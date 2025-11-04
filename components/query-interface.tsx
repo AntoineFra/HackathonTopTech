@@ -59,7 +59,6 @@ export function QueryInterface() {
 
     return (
         <div className="space-y-6">
-            {/* Saisie de la question */}
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -102,7 +101,6 @@ export function QueryInterface() {
                             </Button>
                         </div>
 
-                        {/* Suggestions rapides */}
                         <div className="space-y-2">
                             <p className="text-muted-foreground text-sm">
                                 Suggestions :
@@ -126,7 +124,6 @@ export function QueryInterface() {
                 </CardContent>
             </Card>
 
-            {/* Affichage de la réponse */}
             {loading && (
                 <Card>
                     <CardContent className="pt-6">

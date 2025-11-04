@@ -36,7 +36,6 @@ export function AIResponseDisplay({ response }: AIResponseDisplayProps) {
 
     return (
         <div className="space-y-6">
-            {/* Réponse principale */}
             <Card>
                 <CardHeader>
                     <div className="flex items-start justify-between">
@@ -65,7 +64,6 @@ export function AIResponseDisplay({ response }: AIResponseDisplayProps) {
                 </CardContent>
             </Card>
 
-            {/* Avertissement sur les limitations */}
             {response.limitations && (
                 <Alert>
                     <AlertCircle className="h-4 w-4" />
@@ -75,7 +73,6 @@ export function AIResponseDisplay({ response }: AIResponseDisplayProps) {
                 </Alert>
             )}
 
-            {/* Indicateurs */}
             {response.indicators && response.indicators.length > 0 && (
                 <div className="space-y-4">
                     <h3 className="text-lg font-semibold">
@@ -85,7 +82,6 @@ export function AIResponseDisplay({ response }: AIResponseDisplayProps) {
                 </div>
             )}
 
-            {/* Sources */}
             {response.sources && response.sources.length > 0 && (
                 <Card>
                     <CardHeader>

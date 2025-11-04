@@ -14,7 +14,6 @@ export default function Home() {
     return (
         <div className="from-background to-secondary/20 min-h-screen bg-gradient-to-b">
             <main className="container mx-auto max-w-7xl px-4 py-8">
-                {/* En-tête */}
                 <div className="mb-12 space-y-4 text-center">
                     <div className="mb-4 flex items-center justify-center gap-3">
                         <BarChart3 className="text-primary h-12 w-12" />
@@ -33,7 +32,6 @@ export default function Home() {
                     </p>
                 </div>
 
-                {/* Alerte statut IA */}
                 <Alert className="mb-8 border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
                     <AlertCircle className="h-4 w-4 text-amber-600" />
                     <AlertDescription className="text-amber-900 dark:text-amber-200">
@@ -46,12 +44,10 @@ export default function Home() {
                     </AlertDescription>
                 </Alert>
 
-                {/* Interface de requête principale */}
                 <div className="mb-12">
                     <QueryInterface />
                 </div>
 
-                {/* Vue d'ensemble des catégories */}
                 <div className="mb-12">
                     <Card>
                         <CardHeader>
@@ -67,7 +63,6 @@ export default function Home() {
                     </Card>
                 </div>
 
-                {/* Section des fonctionnalités */}
                 <div className="mb-12 grid grid-cols-1 gap-6 md:grid-cols-3">
                     <Card>
                         <CardHeader>
@@ -112,11 +107,7 @@ export default function Home() {
                     </Card>
                 </div>
 
-                {/* Pied de page */}
                 <footer className="text-muted-foreground border-t py-8 text-center text-sm">
-                    <p>
-                        © 2025 CCI Nice Côte d&apos;Azur - Tous droits réservés
-                    </p>
                     <p className="mt-2">
                         Portail de données socio-démographiques des
                         Alpes-Maritimes (06)
