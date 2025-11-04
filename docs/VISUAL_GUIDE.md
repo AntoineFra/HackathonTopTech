@@ -152,7 +152,7 @@ App
 
 ┌─────────────────────────────────────────────────────────┐
 │  ⚠️  Transparent Limitations                            │
-│  "This data is from 2023. 2024 data not yet available"  │
+│  "This data is from 2023. 2025 data not yet available"  │
 │  ↓ Honest about data gaps                               │
 └─────────────────────────────────────────────────────────┘
 ```

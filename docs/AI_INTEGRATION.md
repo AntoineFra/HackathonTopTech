@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
 ### 1. Natural Language Processing
 - Parse user queries to extract intent (population, employment, etc.)
 - Identify location entities (Nice, Alpes-Maritimes, etc.)
-- Extract time references (2024, last year, etc.)
+- Extract time references (2025, last year, etc.)
 
 ### 2. Data Retrieval
 - Query your database based on extracted parameters
@@ -164,12 +164,12 @@ Your indicators should follow this structure:
 
 ```typescript
 {
-  id: "pop-nice-2024",
+  id: "pop-nice-2025",
   name: "Population of Nice",
   category: "Demographics",
   value: 342669,
   unit: "inhabitants",
-  year: 2024,
+  year: 2025,
   source: "INSEE",
   description: "Total population"
 }
@@ -198,7 +198,7 @@ pnpm start
 3. Try example queries:
    - "What is the population of Nice?"
    - "Show me employment statistics"
-   - "Economic indicators for 2024"
+   - "Economic indicators for 2025"
 
 ## Next Steps
 
@@ -225,4 +225,4 @@ For questions about CCI Nice Côte d'Azur data requirements, refer to your hacka
 
 ---
 
-Built for the CCI Nice Côte d'Azur Hackathon 2024
+Built for the CCI Nice Côte d'Azur Hackathon 2025

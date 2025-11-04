@@ -16,7 +16,7 @@ export function QueryInterface() {
   const [response, setResponse] = useState<AIResponse | null>(null);
   const [suggestions] = useState([
     "Quelle est la population de Nice ?",
-    "Afficher les statistiques d'emploi pour 2024",
+    "Afficher les statistiques d'emploi pour 2025",
     "Quels sont les principaux secteurs économiques du territoire 06 ?",
     "Indicateurs touristiques pour la Côte d'Azur",
     "Démographie des Alpes-Maritimes",

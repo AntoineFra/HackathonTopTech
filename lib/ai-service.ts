@@ -103,7 +103,7 @@ export async function getSuggestions(partial: string): Promise<string[]> {
   return [
     "Quelle est la population de Nice ?",
     "Afficher les statistiques de chômage",
-    "Indicateurs économiques pour 2024",
+    "Indicateurs économiques pour 2025",
     "Données touristiques pour la Côte d'Azur"
   ];
 }

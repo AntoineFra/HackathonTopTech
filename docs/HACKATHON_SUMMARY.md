@@ -129,7 +129,7 @@ Phase 4 - Demo Prep (30 mins)
 
 **Best Demo Queries** (already in the UI):
 1. "What is the population of Nice?"
-2. "Show me employment statistics for 2024"
+2. "Show me employment statistics for 2025"
 3. "What are the main economic sectors in the 06 territory?"
 4. "Tourism indicators for Côte d'Azur"
 
@@ -197,4 +197,4 @@ Everything is set up. Focus on the AI integration and you'll have a working demo
 
 ---
 
-Built with ❤️ for CCI Nice Côte d'Azur Hackathon 2024
+Built with ❤️ for CCI Nice Côte d'Azur Hackathon 2025

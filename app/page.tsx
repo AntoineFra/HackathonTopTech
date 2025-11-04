@@ -94,7 +94,7 @@ export default function Home() {
 
         {/* Pied de page */}
         <footer className="text-center text-sm text-muted-foreground py-8 border-t">
-          <p>© 2024 CCI Nice Côte d&apos;Azur - Tous droits réservés</p>
+          <p>© 2025 CCI Nice Côte d&apos;Azur - Tous droits réservés</p>
           <p className="mt-2">
             Portail de données socio-démographiques des Alpes-Maritimes (06)
           </p>

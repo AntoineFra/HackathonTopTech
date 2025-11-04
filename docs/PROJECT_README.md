@@ -71,4 +71,4 @@ L'application est prête pour la démo avec des données d'exemple. Concentrez-v
 
 ---
 
-Construit pour le Hackathon CCI Nice Côte d'Azur 2024
+Construit pour le Hackathon CCI Nice Côte d'Azur 2025
