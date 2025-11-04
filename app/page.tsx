@@ -1,64 +1,104 @@
-import Image from "next/image";
+import { QueryInterface } from '@/components/query-interface';
+import { CategoryGrid } from '@/components/category-grid';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle, BarChart3 } from 'lucide-react';
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
+      <main className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* En-tête */}
+        <div className="text-center mb-12 space-y-4">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <BarChart3 className="h-12 w-12 text-primary" />
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+              Portail des Données du Territoire 06
+            </h1>
+          </div>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+            Outil intelligent pour interroger les indicateurs socio-démographiques 
+            du territoire Nice Côte d&apos;Azur (Alpes-Maritimes)
+          </p>
+          <p className="text-sm text-muted-foreground">
+            CCI Nice Côte d&apos;Azur - Explorateur de Données Interactif
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        {/* Alerte statut IA */}
+        <Alert className="mb-8 border-amber-500/50 bg-amber-50 dark:bg-amber-950/20">
+          <AlertCircle className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-amber-900 dark:text-amber-200">
+            <strong>Mode Développement :</strong> Les fonctions IA sont prêtes à être connectées. 
+            Consultez <code className="text-xs bg-amber-100 dark:bg-amber-900 px-1 py-0.5 rounded">
+              lib/ai-service.ts
+            </code> pour intégrer votre backend IA.
+          </AlertDescription>
+        </Alert>
+
+        {/* Interface de requête principale */}
+        <div className="mb-12">
+          <QueryInterface />
         </div>
+
+        {/* Vue d'ensemble des catégories */}
+        <div className="mb-12">
+          <Card>
+            <CardHeader>
+              <CardTitle>Explorer par catégorie</CardTitle>
+              <CardDescription>
+                Parcourez les catégories de données disponibles pour le territoire
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <CategoryGrid />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Section des fonctionnalités */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Questions en langage naturel</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Posez vos questions en français simple - aucune connaissance technique requise
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Visualisations instantanées</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Obtenez des graphiques et tableaux clairs avec vos résultats
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Limitations transparentes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground">
+                Informations claires lorsque les données sont indisponibles ou incertaines
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Pied de page */}
+        <footer className="text-center text-sm text-muted-foreground py-8 border-t">
+          <p>© 2024 CCI Nice Côte d&apos;Azur - Tous droits réservés</p>
+          <p className="mt-2">
+            Portail de données socio-démographiques des Alpes-Maritimes (06)
+          </p>
+        </footer>
       </main>
     </div>
   );
