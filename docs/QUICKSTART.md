@@ -15,10 +15,12 @@ Then open: **http://localhost:3000**
 ## Connect AI Service (10 minutes)
 
 ### 1. Get API Key
+
 - OpenAI: https://platform.openai.com/api-keys
 - Anthropic: https://console.anthropic.com/
 
 ### 2. Add to Environment
+
 ```bash
 # Create .env.local
 echo "OPENAI_API_KEY=your-key-here" > .env.local
@@ -31,28 +33,30 @@ Replace line ~15 in `queryAI` function with:
 ```typescript
 // Add at top of file
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+    apiKey: process.env.OPENAI_API_KEY,
 });
 
 // In queryAI function:
 const completion = await openai.chat.completions.create({
-  model: "gpt-4",
-  messages: [
-    {
-      role: "system",
-      content: "You answer questions about Nice Côte d'Azur territory data..."
-    },
-    {
-      role: "user",
-      content: question
-    }
-  ]
+    model: "gpt-4",
+    messages: [
+        {
+            role: "system",
+            content:
+                "You answer questions about Nice Côte d'Azur territory data...",
+        },
+        {
+            role: "user",
+            content: question,
+        },
+    ],
 });
 
 const answer = completion.choices[0].message.content;
 ```
 
 ### 4. Install OpenAI SDK
+
 ```bash
 pnpm add openai
 ```
@@ -62,6 +66,7 @@ pnpm add openai
 ## Test Queries
 
 Try these in the UI:
+
 - "What is the population of Nice?"
 - "Show me employment statistics"
 - "Tourism data for the region"
@@ -94,11 +99,11 @@ Try these in the UI:
 
 ## Key Files to Edit
 
-| Priority | File | What to do |
-|----------|------|------------|
-| 🔴 HIGH | `lib/ai-service.ts` | Add AI integration |
-| 🟡 MED | `.env.local` | Add API keys |
-| 🟢 LOW | `lib/sample-data.ts` | Update test data |
+| Priority | File                 | What to do         |
+| -------- | -------------------- | ------------------ |
+| 🔴 HIGH  | `lib/ai-service.ts`  | Add AI integration |
+| 🟡 MED   | `.env.local`         | Add API keys       |
+| 🟢 LOW   | `lib/sample-data.ts` | Update test data   |
 
 ---
 

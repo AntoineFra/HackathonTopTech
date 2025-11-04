@@ -57,7 +57,7 @@ Voir `AI_INTEGRATION.md` pour des instructions détaillées.
 ✅ Données d'exemple pour les tests  
 ✅ Fonctionnalité de démo basique  
 ⏳ Intégration du service IA (À FAIRE)  
-⏳ Connexion à la source de données réelles (À FAIRE)  
+⏳ Connexion à la source de données réelles (À FAIRE)
 
 ## Technologies
 

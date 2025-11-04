@@ -7,6 +7,7 @@
 Your base project is **completely set up** and ready for the hackathon! Here's what you have:
 
 #### 1. **Complete UI Components** ✨
+
 - ✅ Main query interface with natural language input
 - ✅ AI response display with confidence indicators
 - ✅ Indicator cards for data visualization
@@ -15,11 +16,13 @@ Your base project is **completely set up** and ready for the hackathon! Here's w
 - ✅ Professional styling with Tailwind CSS
 
 #### 2. **Type-Safe Architecture** 🏗️
+
 - ✅ Full TypeScript support
 - ✅ Complete type definitions in `types/index.ts`
 - ✅ Type-safe components and functions
 
 #### 3. **Ready-to-Use Structure** 📁
+
 ```
 ✅ components/          # All UI components ready
 ✅ lib/ai-service.ts    # Service layer with placeholders
@@ -30,6 +33,7 @@ Your base project is **completely set up** and ready for the hackathon! Here's w
 ```
 
 #### 4. **Demo-Ready Functionality** 🎬
+
 - ✅ Working interface with sample data
 - ✅ Basic keyword matching for demos
 - ✅ All UI interactions functional
@@ -42,6 +46,7 @@ Your base project is **completely set up** and ready for the hackathon! Here's w
 Focus your hackathon time on these key areas:
 
 #### **Priority 1: AI Integration** 🤖
+
 **File**: `lib/ai-service.ts`
 
 Replace the `queryAI` function with real AI:
@@ -57,15 +62,18 @@ Replace the `queryAI` function with real AI:
 **Quick Win**: Use OpenAI's API - it's the fastest to integrate!
 
 #### **Priority 2: Data Source** 📊
+
 **File**: `lib/ai-service.ts` - `fetchIndicators` function
 
 Connect to your data:
+
 - Database (PostgreSQL, MongoDB, etc.)
 - API endpoint
 - Static files
 - Or continue using enhanced sample data
 
 #### **Priority 3 (Optional): Advanced Features** 🚀
+
 - Add charts (recharts, Chart.js)
 - Implement data export
 - Add user history
@@ -128,12 +136,14 @@ Phase 4 - Demo Prep (30 mins)
 ### 🎯 Demo Strategy
 
 **Best Demo Queries** (already in the UI):
+
 1. "What is the population of Nice?"
 2. "Show me employment statistics for 2025"
 3. "What are the main economic sectors in the 06 territory?"
 4. "Tourism indicators for Côte d'Azur"
 
 **Selling Points**:
+
 - ✨ Natural language queries (no technical skills needed)
 - 📊 Instant visualizations
 - 🎯 Transparent limitations
@@ -144,13 +154,13 @@ Phase 4 - Demo Prep (30 mins)
 
 ### 📚 Key Files to Know
 
-| File | Purpose | Priority |
-|------|---------|----------|
-| `lib/ai-service.ts` | AI integration | 🔴 HIGH |
-| `lib/sample-data.ts` | Test data | 🟡 MEDIUM |
-| `components/query-interface.tsx` | Main UI | 🟢 LOW (done) |
-| `.env.local` | Config | 🔴 HIGH |
-| `AI_INTEGRATION.md` | Detailed docs | 🟡 MEDIUM |
+| File                             | Purpose        | Priority      |
+| -------------------------------- | -------------- | ------------- |
+| `lib/ai-service.ts`              | AI integration | 🔴 HIGH       |
+| `lib/sample-data.ts`             | Test data      | 🟡 MEDIUM     |
+| `components/query-interface.tsx` | Main UI        | 🟢 LOW (done) |
+| `.env.local`                     | Config         | 🔴 HIGH       |
+| `AI_INTEGRATION.md`              | Detailed docs  | 🟡 MEDIUM     |
 
 ---
 
@@ -167,22 +177,26 @@ Phase 4 - Demo Prep (30 mins)
 ### 🆘 Quick Reference
 
 **Start Dev Server**:
+
 ```bash
 pnpm dev
 ```
 
 **Check for Errors**:
+
 ```bash
 pnpm build
 ```
 
 **Add Environment Variable**:
+
 ```bash
 # Edit .env.local
 OPENAI_API_KEY=sk-...
 ```
 
 **Key Documentation**:
+
 - Main guide: `AI_INTEGRATION.md`
 - Project overview: `PROJECT_README.md`
 - This file: `HACKATHON_SUMMARY.md`

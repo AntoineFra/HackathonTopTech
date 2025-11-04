@@ -5,6 +5,7 @@ Bienvenue dans la documentation du projet !
 ## 🚀 Pour commencer
 
 ### Nouveau sur le projet ?
+
 Commencez ici → **[DEMARRAGE_RAPIDE.md](DEMARRAGE_RAPIDE.md)**
 
 Guide de démarrage en 2 minutes pour lancer l'application.
@@ -14,9 +15,11 @@ Guide de démarrage en 2 minutes pour lancer l'application.
 ## 📖 Guides disponibles
 
 ### 1. [DEMARRAGE_RAPIDE.md](DEMARRAGE_RAPIDE.md)
+
 ⏱️ **Durée : 2-5 minutes**
 
 Guide express pour démarrer rapidement :
+
 - Installation en une commande
 - Configuration de base
 - Premiers tests
@@ -27,9 +30,11 @@ Guide express pour démarrer rapidement :
 ---
 
 ### 2. [HACKATHON_SUMMARY.md](HACKATHON_SUMMARY.md)
+
 ⏱️ **Durée : 10 minutes**
 
 Vue d'ensemble complète du projet hackathon :
+
 - ✅ Ce qui est déjà fait
 - 🔧 Ce qu'il reste à faire
 - 📝 Checklist d'intégration
@@ -41,9 +46,11 @@ Vue d'ensemble complète du projet hackathon :
 ---
 
 ### 3. [AI_INTEGRATION.md](AI_INTEGRATION.md)
+
 ⏱️ **Durée : 30-60 minutes**
 
 Guide détaillé pour intégrer votre IA :
+
 - Configuration OpenAI / Claude / autres
 - Exemples de code complets
 - Structure des données
@@ -55,9 +62,11 @@ Guide détaillé pour intégrer votre IA :
 ---
 
 ### 4. [PROJECT_README.md](PROJECT_README.md)
+
 ⏱️ **Durée : 15 minutes**
 
 Documentation technique du projet :
+
 - Architecture détaillée
 - Technologies utilisées
 - Structure des fichiers
@@ -69,9 +78,11 @@ Documentation technique du projet :
 ---
 
 ### 5. [VISUAL_GUIDE.md](VISUAL_GUIDE.md)
+
 ⏱️ **Durée : 10 minutes**
 
 Guide visuel avec diagrammes :
+
 - Flux de l'application
 - Hiérarchie des composants
 - Diagrammes de flux de données
@@ -83,6 +94,7 @@ Guide visuel avec diagrammes :
 ---
 
 ### 6. [QUICKSTART.md](QUICKSTART.md)
+
 ⏱️ **Durée : 5 minutes**
 
 Version anglaise du guide de démarrage rapide.
@@ -94,19 +106,23 @@ Version anglaise du guide de démarrage rapide.
 ## 🎯 Par cas d'usage
 
 ### "Je débute sur le projet"
+
 1. [DEMARRAGE_RAPIDE.md](DEMARRAGE_RAPIDE.md) - Lancer l'app
 2. [HACKATHON_SUMMARY.md](HACKATHON_SUMMARY.md) - Comprendre le projet
 3. [VISUAL_GUIDE.md](VISUAL_GUIDE.md) - Visualiser l'architecture
 
 ### "Je veux intégrer l'IA"
+
 1. [AI_INTEGRATION.md](AI_INTEGRATION.md) - Guide complet d'intégration
 2. [DEMARRAGE_RAPIDE.md](DEMARRAGE_RAPIDE.md) - Configuration rapide
 
 ### "Je veux comprendre le code"
+
 1. [PROJECT_README.md](PROJECT_README.md) - Architecture technique
 2. [VISUAL_GUIDE.md](VISUAL_GUIDE.md) - Diagrammes
 
 ### "Je prépare la démo du hackathon"
+
 1. [HACKATHON_SUMMARY.md](HACKATHON_SUMMARY.md) - Checklist et stratégie
 2. [VISUAL_GUIDE.md](VISUAL_GUIDE.md) - Scénarios de démo
 
@@ -123,6 +139,7 @@ Version anglaise du guide de démarrage rapide.
 ## 📁 Fichiers du projet
 
 Les fichiers principaux du code sont dans :
+
 - `app/` - Pages et routes Next.js
 - `components/` - Composants React
 - `lib/` - Services et utilitaires

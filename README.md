@@ -49,9 +49,9 @@ Pour activer les réponses IA réelles, configurez votre clé API :
 
 1. Obtenez une clé API (OpenAI, Anthropic, etc.)
 2. Ajoutez-la dans `.env.local` :
-   ```env
-   OPENAI_API_KEY=votre_clé_ici
-   ```
+    ```env
+    OPENAI_API_KEY=votre_clé_ici
+    ```
 3. Implémentez l'intégration dans `lib/ai-service.ts`
 
 Voir [`docs/DEMARRAGE_RAPIDE.md`](docs/DEMARRAGE_RAPIDE.md) pour un guide détaillé.

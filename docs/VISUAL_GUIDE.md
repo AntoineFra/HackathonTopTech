@@ -116,12 +116,14 @@ App
 ## Color Coding Guide
 
 ### In the UI:
+
 - 🟢 Green: High confidence (≥80%)
 - 🟡 Yellow: Medium confidence (60-79%)
 - 🔴 Red: Low confidence (<60%)
 - 🟠 Amber: Warnings and limitations
 
 ### Component States:
+
 - ⚪ Default: Normal state
 - 🔵 Loading: Processing query
 - ✅ Success: Data loaded
@@ -164,18 +166,18 @@ App
 ### 🔌 What You Need to Connect:
 
 1. **AI Service** (Priority 1)
-   - File: `lib/ai-service.ts`
-   - Options: OpenAI, Claude, Azure OpenAI
-   - Time: 1-2 hours
+    - File: `lib/ai-service.ts`
+    - Options: OpenAI, Claude, Azure OpenAI
+    - Time: 1-2 hours
 
 2. **Data Source** (Priority 2)
-   - File: `lib/ai-service.ts` or new API
-   - Options: Database, API, Enhanced sample data
-   - Time: 1-3 hours
+    - File: `lib/ai-service.ts` or new API
+    - Options: Database, API, Enhanced sample data
+    - Time: 1-3 hours
 
 3. **Charts** (Optional)
-   - Install: recharts, Chart.js, or similar
-   - Time: 1-2 hours
+    - Install: recharts, Chart.js, or similar
+    - Time: 1-2 hours
 
 ---
 
@@ -195,6 +197,7 @@ App
 ## Demo Scenarios
 
 ### Scenario 1: Population Query
+
 ```
 User: "What is the population of Nice?"
   ↓
@@ -208,6 +211,7 @@ Result: ✅ Success with data cards
 ```
 
 ### Scenario 2: Economic Data
+
 ```
 User: "Show me employment statistics"
   ↓
@@ -221,6 +225,7 @@ Result: ✅ Success with multiple indicators
 ```
 
 ### Scenario 3: Unavailable Data
+
 ```
 User: "What will the population be in 2050?"
   ↓

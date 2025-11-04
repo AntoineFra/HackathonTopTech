@@ -5,6 +5,7 @@ An AI-powered interactive portal for querying socio-demographic indicators of th
 ## Project Overview
 
 This application allows users to:
+
 - Ask questions in natural French language about territory indicators
 - Get instant responses with data visualizations
 - Explore socio-demographic, economic, and infrastructure data
@@ -45,38 +46,39 @@ Edit `lib/ai-service.ts` and implement the `queryAI` function:
 
 ```typescript
 export async function queryAI(question: string): Promise<AIResponse> {
-  // Example with OpenAI
-  const response = await fetch('YOUR_AI_ENDPOINT', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-    },
-    body: JSON.stringify({
-      model: 'gpt-4',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are an assistant for the CCI Nice Côte d\'Azur that answers questions about socio-demographic indicators...'
+    // Example with OpenAI
+    const response = await fetch("YOUR_AI_ENDPOINT", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         },
-        {
-          role: 'user',
-          content: question
-        }
-      ]
-    })
-  });
+        body: JSON.stringify({
+            model: "gpt-4",
+            messages: [
+                {
+                    role: "system",
+                    content:
+                        "You are an assistant for the CCI Nice Côte d'Azur that answers questions about socio-demographic indicators...",
+                },
+                {
+                    role: "user",
+                    content: question,
+                },
+            ],
+        }),
+    });
 
-  const data = await response.json();
-  
-  return {
-    success: true,
-    query: question,
-    answer: data.choices[0].message.content,
-    confidence: 0.85,
-    indicators: await extractIndicators(question),
-    visualizations: []
-  };
+    const data = await response.json();
+
+    return {
+        success: true,
+        query: question,
+        answer: data.choices[0].message.content,
+        confidence: 0.85,
+        indicators: await extractIndicators(question),
+        visualizations: [],
+    };
 }
 ```
 
@@ -85,14 +87,16 @@ export async function queryAI(question: string): Promise<AIResponse> {
 Update `fetchIndicators` function to connect to your database:
 
 ```typescript
-export async function fetchIndicators(filters: SearchFilters): Promise<Indicator[]> {
-  // Connect to your data source (PostgreSQL, MongoDB, API, etc.)
-  const response = await fetch('/api/indicators', {
-    method: 'POST',
-    body: JSON.stringify(filters)
-  });
-  
-  return response.json();
+export async function fetchIndicators(
+    filters: SearchFilters,
+): Promise<Indicator[]> {
+    // Connect to your data source (PostgreSQL, MongoDB, API, etc.)
+    const response = await fetch("/api/indicators", {
+        method: "POST",
+        body: JSON.stringify(filters),
+    });
+
+    return response.json();
 }
 ```
 
@@ -118,42 +122,46 @@ NEXT_PUBLIC_API_URL=your_api_url
 Create `app/api/query/route.ts` for server-side AI calls:
 
 ```typescript
-import { NextRequest, NextResponse } from 'next/server';
-import { queryAI } from '@/lib/ai-service';
+import { NextRequest, NextResponse } from "next/server";
+import { queryAI } from "@/lib/ai-service";
 
 export async function POST(request: NextRequest) {
-  const { query } = await request.json();
-  
-  try {
-    const response = await queryAI(query);
-    return NextResponse.json(response);
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to process query' },
-      { status: 500 }
-    );
-  }
+    const { query } = await request.json();
+
+    try {
+        const response = await queryAI(query);
+        return NextResponse.json(response);
+    } catch (error) {
+        return NextResponse.json(
+            { error: "Failed to process query" },
+            { status: 500 },
+        );
+    }
 }
 ```
 
 ## Key Features to Implement
 
 ### 1. Natural Language Processing
+
 - Parse user queries to extract intent (population, employment, etc.)
 - Identify location entities (Nice, Alpes-Maritimes, etc.)
 - Extract time references (2025, last year, etc.)
 
 ### 2. Data Retrieval
+
 - Query your database based on extracted parameters
 - Aggregate and format data for display
 - Include metadata (sources, dates, confidence)
 
 ### 3. Response Generation
+
 - Generate natural language explanations
 - Create appropriate visualizations (charts, tables, maps)
 - Include limitations and caveats
 
 ### 4. Visualization Support
+
 - Implement chart components (recharts, chart.js, etc.)
 - Add data export functionality
 - Support multiple visualization types
@@ -196,9 +204,9 @@ pnpm start
 1. Start the development server
 2. Open http://localhost:3000
 3. Try example queries:
-   - "What is the population of Nice?"
-   - "Show me employment statistics"
-   - "Economic indicators for 2025"
+    - "What is the population of Nice?"
+    - "Show me employment statistics"
+    - "Economic indicators for 2025"
 
 ## Next Steps
 
