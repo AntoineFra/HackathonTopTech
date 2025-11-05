@@ -25,6 +25,12 @@ export default function Home() {
 
                 {/* Map Link */}
                 <div className="flex justify-center gap-3 pt-4">
+                    <Link href="/map2d">
+                        <Button size="lg" className="gap-2" variant="outline">
+                            <MapPin className="h-5 w-5" />
+                            Carte 2D seule
+                        </Button>
+                    </Link>
                     <Link href="/map">
                         <Button size="lg" className="gap-2" variant="outline">
                             <MapPin className="h-5 w-5" />
