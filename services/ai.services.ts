@@ -1,4 +1,4 @@
-import { apiFetch } from './api';
+import { apiFetch } from "./api";
 
 /**
  * ai.services.ts
@@ -9,12 +9,12 @@ import { apiFetch } from './api';
  */
 
 export async function aiHealth() {
-  return apiFetch('/ai/health', { method: 'GET' });
+    return apiFetch("/ai/health", { method: "GET" });
 }
 
 export async function aiAnswer(prompt: string) {
-  return apiFetch('/ai/answer', {
-    method: 'POST',
-    body: JSON.stringify({ question: prompt }),
-  });
+    return apiFetch("/ai/answer", {
+        method: "POST",
+        body: JSON.stringify({ question: prompt }),
+    });
 }

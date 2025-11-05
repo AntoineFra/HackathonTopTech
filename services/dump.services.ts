@@ -1,4 +1,4 @@
-import { apiFetch } from './api';
+import { apiFetch } from "./api";
 
 /**
  * dump.services.ts
@@ -8,10 +8,10 @@ import { apiFetch } from './api';
  */
 
 export async function listDumps() {
-  return apiFetch('/dump', { method: 'GET' });
+    return apiFetch("/dump", { method: "GET" });
 }
 
 export async function getDump(dumpType: string) {
-  if (!dumpType) throw new TypeError('dumpType is required');
-  return apiFetch(`/dump/${dumpType}`, { method: 'GET' });
+    if (!dumpType) throw new TypeError("dumpType is required");
+    return apiFetch(`/dump/${dumpType}`, { method: "GET" });
 }

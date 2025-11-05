@@ -8,11 +8,13 @@ type ThemeContextType = {
     theme: Theme;
     toggleTheme: () => void;
     setTheme: (theme: Theme) => void;
+    mounted: boolean;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
+    const [mounted, setMounted] = useState(false);
     const [theme, setThemeState] = useState<Theme>(() => {
         // This runs only once during initial render on client
         if (typeof window === "undefined") return "light";
@@ -24,6 +26,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
             ? "dark"
             : "light";
     });
+
+    // Mark as mounted after first render
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     // Sync theme to DOM
     useEffect(() => {
@@ -41,7 +48,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+        <ThemeContext.Provider
+            value={{ theme, toggleTheme, setTheme, mounted }}
+        >
             {children}
         </ThemeContext.Provider>
     );
