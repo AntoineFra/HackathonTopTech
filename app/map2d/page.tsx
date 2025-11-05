@@ -57,6 +57,9 @@ export default function Map2DPage() {
     if (!map || typeof window === 'undefined' || !window.google) return;
     const maps = window.google.maps;
 
+    console.log(`🗺️ Chargement de ${Object.keys(cityPolygons).length} polygones de villes`);
+    console.log(`📊 Villes disponibles:`, Object.keys(cityPolygons).slice(0, 10).join(', '), '...');
+
     Object.entries(cityPolygons).forEach(([city, coords]) => {
       const polygon = new maps.Polygon({
         paths: coords,
