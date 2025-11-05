@@ -37,7 +37,7 @@ export async function aiAnswer(
 }> {
     return apiFetch("/ai/answer", {
         method: "POST",
-        body: JSON.stringify({ 
+        body: JSON.stringify({
             question: prompt,
             history: history || [],
         }),

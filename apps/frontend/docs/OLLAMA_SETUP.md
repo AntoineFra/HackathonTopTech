@@ -5,6 +5,7 @@
 ### 1. Installation d'Ollama
 
 **macOS / Linux :**
+
 ```bash
 curl -fsSL https://ollama.com/install.sh | sh
 ```
@@ -23,6 +24,7 @@ Le serveur démarre sur `http://localhost:11434`
 ### 3. Télécharger un modèle
 
 **Pour le français (recommandé) :**
+
 ```bash
 # Mistral (7B - bon équilibre performance/qualité)
 ollama pull mistral
@@ -65,12 +67,12 @@ OLLAMA_TIMEOUT=30000
 
 ## Modèles recommandés par cas d'usage
 
-| Modèle | Taille | RAM | Vitesse | Qualité | Usage |
-|--------|--------|-----|---------|---------|-------|
-| `gemma2:2b` | 2B | 4GB | ⚡⚡⚡ | ⭐⭐ | Développement rapide |
-| `llama3.2:3b` | 3B | 6GB | ⚡⚡ | ⭐⭐⭐ | Production (petit) |
-| `mistral` | 7B | 8GB | ⚡ | ⭐⭐⭐⭐ | Production (qualité) |
-| `llama3.1:8b` | 8B | 10GB | ⚡ | ⭐⭐⭐⭐ | Production (meilleur) |
+| Modèle        | Taille | RAM  | Vitesse | Qualité  | Usage                 |
+| ------------- | ------ | ---- | ------- | -------- | --------------------- |
+| `gemma2:2b`   | 2B     | 4GB  | ⚡⚡⚡  | ⭐⭐     | Développement rapide  |
+| `llama3.2:3b` | 3B     | 6GB  | ⚡⚡    | ⭐⭐⭐   | Production (petit)    |
+| `mistral`     | 7B     | 8GB  | ⚡      | ⭐⭐⭐⭐ | Production (qualité)  |
+| `llama3.1:8b` | 8B     | 10GB | ⚡      | ⭐⭐⭐⭐ | Production (meilleur) |
 
 ## Commandes utiles
 
@@ -91,6 +93,7 @@ killall ollama
 ## Dépannage
 
 ### Ollama ne démarre pas
+
 ```bash
 # Vérifier si le port 11434 est utilisé
 lsof -i :11434
@@ -100,11 +103,13 @@ killall ollama && ollama serve
 ```
 
 ### Modèle trop lent
+
 - Utilisez un modèle plus petit (gemma2:2b)
 - Réduisez le contexte dans les prompts
 - Ajoutez plus de RAM
 
 ### Erreur de mémoire
+
 - Fermez les applications inutiles
 - Utilisez un modèle plus petit
 - Ajustez les paramètres num_ctx et num_thread
@@ -112,6 +117,7 @@ killall ollama && ollama serve
 ## Prochaines étapes
 
 Une fois Ollama installé et fonctionnel :
+
 1. L'API `/api/ai-local` sera créée automatiquement
 2. Le chat utilisera automatiquement l'IA locale
 3. Les réponses seront générées localement sans API externe

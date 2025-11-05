@@ -26,7 +26,8 @@ export default function Home() {
                 <QueryInterface />
 
                 <p className="text-muted-foreground mr-2 self-center">
-                    Ou explorez directement les données géospatiales sur une carte 3D via l&apos;IA :
+                    Ou explorez directement les données géospatiales sur une
+                    carte 3D via l&apos;IA :
                 </p>
 
                 <div className="flex justify-center gap-3 pt-4">

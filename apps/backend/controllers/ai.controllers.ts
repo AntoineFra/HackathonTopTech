@@ -23,23 +23,19 @@ export async function answer(req: Request, res: Response) {
 export async function health(req: Request, res: Response) {
     try {
         const healthStatus = await checkOllamaHealth();
-        
+
         if (healthStatus.status === "healthy") {
             return res.json(healthStatus);
         }
 
-        return res
-            .status(503)
-            .json(healthStatus);
+        return res.status(503).json(healthStatus);
     } catch (error: unknown) {
         const err = error as Error;
         console.error("Error checking AI health status:", err);
-        return res
-            .status(500)
-            .json({ 
-                status: "error",
-                error: "Internal server error", 
-                message: err.message 
-            });
+        return res.status(500).json({
+            status: "error",
+            error: "Internal server error",
+            message: err.message,
+        });
     }
 }

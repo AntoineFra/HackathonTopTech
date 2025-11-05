@@ -152,9 +152,9 @@ export async function generateWithOllama(
         return data;
     } catch (error: unknown) {
         clearTimeout(timeoutId);
-        
+
         const err = error as Error & { name?: string };
-        
+
         if (err.name === "AbortError") {
             throw new Error(
                 "Timeout: La requête a pris trop de temps. Essayez un modèle plus rapide.",

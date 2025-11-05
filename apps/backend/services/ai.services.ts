@@ -251,14 +251,19 @@ export async function getAIResponse(prompt: string) {
 }
 
 // Centralise la logique métier pour répondre à une question (utilisée par le handler Express)
-export async function answerQuestion(question: string, history: ChatMessage[] = []) {
+export async function answerQuestion(
+    question: string,
+    history: ChatMessage[] = [],
+) {
     if (!question) throw new Error("Question is required");
 
     // Utiliser Ollama pour répondre
     const response = await answerQuestionWithOllama(question, history);
 
     if (!response.success) {
-        throw new Error(response.error || "Erreur lors de la génération de la réponse");
+        throw new Error(
+            response.error || "Erreur lors de la génération de la réponse",
+        );
     }
 
     return {

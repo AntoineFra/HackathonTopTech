@@ -82,6 +82,7 @@ docker-compose up --build
 ```
 
 Les services démarrent dans l'ordre :
+
 1. **Ollama** (IA locale)
 2. **Ollama-init** (téléchargement du modèle Mistral)
 3. **Backend** (Express API)
@@ -185,9 +186,9 @@ Variables principales :
 Le fichier `docker-compose.yml` configure :
 
 - **Networks** : `paca-analytics-network` pour la communication inter-services
-- **Volumes** : 
-  - `paca-ollama-models` : Modèles Ollama persistants
-  - `paca-backend-db` : Base de données SQLite
+- **Volumes** :
+    - `paca-ollama-models` : Modèles Ollama persistants
+    - `paca-backend-db` : Base de données SQLite
 - **Health Checks** : Ollama vérifié avant le démarrage des autres services
 
 ## 🧪 Tests

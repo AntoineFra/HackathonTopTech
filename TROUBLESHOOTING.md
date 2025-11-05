@@ -3,34 +3,39 @@
 ## ❌ NetworkError when attempting to fetch resource
 
 ### Problème
+
 Dans la console du navigateur, vous voyez :
+
 ```
 TypeError: NetworkError when attempting to fetch resource.
 ```
 
 ### Cause
+
 Le frontend Next.js ne peut pas appeler le backend Express car la variable d'environnement `NEXT_PUBLIC_BACKEND_URL` n'est pas définie.
 
 ### Solution ✅
 
 1. **Ajouter la variable dans `.env.local`** :
-   ```bash
-   # apps/frontend/.env.local
-   NEXT_PUBLIC_BACKEND_URL=http://localhost:3000
-   ```
+
+    ```bash
+    # apps/frontend/.env.local
+    NEXT_PUBLIC_BACKEND_URL=http://localhost:3000
+    ```
 
 2. **Redémarrer le frontend** :
-   ```bash
-   docker-compose restart frontend
-   # ou
-   pnpm dev:frontend
-   ```
+
+    ```bash
+    docker-compose restart frontend
+    # ou
+    pnpm dev:frontend
+    ```
 
 3. **Vérifier dans la console** :
    Le service API affiche maintenant :
-   ```
-   ➡️  POST http://localhost:3000/api/ai/answer
-   ```
+    ```
+    ➡️  POST http://localhost:3000/api/ai/answer
+    ```
 
 ### Pourquoi `NEXT_PUBLIC_` ?
 
@@ -53,7 +58,8 @@ Notre appel `fetch()` se fait depuis le navigateur, donc on doit utiliser `NEXT_
       └──── appelle http://localhost:3000/api/... ─────────────────┘
 ```
 
-**Important :** 
+**Important :**
+
 - Le navigateur appelle toujours `localhost:3000` (même si le frontend est dans Docker)
 - Les conteneurs Docker communiquent entre eux via les noms de services (`http://backend:3000`)
 - Mais le **navigateur** n'a pas accès au réseau Docker interne
@@ -65,32 +71,35 @@ Notre appel `fetch()` se fait depuis le navigateur, donc on doit utiliser `NEXT_
 ### 1. CORS Error
 
 **Symptôme :**
+
 ```
-Access to fetch at 'http://localhost:3000' from origin 'http://localhost:8080' 
+Access to fetch at 'http://localhost:3000' from origin 'http://localhost:8080'
 has been blocked by CORS policy
 ```
 
 **Solution :**
 Vérifiez que le backend Express a bien configuré CORS :
+
 ```typescript
 // apps/backend/server.ts
-app.use(cors({
-  origin: [
-    'http://localhost:8080',
-    'http://localhost:3000'
-  ],
-  credentials: true
-}));
+app.use(
+    cors({
+        origin: ["http://localhost:8080", "http://localhost:3000"],
+        credentials: true,
+    }),
+);
 ```
 
 ### 2. Backend ne démarre pas
 
 **Symptôme :**
+
 ```
 PrismaClientInitializationError: Prisma Client could not locate the Query Engine
 ```
 
 **Solution :**
+
 ```bash
 # Entrez dans le conteneur
 docker-compose exec backend sh
@@ -106,26 +115,30 @@ docker-compose restart backend
 ### 3. Ollama Timeout
 
 **Symptôme :**
+
 ```json
-{"error":"Timeout: La requête a pris trop de temps"}
+{ "error": "Timeout: La requête a pris trop de temps" }
 ```
 
 **Solution :**
 Augmentez le timeout dans `docker-compose.yml` :
+
 ```yaml
 backend:
-  environment:
-    - OLLAMA_TIMEOUT=120000  # 2 minutes au lieu de 30s
+    environment:
+        - OLLAMA_TIMEOUT=120000 # 2 minutes au lieu de 30s
 ```
 
 ### 4. Modèle Mistral non téléchargé
 
 **Symptôme :**
+
 ```
 Error: model 'mistral' not found
 ```
 
 **Solution :**
+
 ```bash
 # Téléchargez manuellement
 docker-compose exec ollama ollama pull mistral
@@ -137,11 +150,13 @@ docker-compose exec ollama ollama list
 ### 5. Port déjà utilisé
 
 **Symptôme :**
+
 ```
 Error: bind: address already in use
 ```
 
 **Solution :**
+
 ```bash
 # Trouvez le processus
 lsof -ti:3000  # ou :8080, :11434
@@ -159,22 +174,25 @@ ports:
 ## 🧪 Tests de Validation
 
 ### 1. Backend Health Check
+
 ```bash
 curl http://localhost:3000/api/ai/health
 ```
 
 **Réponse attendue :**
+
 ```json
 {
-  "status": "healthy",
-  "ollama_url": "http://ollama:11434",
-  "model": "mistral",
-  "available_models": ["mistral:latest"],
-  "message": "AI locale opérationnelle"
+    "status": "healthy",
+    "ollama_url": "http://ollama:11434",
+    "model": "mistral",
+    "available_models": ["mistral:latest"],
+    "message": "AI locale opérationnelle"
 }
 ```
 
 ### 2. Question à l'IA
+
 ```bash
 curl -X POST http://localhost:3000/api/ai/answer \
   -H "Content-Type: application/json" \
@@ -182,16 +200,19 @@ curl -X POST http://localhost:3000/api/ai/answer \
 ```
 
 ### 3. Frontend Accessible
+
 ```bash
 curl -s http://localhost:8080 | grep -q "Next.js" && echo "✅ Frontend OK"
 ```
 
 ### 4. Tous les conteneurs actifs
+
 ```bash
 docker-compose ps
 ```
 
 **Attendu :**
+
 ```
 paca-frontend    Up
 paca-backend     Up
@@ -203,6 +224,7 @@ paca-ollama      Up (healthy)
 ## 🛠️ Commandes de Debug
 
 ### Voir les logs en temps réel
+
 ```bash
 # Tous les services
 docker-compose logs -f
@@ -214,6 +236,7 @@ docker-compose logs -f ollama
 ```
 
 ### Inspecter un conteneur
+
 ```bash
 # Entrer dans le conteneur
 docker-compose exec backend sh
@@ -226,6 +249,7 @@ docker-compose exec backend wget -O- http://ollama:11434/api/tags
 ```
 
 ### Reconstruire proprement
+
 ```bash
 # Arrêter et nettoyer
 docker-compose down -v
@@ -238,6 +262,7 @@ docker-compose up -d
 ```
 
 ### Vérifier les variables d'environnement Next.js
+
 ```bash
 # Dans le conteneur frontend
 docker-compose exec frontend sh -c 'echo $NEXT_PUBLIC_BACKEND_URL'

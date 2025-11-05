@@ -84,7 +84,11 @@ export function ChatInterface() {
                 try {
                     // Build conversation history (last 10 messages)
                     const history: ChatMessage[] = messages
-                        .filter((m) => !m.loading && m.role !== "assistant" || m.response)
+                        .filter(
+                            (m) =>
+                                (!m.loading && m.role !== "assistant") ||
+                                m.response,
+                        )
                         .slice(-10)
                         .map((m) => ({
                             role: m.role === "user" ? "user" : "assistant",

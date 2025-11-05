@@ -13,11 +13,11 @@ function getBackendUrl(): string {
     if (!backendUrl) {
         // Fallback pour le développement local
         console.warn(
-            "⚠️  NEXT_PUBLIC_BACKEND_URL not set, using fallback: http://localhost:3000"
+            "⚠️  NEXT_PUBLIC_BACKEND_URL not set, using fallback: http://localhost:3000",
         );
         return "http://localhost:3000";
     }
-    
+
     return backendUrl.replace(/\/$/, "");
 }
 

@@ -9,6 +9,7 @@ L'intégration complète d'une IA locale avec Ollama pour l'application PACA Ana
 ### 1. Backend API (`app/api/ai-local/route.ts`)
 
 **Endpoint POST** `/api/ai-local`
+
 - Reçoit une question et l'historique de conversation
 - Appelle Ollama via HTTP (localhost:11434)
 - Utilise le prompt engineering spécialisé PACA
@@ -16,11 +17,13 @@ L'intégration complète d'une IA locale avec Ollama pour l'application PACA Ana
 - Retourne des réponses structurées avec confiance
 
 **Endpoint GET** `/api/ai-local`
+
 - Health check pour vérifier qu'Ollama fonctionne
 - Liste les modèles disponibles
 - Affiche la configuration actuelle
 
 **Variables d'environnement :**
+
 ```bash
 OLLAMA_BASE_URL=http://localhost:11434  # URL du serveur Ollama
 OLLAMA_MODEL=mistral                     # Modèle à utiliser
@@ -30,22 +33,26 @@ OLLAMA_TIMEOUT=30000                     # Timeout en ms
 ### 2. Prompt Engineering (`lib/ai-prompts.ts`)
 
 **System Prompt spécialisé :**
+
 - Contexte territorial : Alpes-Maritimes (06), Nice, Cannes
 - Expertise : tourisme, technologie, économie locale
 - Statistiques démographiques et socio-économiques
 - Réponses structurées en français
 
 **Fonctions utilitaires :**
+
 - `buildConversationPrompt()` : construit le contexte avec historique (10 derniers messages)
 - `formatPromptForOllama()` : formate pour l'API Ollama
 
 ### 3. Service Client (`services/ai.services.ts`)
 
 **Nouvelles fonctions :**
+
 - `aiAnswerLocal(prompt, history?)` : appelle l'IA locale avec historique
 - `aiLocalHealth()` : vérifie la santé d'Ollama
 
 **Types TypeScript :**
+
 ```typescript
 interface AIResponse {
     success: boolean;
@@ -61,6 +68,7 @@ interface AIResponse {
 ### 4. Interface Chat (`components/chat-interface.tsx`)
 
 **Intégration complète :**
+
 - ✅ Utilise `aiAnswerLocal()` au lieu de l'API externe
 - ✅ Passe automatiquement l'historique (10 derniers messages)
 - ✅ Affiche le modèle utilisé
@@ -70,11 +78,13 @@ interface AIResponse {
 ### 5. Documentation
 
 **Guides créés :**
+
 - `docs/OLLAMA_SETUP.md` : installation complète d'Ollama
 - `docs/LOCAL_AI_QUICKSTART.md` : démarrage rapide en 3 étapes
 - `scripts/README.md` : documentation des scripts
 
 **Fichiers de configuration :**
+
 - `.env.example` : variables d'environnement avec valeurs par défaut
 - `scripts/start-ollama.sh` : script de démarrage automatique
 
@@ -123,30 +133,32 @@ curl http://localhost:3000/api/ai-local
 ```
 
 Réponse attendue :
+
 ```json
 {
-  "status": "healthy",
-  "ollama_url": "http://localhost:11434",
-  "model": "mistral",
-  "available_models": ["mistral", "llama3.2"],
-  "message": "AI locale opérationnelle"
+    "status": "healthy",
+    "ollama_url": "http://localhost:11434",
+    "model": "mistral",
+    "available_models": ["mistral", "llama3.2"],
+    "message": "AI locale opérationnelle"
 }
 ```
 
 ### Test 3 : Question PACA
 
 Ouvrir http://localhost:3000/chat et poser :
+
 - "Quelle est la population de Nice ?"
 - "Donne-moi des statistiques touristiques des Alpes-Maritimes"
 - "Quels sont les secteurs économiques du 06 ?"
 
 ## 📊 Comparaison des modèles
 
-| Modèle | Taille | RAM | Vitesse | Qualité FR | Recommandation |
-|--------|--------|-----|---------|------------|----------------|
-| **mistral** | 7B | 8 GB | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | **Production** |
-| llama3.2 | 3B | 4 GB | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | Développement |
-| gemma2 | 2B | 2 GB | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | Tests rapides |
+| Modèle      | Taille | RAM  | Vitesse    | Qualité FR | Recommandation |
+| ----------- | ------ | ---- | ---------- | ---------- | -------------- |
+| **mistral** | 7B     | 8 GB | ⭐⭐⭐     | ⭐⭐⭐⭐⭐ | **Production** |
+| llama3.2    | 3B     | 4 GB | ⭐⭐⭐⭐   | ⭐⭐⭐⭐   | Développement  |
+| gemma2      | 2B     | 2 GB | ⭐⭐⭐⭐⭐ | ⭐⭐⭐     | Tests rapides  |
 
 **Recommandation :** Mistral pour la meilleure qualité en français.
 
@@ -176,21 +188,25 @@ Ouvrir http://localhost:3000/chat et poser :
 ## 🎓 Avantages de l'IA locale
 
 ### 🔒 Confidentialité
+
 - Aucune donnée envoyée sur internet
 - Traitement 100% local
 - Conformité RGPD garantie
 
 ### 💰 Coût
+
 - Zéro coût d'API
 - Pas de limite de requêtes
 - Infrastructure locale
 
 ### ⚡ Performance
+
 - Pas de latence réseau
 - Réponses en 1-5 secondes
 - Fonctionne offline
 
 ### 🎯 Personnalisation
+
 - Prompt spécialisé PACA
 - Contexte territorial intégré
 - Ajustable selon les besoins
@@ -256,11 +272,13 @@ ollama pull mistral
 ### Erreur : "Timeout"
 
 Option 1 : Augmenter le timeout dans `.env.local`
+
 ```bash
 OLLAMA_TIMEOUT=60000
 ```
 
 Option 2 : Utiliser un modèle plus rapide
+
 ```bash
 OLLAMA_MODEL=gemma2
 ```
@@ -281,9 +299,10 @@ OLLAMA_MODEL=gemma2
 
 ## 🎉 Résultat
 
-L'IA locale est **100% fonctionnelle** et prête à l'emploi ! 
+L'IA locale est **100% fonctionnelle** et prête à l'emploi !
 
 **Pour démarrer :**
+
 ```bash
 ./scripts/start-ollama.sh && pnpm dev
 ```

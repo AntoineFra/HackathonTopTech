@@ -7,30 +7,30 @@ L'intégration d'Ollama pour une IA locale complète est maintenant prête ! Voi
 ### 📦 Fichiers créés/modifiés
 
 1. **Backend API** (`app/api/ai-local/route.ts`)
-   - Endpoint POST `/api/ai-local` pour générer des réponses
-   - Endpoint GET `/api/ai-local` pour vérifier l'état d'Ollama
-   - Gestion complète des erreurs (timeout, connexion, etc.)
-   - Support des variables d'environnement
+    - Endpoint POST `/api/ai-local` pour générer des réponses
+    - Endpoint GET `/api/ai-local` pour vérifier l'état d'Ollama
+    - Gestion complète des erreurs (timeout, connexion, etc.)
+    - Support des variables d'environnement
 
 2. **Prompt Engineering** (`lib/ai-prompts.ts`)
-   - System prompt spécialisé pour le territoire PACA/Alpes-Maritimes
-   - Contexte territorial : Nice, Cannes, tourisme, tech
-   - Gestion de l'historique de conversation (10 derniers messages)
-   - Formatage pour l'API Ollama
+    - System prompt spécialisé pour le territoire PACA/Alpes-Maritimes
+    - Contexte territorial : Nice, Cannes, tourisme, tech
+    - Gestion de l'historique de conversation (10 derniers messages)
+    - Formatage pour l'API Ollama
 
 3. **Service Client** (`services/ai.services.ts`)
-   - `aiAnswerLocal()` : appelle l'IA locale avec historique
-   - `aiLocalHealth()` : vérifie la santé d'Ollama
-   - Gestion des erreurs côté client
+    - `aiAnswerLocal()` : appelle l'IA locale avec historique
+    - `aiLocalHealth()` : vérifie la santé d'Ollama
+    - Gestion des erreurs côté client
 
 4. **Interface Chat** (`components/chat-interface.tsx`)
-   - Utilise maintenant `aiAnswerLocal()` au lieu de l'API externe
-   - Passe automatiquement l'historique des conversations
-   - Affiche le modèle utilisé et la confiance
+    - Utilise maintenant `aiAnswerLocal()` au lieu de l'API externe
+    - Passe automatiquement l'historique des conversations
+    - Affiche le modèle utilisé et la confiance
 
 5. **Documentation**
-   - `docs/OLLAMA_SETUP.md` : guide d'installation complet
-   - `.env.example` : variables d'environnement
+    - `docs/OLLAMA_SETUP.md` : guide d'installation complet
+    - `.env.example` : variables d'environnement
 
 ## 🎯 Démarrage en 3 étapes
 
@@ -97,6 +97,7 @@ curl http://localhost:3000/api/ai-local
 ```
 
 Réponse attendue :
+
 ```json
 {
   "status": "healthy",
@@ -143,11 +144,11 @@ pnpm dev
 
 ## 📊 Comparaison des modèles
 
-| Modèle | Taille | Vitesse | Qualité FR | RAM recommandée |
-|--------|--------|---------|------------|-----------------|
-| **mistral** | 7B | Moyenne | ⭐⭐⭐⭐⭐ | 8 GB |
-| llama3.2 | 3B | Rapide | ⭐⭐⭐⭐ | 4 GB |
-| gemma2 | 2B | Très rapide | ⭐⭐⭐ | 2 GB |
+| Modèle      | Taille | Vitesse     | Qualité FR | RAM recommandée |
+| ----------- | ------ | ----------- | ---------- | --------------- |
+| **mistral** | 7B     | Moyenne     | ⭐⭐⭐⭐⭐ | 8 GB            |
+| llama3.2    | 3B     | Rapide      | ⭐⭐⭐⭐   | 4 GB            |
+| gemma2      | 2B     | Très rapide | ⭐⭐⭐     | 2 GB            |
 
 ## 🐛 Résolution de problèmes
 
@@ -164,6 +165,7 @@ ollama serve
 ### Erreur : "Timeout"
 
 Le modèle est peut-être trop lent. Options :
+
 1. Augmenter le timeout : `OLLAMA_TIMEOUT=60000`
 2. Utiliser un modèle plus rapide : `OLLAMA_MODEL=gemma2`
 3. Fermer d'autres applications pour libérer la RAM

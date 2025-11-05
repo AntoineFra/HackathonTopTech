@@ -5,24 +5,28 @@ Félicitations ! L'intégration d'une IA locale avec Ollama est maintenant **com
 ## ✅ Ce qui a été fait
 
 ### 1. Backend complet
+
 - ✅ API endpoint `/api/ai-local` créé
 - ✅ Gestion d'erreurs et timeouts
 - ✅ Health check pour vérifier Ollama
 - ✅ Variables d'environnement configurables
 
 ### 2. Intelligence artificielle
+
 - ✅ Prompt engineering spécialisé PACA
 - ✅ Contexte territorial (Nice, Cannes, 06)
 - ✅ Historique de conversation (10 messages)
 - ✅ Réponses structurées en français
 
 ### 3. Interface utilisateur
+
 - ✅ ChatInterface mis à jour
 - ✅ Affichage du modèle utilisé
 - ✅ Messages de chargement
 - ✅ Gestion d'erreurs conviviale
 
 ### 4. Documentation
+
 - ✅ Guide d'installation complet
 - ✅ Démarrage rapide en 3 étapes
 - ✅ Script de démarrage automatique
@@ -63,23 +67,27 @@ pnpm dev
 ### Maintenant (requis) :
 
 1. **Installer Ollama** si pas encore fait
-   ```bash
-   curl -fsSL https://ollama.com/install.sh | sh
-   ```
+
+    ```bash
+    curl -fsSL https://ollama.com/install.sh | sh
+    ```
 
 2. **Télécharger le modèle Mistral**
-   ```bash
-   ollama pull mistral
-   ```
-   Ou utiliser le script automatique :
-   ```bash
-   ./scripts/start-ollama.sh
-   ```
+
+    ```bash
+    ollama pull mistral
+    ```
+
+    Ou utiliser le script automatique :
+
+    ```bash
+    ./scripts/start-ollama.sh
+    ```
 
 3. **Tester l'application**
-   - Ouvrir http://localhost:3000/chat
-   - Poser : "Quelle est la population de Nice ?"
-   - L'IA devrait répondre avec le contexte PACA
+    - Ouvrir http://localhost:3000/chat
+    - Poser : "Quelle est la population de Nice ?"
+    - L'IA devrait répondre avec le contexte PACA
 
 ### Plus tard (optionnel) :
 
@@ -112,6 +120,7 @@ curl http://localhost:3000/api/ai-local
 ### Test 3 : Chat fonctionne ?
 
 Ouvrir http://localhost:3000/chat et poser :
+
 - "Quelle est la population de Nice ?"
 - "Statistiques touristiques des Alpes-Maritimes"
 - "Secteurs économiques du 06"
@@ -120,23 +129,24 @@ Ouvrir http://localhost:3000/chat et poser :
 
 ## 📚 Documentation
 
-| Document | Description |
-|----------|-------------|
-| `docs/OLLAMA_SETUP.md` | Installation complète d'Ollama |
-| `docs/LOCAL_AI_QUICKSTART.md` | Démarrage rapide en 3 étapes |
+| Document                          | Description                     |
+| --------------------------------- | ------------------------------- |
+| `docs/OLLAMA_SETUP.md`            | Installation complète d'Ollama  |
+| `docs/LOCAL_AI_QUICKSTART.md`     | Démarrage rapide en 3 étapes    |
 | `docs/AI_LOCAL_IMPLEMENTATION.md` | Récapitulatif technique complet |
-| `scripts/README.md` | Documentation des scripts |
-| `.env.local.example` | Configuration d'exemple |
+| `scripts/README.md`               | Documentation des scripts       |
+| `.env.local.example`              | Configuration d'exemple         |
 
 ## 🎯 Modèles disponibles
 
-| Modèle | RAM | Qualité FR | Vitesse | Recommandation |
-|--------|-----|------------|---------|----------------|
-| **mistral** | 8 GB | ⭐⭐⭐⭐⭐ | Moyenne | **Production** |
-| llama3.2 | 4 GB | ⭐⭐⭐⭐ | Rapide | Développement |
-| gemma2 | 2 GB | ⭐⭐⭐ | Très rapide | Tests |
+| Modèle      | RAM  | Qualité FR | Vitesse     | Recommandation |
+| ----------- | ---- | ---------- | ----------- | -------------- |
+| **mistral** | 8 GB | ⭐⭐⭐⭐⭐ | Moyenne     | **Production** |
+| llama3.2    | 4 GB | ⭐⭐⭐⭐   | Rapide      | Développement  |
+| gemma2      | 2 GB | ⭐⭐⭐     | Très rapide | Tests          |
 
 Pour changer de modèle :
+
 ```bash
 # Télécharger
 ollama pull llama3.2
@@ -159,15 +169,19 @@ pnpm dev
 ## 🐛 Problèmes courants
 
 ### "Ollama n'est pas démarré"
+
 → Lancer `ollama serve`
 
 ### "Model not found"
+
 → Lancer `ollama pull mistral`
 
 ### "Timeout"
+
 → Augmenter `OLLAMA_TIMEOUT=60000` dans `.env.local`
 
 ### Réponses lentes
+
 → Utiliser `gemma2` : `OLLAMA_MODEL=gemma2`
 
 ## 📊 Todo List
@@ -175,6 +189,7 @@ pnpm dev
 ✅ Tâches terminées : **6/10**
 
 Restant à faire (optionnel) :
+
 - [ ] Télécharger le modèle (todo #2) - **À faire maintenant**
 - [ ] Streaming des réponses (todo #7)
 - [ ] Gestion d'erreurs avancée (todo #8)
@@ -199,6 +214,7 @@ L'IA locale est **prête à l'emploi** ! Il ne reste qu'à :
 3. ✅ Tester le chat
 
 **Commande unique pour tout faire :**
+
 ```bash
 ./scripts/start-ollama.sh && pnpm dev
 ```
@@ -208,6 +224,7 @@ Puis ouvrir http://localhost:3000/chat ! 🚀
 ---
 
 **Questions ?** Consultez :
+
 - `docs/OLLAMA_SETUP.md` pour l'installation
 - `docs/LOCAL_AI_QUICKSTART.md` pour le démarrage
 - `docs/AI_LOCAL_IMPLEMENTATION.md` pour les détails techniques

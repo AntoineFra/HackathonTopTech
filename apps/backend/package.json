@@ -4,7 +4,6 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "format": "prettier --write .",
         "dev": "tsx watch server.ts",
         "start": "npx tsx server.ts",
         "update": "pnpm prisma db push"

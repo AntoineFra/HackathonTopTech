@@ -9,6 +9,7 @@ Ce dossier contient des scripts pour faciliter le développement et le déploiem
 Script de démarrage automatique pour Ollama (IA locale).
 
 **Fonctionnalités :**
+
 - ✅ Vérifie si Ollama est installé
 - 🚀 Démarre Ollama si nécessaire
 - 📥 Télécharge le modèle Mistral si absent
@@ -26,10 +27,12 @@ OLLAMA_MODEL=llama3.2 ./scripts/start-ollama.sh
 ```
 
 **Prérequis :**
+
 - macOS ou Linux (bash)
 - curl installé
 
 **Installation d'Ollama :**
+
 ```bash
 # macOS / Linux
 curl -fsSL https://ollama.com/install.sh | sh
@@ -60,6 +63,7 @@ OLLAMA_TIMEOUT=30000
 ## Support Windows
 
 Pour Windows, utilisez :
+
 - **Git Bash** (installé avec Git pour Windows)
 - **WSL** (Windows Subsystem for Linux)
 - **PowerShell** (scripts `.ps1` à créer)

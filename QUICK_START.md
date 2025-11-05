@@ -11,6 +11,7 @@ pnpm dev
 ```
 
 **C'est tout ! 🎉** Le projet démarre automatiquement :
+
 - ✅ Frontend sur http://localhost:8080
 - ✅ Backend sur http://localhost:3000
 - ✅ Ollama sur http://localhost:11434
@@ -53,15 +54,15 @@ pnpm dev
 
 ### Fichiers Clés Créés
 
-| Fichier | Rôle |
-|---------|------|
-| `docker-compose.yml` | Orchestre frontend + backend + Ollama |
-| `package.json` (root) | Scripts dev, build, logs, prisma, ollama |
-| `apps/frontend/Dockerfile.dev` | Hot-reload frontend |
-| `apps/backend/Dockerfile.dev` | Hot-reload backend |
-| `apps/backend/services/ollama.services.ts` | Service IA Ollama |
-| `.env.root.example` | Configuration d'exemple |
-| `README.monorepo.md` | Guide complet |
+| Fichier                                    | Rôle                                     |
+| ------------------------------------------ | ---------------------------------------- |
+| `docker-compose.yml`                       | Orchestre frontend + backend + Ollama    |
+| `package.json` (root)                      | Scripts dev, build, logs, prisma, ollama |
+| `apps/frontend/Dockerfile.dev`             | Hot-reload frontend                      |
+| `apps/backend/Dockerfile.dev`              | Hot-reload backend                       |
+| `apps/backend/services/ollama.services.ts` | Service IA Ollama                        |
+| `.env.root.example`                        | Configuration d'exemple                  |
+| `README.monorepo.md`                       | Guide complet                            |
 
 ---
 
@@ -232,24 +233,29 @@ pnpm logs:ollama      # Ollama uniquement
 ### ✅ Frontend (`apps/frontend/`)
 
 **Modifié :**
+
 - `services/ai.services.ts` : Appelle backend Express
 - `components/chat-interface.tsx` : Utilise `aiAnswer()` avec historique
 
 **Supprimé :**
+
 - `app/api/ai-local/` : Route Next.js (remplacée par backend)
 
 **Ajouté :**
+
 - `Dockerfile` : Build production
 - `Dockerfile.dev` : Hot-reload development
 
 ### ✅ Backend (`apps/backend/`)
 
 **Ajouté :**
+
 - `services/ollama.services.ts` : Service complet Ollama
 - `Dockerfile` : Build production
 - `Dockerfile.dev` : Hot-reload development
 
 **Modifié :**
+
 - `controllers/ai.controllers.ts` : Support historique conversation
 - `services/ai.services.ts` : Intégration Ollama
 - `server.ts` : CORS étendu pour Docker
@@ -257,6 +263,7 @@ pnpm logs:ollama      # Ollama uniquement
 ### ✅ Root
 
 **Créé :**
+
 - `package.json` : Scripts monorepo
 - `docker-compose.yml` : Orchestration
 - `.env.root.example` : Configuration
@@ -286,6 +293,7 @@ pnpm build:backend
 ### Déploiement
 
 Les Dockerfiles de production sont prêts :
+
 - Multi-stage builds optimisés
 - Images minimales
 - Non-root users
@@ -298,6 +306,7 @@ Les Dockerfiles de production sont prêts :
 ### Hot-Reload
 
 Les modifications sont détectées automatiquement :
+
 - **Frontend** : Rechargement instantané
 - **Backend** : Redémarrage automatique (tsx watch)
 - **Base de données** : Persistante entre redémarrages
@@ -382,14 +391,16 @@ pnpm dev
 ```
 
 **Temps de démarrage :**
+
 - Première fois : 5-10 min (téléchargement Mistral)
 - Redémarrages : 30-60 secondes
 
 **Accès :**
+
 - 🖥️ Frontend : http://localhost:8080
 - ⚙️ Backend : http://localhost:3000
 - 🤖 Ollama : http://localhost:11434
 
 ---
 
-*PACA Analytics - Hackathon TopTech 2025*
+_PACA Analytics - Hackathon TopTech 2025_

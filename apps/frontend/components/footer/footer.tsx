@@ -14,7 +14,7 @@ export default function Footer() {
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                         <Link
                             href="/"
-                            aria-label="Homepage"
+                            aria-label="Accueil"
                             className="inline-flex items-center gap-2"
                         >
                             <span className="bg-primary/10 inline-block rounded-md p-2">
@@ -52,40 +52,43 @@ export default function Footer() {
                     </div>
 
                     {/* Links */}
-                    <nav aria-label="Footer" className="flex flex-wrap gap-6">
+                    <nav
+                        aria-label="Pied de page"
+                        className="flex flex-wrap gap-6"
+                    >
                         <div className="flex flex-col">
                             <span className="mb-2 text-sm font-medium">
-                                Products
+                                Produits
                             </span>
                             <Link
                                 href="/features"
                                 className="text-muted-foreground hover:text-foreground text-sm"
                             >
-                                Features
+                                Fonctionnalités
                             </Link>
                             <Link
                                 href="/pricing"
                                 className="text-muted-foreground hover:text-foreground mt-1 text-sm"
                             >
-                                Pricing
+                                Tarifs
                             </Link>
                         </div>
 
                         <div className="flex flex-col">
                             <span className="mb-2 text-sm font-medium">
-                                Company
+                                Entreprise
                             </span>
                             <Link
                                 href="/about"
                                 className="text-muted-foreground hover:text-foreground text-sm"
                             >
-                                About
+                                À propos
                             </Link>
                             <Link
                                 href="/careers"
                                 className="text-muted-foreground hover:text-foreground mt-1 text-sm"
                             >
-                                Careers
+                                Recrutement
                             </Link>
                         </div>
 
@@ -97,7 +100,7 @@ export default function Footer() {
                                 href="/docs"
                                 className="text-muted-foreground hover:text-foreground text-sm"
                             >
-                                Docs
+                                Documentation
                             </Link>
                             <Link
                                 href="/contact"
@@ -125,21 +128,21 @@ export default function Footer() {
                                 htmlFor="footer-newsletter"
                                 className="sr-only"
                             >
-                                Email address
+                                Adresse e-mail
                             </label>
                             <input
                                 id="footer-newsletter"
                                 name="email"
                                 type="email"
                                 required
-                                placeholder="Your email"
+                                placeholder="Votre e-mail"
                                 className="placeholder:text-muted-foreground flex-1 rounded-md border bg-transparent px-3 py-2 text-sm focus:outline-none"
                             />
                             <button
                                 type="submit"
                                 className="bg-primary text-primary-foreground rounded-md px-3 py-2 text-sm font-medium hover:opacity-95"
                             >
-                                Subscribe
+                                S'abonner
                             </button>
                         </form>
 
@@ -164,7 +167,7 @@ export default function Footer() {
                             </a>
                             <a
                                 href="mailto:hello@example.com"
-                                aria-label="Email"
+                                aria-label="E-mail"
                                 className="text-muted-foreground hover:text-foreground rounded-md p-2"
                             >
                                 <Mail size={18} />
@@ -176,20 +179,20 @@ export default function Footer() {
                 <div className="mt-8 border-t pt-6">
                     <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
                         <p className="text-muted-foreground text-sm">
-                            &copy; {year} YourApp. All rights reserved.
+                            &copy; {year} PACA Analytics. Tous droits réservés.
                         </p>
                         <div className="flex gap-4 text-sm">
                             <Link
                                 href="/terms"
                                 className="text-muted-foreground hover:text-foreground"
                             >
-                                Terms
+                                Conditions
                             </Link>
                             <Link
                                 href="/privacy"
                                 className="text-muted-foreground hover:text-foreground"
                             >
-                                Privacy
+                                Confidentialité
                             </Link>
                         </div>
                     </div>

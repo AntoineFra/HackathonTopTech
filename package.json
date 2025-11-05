@@ -1,40 +1,41 @@
 {
-  "name": "paca-analytics-monorepo",
-  "version": "1.0.0",
-  "description": "Monorepo PACA Analytics - Frontend (Next.js) + Backend (Express) + Ollama AI",
-  "private": true,
-  "packageManager": "pnpm@10.20.0",
-  "scripts": {
-    "dev": "docker-compose up --build",
-    "dev:frontend": "cd apps/frontend && pnpm dev",
-    "dev:backend": "cd apps/backend && pnpm dev",
-    "dev:local": "concurrently \"pnpm dev:frontend\" \"pnpm dev:backend\"",
-    "build": "pnpm build:frontend && pnpm build:backend",
-    "build:frontend": "cd apps/frontend && pnpm build",
-    "build:backend": "cd apps/backend && pnpm build",
-    "start": "docker-compose up",
-    "stop": "docker-compose down",
-    "clean": "docker-compose down -v && rm -rf apps/*/node_modules apps/*/.next",
-    "prisma:generate": "cd apps/backend && pnpm prisma generate",
-    "prisma:push": "cd apps/backend && pnpm prisma db push",
-    "prisma:studio": "cd apps/backend && pnpm prisma studio",
-    "ollama:pull": "docker-compose exec ollama ollama pull mistral",
-    "ollama:list": "docker-compose exec ollama ollama list",
-    "logs": "docker-compose logs -f",
-    "logs:frontend": "docker-compose logs -f frontend",
-    "logs:backend": "docker-compose logs -f backend",
-    "logs:ollama": "docker-compose logs -f ollama",
-    "format": "prettier --write \"apps/**/*.{ts,tsx,js,jsx,json,css,md}\"",
-    "lint": "cd apps/frontend && pnpm lint",
-    "test": "echo \"No tests yet\"",
-    "install:all": "pnpm install && cd apps/frontend && pnpm install && cd ../backend && pnpm install"
-  },
-  "devDependencies": {
-    "concurrently": "^9.1.2",
-    "prettier": "^3.6.2"
-  },
-  "engines": {
-    "node": ">=20.0.0",
-    "pnpm": ">=10.0.0"
-  }
+    "name": "paca-analytics-monorepo",
+    "version": "1.0.0",
+    "description": "Monorepo PACA Analytics - Frontend (Next.js) + Backend (Express) + Ollama AI",
+    "private": true,
+    "packageManager": "pnpm@10.20.0",
+    "scripts": {
+        "dev": "docker-compose up --build",
+        "dev:frontend": "cd apps/frontend && pnpm dev",
+        "dev:backend": "cd apps/backend && pnpm dev",
+        "dev:local": "concurrently \"pnpm dev:frontend\" \"pnpm dev:backend\"",
+        "build": "pnpm build:frontend && pnpm build:backend",
+        "build:frontend": "cd apps/frontend && pnpm build",
+        "build:backend": "cd apps/backend && pnpm build",
+        "start": "docker-compose up",
+        "stop": "docker-compose down",
+        "clean": "docker-compose down -v && rm -rf apps/*/node_modules apps/*/.next",
+        "prisma:generate": "cd apps/backend && pnpm prisma generate",
+        "prisma:push": "cd apps/backend && pnpm prisma db push",
+        "prisma:studio": "cd apps/backend && pnpm prisma studio",
+        "ollama:pull": "docker-compose exec ollama ollama pull mistral",
+        "ollama:list": "docker-compose exec ollama ollama list",
+        "logs": "docker-compose logs -f",
+        "logs:frontend": "docker-compose logs -f frontend",
+        "logs:backend": "docker-compose logs -f backend",
+        "logs:ollama": "docker-compose logs -f ollama",
+        "format": "prettier --write \"**.{ts,tsx,js,jsx,json,css,md}\"",
+        "lint": "cd apps/frontend && pnpm lint",
+        "test": "echo \"No tests yet\"",
+        "install:all": "pnpm install && cd apps/frontend && pnpm install && cd ../backend && pnpm install",
+        "error-check": "pnpm -s tsc --noEmit"
+    },
+    "devDependencies": {
+        "concurrently": "^9.1.2",
+        "prettier": "^3.6.2"
+    },
+    "engines": {
+        "node": ">=20.0.0",
+        "pnpm": ">=10.0.0"
+    }
 }
