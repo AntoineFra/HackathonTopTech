@@ -1,23 +1,24 @@
 /**
  * services/api.ts
  * Small centralized fetch helper for calling the external backend.
- * - Reads NEXT_PUBLIC_BACKEND_URL (client) or BACKEND_URL (server) and falls back to NEXT_PUBLIC_BACKEND_URL.
+ * - Reads NEXT_PUBLIC_BACKEND_URL from environment variables
  * - Normalizes trailing slashes.
  * - Adds a convenient apiFetch wrapper that throws on non-OK responses and parses JSON when possible.
  */
 
 function getBackendUrl(): string {
-    const serverUrl =
-        typeof process !== "undefined"
-            ? (process.env.NEXT_PUBLIC_BACKEND_URL as string | undefined)
-            : undefined;
+    // In browser, process.env is replaced at build time by Next.js
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-    if (!serverUrl) {
-        throw new Error(
-            "NEXT_PUBLIC_BACKEND_URL environment variable is required",
+    if (!backendUrl) {
+        // Fallback pour le développement local
+        console.warn(
+            "⚠️  NEXT_PUBLIC_BACKEND_URL not set, using fallback: http://localhost:3000"
         );
+        return "http://localhost:3000";
     }
-    return serverUrl.replace(/\/$/, "");
+    
+    return backendUrl.replace(/\/$/, "");
 }
 
 export async function apiFetch(path: string, options: RequestInit = {}) {
@@ -49,7 +50,7 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
             `Request to ${url} failed with status ${res.status}: ${text}`,
         );
         // Attach status for callers who want to branch on it
-        // @ts-ignore
+        // @ts-expect-error - Adding custom property to Error
         err.status = res.status;
         throw err;
     }

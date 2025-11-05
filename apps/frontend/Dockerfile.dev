@@ -1,0 +1,26 @@
+# ===================================
+# Frontend Dockerfile - Development
+# Hot reload with volume mounting
+# ===================================
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Copy package files
+COPY apps/frontend/package.json apps/frontend/pnpm-lock.yaml ./
+
+# Install dependencies
+RUN pnpm install
+
+# Copy source code
+COPY apps/frontend .
+
+# Expose Next.js port
+EXPOSE 3000
+
+# Start development server
+CMD ["pnpm", "dev"]

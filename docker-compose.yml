@@ -1,0 +1,125 @@
+# ==============================================
+# Docker Compose - Development Environment
+# PACA Analytics Monorepo
+# ==============================================
+
+services:
+  # ===================
+  # Frontend - Next.js
+  # ===================
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile.dev
+    container_name: paca-frontend
+    ports:
+      - "8080:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_BACKEND_URL=http://localhost:3000
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=mistral
+      - OLLAMA_TIMEOUT=30000
+    volumes:
+      - ./apps/frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+      - ollama
+    networks:
+      - paca-network
+    restart: unless-stopped
+
+  # ====================
+  # Backend - Express
+  # ====================
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile.dev
+    container_name: paca-backend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - DATABASE_URL=file:/app/prisma/dev.db
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=mistral
+      - OLLAMA_TIMEOUT=120000
+    volumes:
+      - ./apps/backend:/app
+      - /app/node_modules
+      - backend-db:/app/prisma
+    depends_on:
+      - ollama
+    networks:
+      - paca-network
+    restart: unless-stopped
+    command: pnpm dev
+
+  # ====================
+  # Ollama - Local AI
+  # ====================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: paca-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    networks:
+      - paca-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ====================================
+  # Ollama Model Downloader (Init)
+  # ====================================
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: paca-ollama-init
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - paca-network
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        echo "🚀 Vérification du modèle Mistral..."
+        sleep 10
+        if ! OLLAMA_HOST=http://ollama:11434 ollama list | grep -q "mistral"; then
+          echo "📥 Téléchargement du modèle Mistral (cela peut prendre plusieurs minutes)..."
+          OLLAMA_HOST=http://ollama:11434 ollama pull mistral
+          echo "✅ Modèle Mistral téléchargé avec succès !"
+        else
+          echo "✅ Modèle Mistral déjà disponible !"
+        fi
+    restart: "no"
+
+# ===================
+# Networks
+# ===================
+networks:
+  paca-network:
+    driver: bridge
+    name: paca-analytics-network
+
+# ===================
+# Volumes
+# ===================
+volumes:
+  ollama-models:
+    name: paca-ollama-models
+  backend-db:
+    name: paca-backend-db

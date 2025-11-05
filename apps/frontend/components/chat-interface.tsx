@@ -4,12 +4,11 @@ import { AIResponse } from "@/types";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { aiAnswerLocal } from "@/services/ai.services";
+import { aiAnswer, type ChatMessage } from "@/services/ai.services";
 import { useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Loader2, Sparkles, User, Bot } from "lucide-react";
-import type { ChatMessage } from "@/lib/ai-prompts";
 
 interface Message {
     id: string;
@@ -92,7 +91,7 @@ export function ChatInterface() {
                             content: m.content,
                         }));
 
-                    const result = await aiAnswerLocal(initialQuery, history);
+                    const result = await aiAnswer(initialQuery, history);
 
                     setMessages((prev) => {
                         const filtered = prev.filter((m) => !m.loading);
@@ -174,7 +173,7 @@ export function ChatInterface() {
                     content: m.content,
                 }));
 
-            const result = await aiAnswerLocal(userMessage.content, history);
+            const result = await aiAnswer(userMessage.content, history);
 
             // Remove loading message and add real response
             setMessages((prev) => {

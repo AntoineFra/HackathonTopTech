@@ -1,0 +1,32 @@
+# ===================================
+# Backend Dockerfile - Development
+# Hot reload with tsx watch
+# ===================================
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+# Copy package files
+COPY apps/backend/package.json apps/backend/pnpm-lock.yaml ./
+
+# Install dependencies
+RUN pnpm install
+
+# Copy source code
+COPY apps/backend .
+
+# Generate Prisma Client
+RUN pnpm prisma generate
+
+# Create necessary directories
+RUN mkdir -p tmp data prisma
+
+# Expose backend port
+EXPOSE 3000
+
+# Start development server with hot reload
+CMD ["sh", "-c", "pnpm prisma db push --accept-data-loss && pnpm dev"]
