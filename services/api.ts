@@ -7,14 +7,12 @@
  */
 
 function getBackendUrl(): string {
-  // Prefer server-only BACKEND_URL when available, but allow NEXT_PUBLIC_BACKEND_URL for client usage.
-  const serverUrl = typeof process !== 'undefined' ? (process.env.BACKEND_URL as string | undefined) : undefined;
-  const publicUrl = typeof process !== 'undefined' ? (process.env.NEXT_PUBLIC_BACKEND_URL as string | undefined) : undefined;
-  const url = serverUrl || publicUrl;
-  if (!url) {
-    throw new Error('BACKEND_URL or NEXT_PUBLIC_BACKEND_URL environment variable is required');
+  const serverUrl = typeof process !== 'undefined' ? (process.env.NEXT_PUBLIC_BACKEND_URL as string | undefined) : undefined;
+
+  if (!serverUrl) {
+    throw new Error('NEXT_PUBLIC_BACKEND_URL environment variable is required');
   }
-  return url.replace(/\/$/, '');
+  return serverUrl.replace(/\/$/, '');
 }
 
 export async function apiFetch(path: string, options: RequestInit = {}) {
@@ -32,7 +30,9 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
     headers['Content-Type'] = 'application/json';
   }
 
+  console.log(`➡️  ${options.method || 'GET'} ${url}`, headers);
   const res = await fetch(url, { ...options, headers });
+  console.log("⬅️  ", res);
 
   if (!res.ok) {
     const text = await res.text();

@@ -15,6 +15,6 @@ export async function aiHealth() {
 export async function aiAnswer(prompt: string) {
   return apiFetch('/ai/answer', {
     method: 'POST',
-    body: JSON.stringify({ prompt }),
+    body: JSON.stringify({ question: prompt }),
   });
 }

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Search, Loader2, Sparkles } from "lucide-react";
-import { queryAI, getSuggestions } from "@/lib/backup/ai-service";
+import { aiAnswer } from "@/services/ai.services";
 import { AIResponse } from "@/types";
 import { AIResponseDisplay } from "./ai-response-display";
 
@@ -37,7 +37,9 @@ export function QueryInterface() {
         setResponse(null);
 
         try {
-            const result = await queryAI(query);
+            // Appel au service backend via le wrapper `aiAnswer`
+            // aiAnswer envoie { prompt } au backend et retourne la réponse JSON
+            const result = await aiAnswer(query);
             setResponse(result);
         } catch (error) {
             setResponse({
