@@ -115,6 +115,8 @@
 @layer base {
     * {
         @apply border-border outline-ring/50;
+        --header-height: 4rem;
+        --footer-height: 4rem;
     }
     body {
         @apply bg-background text-foreground;

@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useState } from "react";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 type NavLink = {
     label: string;
@@ -25,20 +26,19 @@ const defaultLinks: NavLink[] = [
 const Navbar: React.FC<NavbarProps> = ({
     brand,
     links = defaultLinks,
-    cta,
     sticky = false,
 }) => {
     const [open, setOpen] = useState(false);
 
     return (
         <header
-            className={`w-full border-b bg-white ${sticky ? "sticky top-0 z-60 backdrop-blur-md" : ""}`}
+            className={`bg-background dark:bg-card flex h-[var(--header-height)] w-full items-center border-b ${sticky ? "sticky top-0 z-60 backdrop-blur-md" : ""}`}
         >
-            <div className="mx-auto flex max-w-[1100px] items-center gap-4 px-4 py-2">
+            <div className="mx-auto flex h-full max-w-[1100px] items-center gap-4 px-4 py-2">
                 <div className="flex flex-1 items-center gap-3">
                     <Link
                         href="/"
-                        className="inline-flex items-center gap-2 text-base font-semibold text-slate-900"
+                        className="text-foreground inline-flex items-center gap-2 text-base font-semibold"
                         aria-label="Homepage"
                     >
                         {brand ?? (
@@ -80,26 +80,26 @@ const Navbar: React.FC<NavbarProps> = ({
                     </Link>
 
                     <button
-                        className="inline-flex items-center justify-center rounded-md p-1 focus:ring-2 focus:ring-sky-300 focus:outline-none md:hidden"
+                        className="text-foreground inline-flex items-center justify-center rounded-md p-1 focus:ring-2 focus:ring-sky-300 focus:outline-none md:hidden"
                         aria-expanded={open}
                         aria-label={open ? "Close menu" : "Open menu"}
                         onClick={() => setOpen((s) => !s)}
                     >
                         <span className="sr-only">Menu</span>
                         <span
-                            className={`block h-0.5 w-5 bg-slate-900 transition-all duration-200 ${open ? "translate-y-1.5 rotate-45" : "-translate-y-1.5"}`}
+                            className={`bg-foreground block h-0.5 w-5 transition-all duration-200 ${open ? "translate-y-1.5 rotate-45" : "-translate-y-1.5"}`}
                         />
                         <span
-                            className={`my-1 block h-0.5 w-5 bg-slate-900 transition-opacity duration-200 ${open ? "opacity-0" : "opacity-100"}`}
+                            className={`bg-foreground my-1 block h-0.5 w-5 transition-opacity duration-200 ${open ? "opacity-0" : "opacity-100"}`}
                         />
                         <span
-                            className={`block h-0.5 w-5 bg-slate-900 transition-all duration-200 ${open ? "-translate-y-1.5 -rotate-45" : "translate-y-1.5"}`}
+                            className={`bg-foreground block h-0.5 w-5 transition-all duration-200 ${open ? "-translate-y-1.5 -rotate-45" : "translate-y-1.5"}`}
                         />
                     </button>
                 </div>
 
                 <nav
-                    className={`${open ? "absolute top-16 right-0 left-0 z-50 block border-b bg-white p-4" : "hidden"} md:static md:block md:pl-4`}
+                    className={`${open ? "bg-background dark:bg-card absolute top-[var(--header-height)] right-0 left-0 z-50 block border-b p-4" : "hidden"} md:static md:block md:pl-4`}
                     aria-label="Primary navigation"
                 >
                     <ul
@@ -109,7 +109,7 @@ const Navbar: React.FC<NavbarProps> = ({
                             <li key={l.href}>
                                 {l.external ? (
                                     <a
-                                        className="rounded-md px-2 py-1 text-sm font-medium text-slate-900 hover:bg-slate-100"
+                                        className="text-foreground hover:bg-accent rounded-md px-2 py-1 text-sm font-medium"
                                         href={l.href}
                                         target="_blank"
                                         rel="noreferrer noopener"
@@ -120,7 +120,7 @@ const Navbar: React.FC<NavbarProps> = ({
                                 ) : (
                                     <Link
                                         href={l.href}
-                                        className="rounded-md px-2 py-1 text-sm font-medium text-slate-900 hover:bg-slate-100"
+                                        className="text-foreground hover:bg-accent rounded-md px-2 py-1 text-sm font-medium"
                                         onClick={() => setOpen(false)}
                                     >
                                         {l.label}
@@ -128,6 +128,9 @@ const Navbar: React.FC<NavbarProps> = ({
                                 )}
                             </li>
                         ))}
+                        <li>
+                            <ThemeToggle />
+                        </li>
                     </ul>
                 </nav>
             </div>
