@@ -17,7 +17,9 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
     return (
         <>
             <Navbar sticky />
-            {children}
+            <div className="from-background to-secondary/20 min-h-[calc(100vh-calc(var(--header-height)+var(--footer-height)))] bg-linear-to-b">
+                {children}
+            </div>
             <Footer />
         </>
     );
