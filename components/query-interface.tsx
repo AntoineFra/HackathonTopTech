@@ -1,8 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
     Card,
     CardContent,
@@ -10,16 +7,17 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Loader2, Sparkles } from "lucide-react";
-import { aiAnswer } from "@/services/ai.services";
-import { AIResponse } from "@/types";
-import { AIResponseDisplay } from "./ai-response-display";
+import { Button } from "@/components/ui/button";
+import { Search, Sparkles } from "lucide-react";
 
 export function QueryInterface() {
+    const router = useRouter();
     const [query, setQuery] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [response, setResponse] = useState<AIResponse | null>(null);
     const [suggestions] = useState([
         "Quelle est la population de Nice ?",
         "Afficher les statistiques d'emploi pour 2025",
@@ -31,32 +29,14 @@ export function QueryInterface() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!query.trim() || loading) return;
+        if (!query.trim()) return;
 
-        setLoading(true);
-        setResponse(null);
-
-        try {
-            // Appel au service backend via le wrapper `aiAnswer`
-            // aiAnswer envoie { prompt } au backend et retourne la réponse JSON
-            const result = await aiAnswer(query);
-            setResponse(result);
-        } catch (error) {
-            setResponse({
-                success: false,
-                query,
-                answer: "Une erreur s'est produite lors du traitement de votre question. Veuillez réessayer.",
-                confidence: 0,
-                error:
-                    error instanceof Error ? error.message : "Erreur inconnue",
-            });
-        } finally {
-            setLoading(false);
-        }
+        // Redirect to chat page with the query
+        router.push(`/chat?q=${encodeURIComponent(query.trim())}`);
     };
 
     const handleSuggestionClick = (suggestion: string) => {
-        setQuery(suggestion);
+        router.push(`/chat?q=${encodeURIComponent(suggestion)}`);
     };
 
     return (
@@ -82,24 +62,11 @@ export function QueryInterface() {
                                 placeholder="Ex : Quel est le taux de chômage à Nice ?"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
-                                disabled={loading}
                                 className="flex-1"
                             />
-                            <Button
-                                type="submit"
-                                disabled={loading || !query.trim()}
-                            >
-                                {loading ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Traitement...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Search className="mr-2 h-4 w-4" />
-                                        Rechercher
-                                    </>
-                                )}
+                            <Button type="submit" disabled={!query.trim()}>
+                                <Search className="mr-2 h-4 w-4" />
+                                Rechercher
                             </Button>
                         </div>
 
@@ -125,21 +92,6 @@ export function QueryInterface() {
                     </form>
                 </CardContent>
             </Card>
-
-            {loading && (
-                <Card>
-                    <CardContent className="pt-6">
-                        <div className="flex items-center justify-center py-8">
-                            <Loader2 className="text-primary h-8 w-8 animate-spin" />
-                            <span className="text-muted-foreground ml-3">
-                                Analyse de votre question...
-                            </span>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
-
-            {response && <AIResponseDisplay response={response} />}
         </div>
     );
 }
