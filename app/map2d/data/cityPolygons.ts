@@ -79,9 +79,16 @@ function isInAlpesMaritimes(city: any): boolean {
     const lng = city.geoData.centreLon;
     
     // Limites approximatives des Alpes-Maritimes
-    // Latitude: 43.4 à 44.4
-    // Longitude: 6.6 à 7.7
-    return lat >= 43.4 && lat <= 44.4 && lng >= 6.6 && lng <= 7.7;
+    // Latitude: 43.4 à 44.4 (du littoral au nord montagneux)
+    // Longitude: 6.6 à 7.7 → ÉLARGI à 6.0-7.8 pour inclure toutes les villes du 06
+    const isInBounds = lat >= 43.4 && lat <= 44.4 && lng >= 6.0 && lng <= 7.8;
+    
+    // Log les villes filtrées pour debug
+    if (!isInBounds) {
+      console.log(`❌ Ville filtrée: ${city.name} (lat: ${lat}, lng: ${lng}) - hors limites géographiques`);
+    }
+    
+    return isInBounds;
   }
   
   return true; // Si pas de coordonnées, on garde par défaut
@@ -91,9 +98,11 @@ function isInAlpesMaritimes(city: any): boolean {
 export const cityPolygons: CityPolygonsType = {};
 export const cityData: CityDataMap = {};
 
+let filteredCount = 0;
 citiesData.forEach(city => {
   // Filtrer uniquement les villes des Alpes-Maritimes
   if (!isInAlpesMaritimes(city)) {
+    filteredCount++;
     return;
   }
   
@@ -121,4 +130,5 @@ citiesData.forEach(city => {
   }
 });
 
-console.log(`${Object.keys(cityPolygons).length} villes chargées avec leurs polygones (filtrées pour Alpes-Maritimes)`);
+console.log(`✅ ${Object.keys(cityPolygons).length} villes chargées avec leurs polygones`);
+console.log(`🚫 ${filteredCount} villes filtrées (hors Alpes-Maritimes)`);
