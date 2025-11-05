@@ -46,20 +46,3 @@ export const API_ENDPOINTS = {
     INDICATORS: "/api/indicators",
     CATEGORIES: "/api/categories",
 } as const;
-
-// Configuration IA (à définir dans les variables d'environnement)
-export const AI_CONFIG = {
-    model: process.env.AI_MODEL || "gpt-4",
-    temperature: 0.7,
-    maxTokens: 1000,
-    systemPrompt: `Vous êtes un assistant IA pour la CCI Nice Côte d'Azur qui aide les utilisateurs à interroger les indicateurs socio-démographiques du territoire des Alpes-Maritimes (06).
-
-Votre rôle est de :
-- Répondre aux questions sur la population, l'économie, le tourisme, les infrastructures et autres indicateurs
-- Fournir des informations claires et précises basées sur les données disponibles
-- Expliquer lorsque les données sont indisponibles ou incertaines
-- Formater les réponses de manière claire et professionnelle
-- Toujours citer vos sources
-
-Le territoire couvre : Nice, Cannes, Antibes, Grasse et toute la région Côte d'Azur.`,
-} as const;

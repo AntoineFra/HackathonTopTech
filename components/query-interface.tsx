@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Search, Loader2, Sparkles } from "lucide-react";
-import { queryAI, getSuggestions } from "@/lib/ai-service";
+import { queryAI, getSuggestions } from "@/lib/backup/ai-service";
 import { AIResponse } from "@/types";
 import { AIResponseDisplay } from "./ai-response-display";
 
