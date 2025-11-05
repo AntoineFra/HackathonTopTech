@@ -26,7 +26,7 @@ export async function getDumpList(req: Request, res: Response) {
 
         const dumpsForResponse = dumps.map((d: any) => ({
             ...d,
-            type: typeToFrench[d.type] ?? d.type,
+            label: typeToFrench[d.type] ?? d.type,
         }));
 
         return res.json({ status: "ok", dumps: dumpsForResponse });
@@ -80,10 +80,12 @@ export async function dumpData(req: Request, res: Response) {
                 where: { type: dumpType as any },
                 data: { status: "PAS_A_JOUR" },
             });
-            return res.status(500).json({
-                error: "Failed to run dump",
-                details: String(innerErr),
-            });
+            return res
+                .status(500)
+                .json({
+                    error: "Failed to run dump",
+                    details: String(innerErr),
+                });
         }
     } catch (err) {
         console.log("Error during dumpData:", err);

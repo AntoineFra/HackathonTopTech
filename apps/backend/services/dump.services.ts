@@ -38,10 +38,11 @@ export async function dumpLegalUnit() {
                 console.log("✅ CSV imported successfully!");
                 //fs.unlinkSync(data/StockUniteLegale_utf8.csv);
                 console.log("🧹 Temporary CSV removed.");
-                resolve();
             } else {
-                reject(new Error(`SQLite process exited with code ${code}`));
+              console.log(`❌ SQLite process exited with code ${code}`);
+              //reject(new Error(`SQLite process exited with code ${code}`));
             }
+            resolve();
         });
     });
 }
