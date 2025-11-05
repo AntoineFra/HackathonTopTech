@@ -28,6 +28,8 @@ export default function SettingsDialog() {
     const [dumps, setDumps] = useState<DumpItem[]>([]);
     const [loadingDumps, setLoadingDumps] = useState(false);
     const [downloading, setDownloading] = useState<Record<string, boolean>>({});
+    // track temporary download result per type: 'idle' | 'loading' | 'ok' | 'error'
+    const [downloadResult, setDownloadResult] = useState<Record<string, 'idle' | 'loading' | 'ok' | 'error'>>({});
     const [error, setError] = useState<string | null>(null);
 
     // Animation duration must match CSS transition (ms)
@@ -118,6 +120,7 @@ export default function SettingsDialog() {
 
     async function handleDownload(type: string) {
         setDownloading((s) => ({ ...s, [type]: true }));
+        setDownloadResult((s) => ({ ...s, [type]: 'loading' }));
         setError(null);
         try {
             const dumpRes = await getDump(type);
@@ -156,14 +159,37 @@ export default function SettingsDialog() {
             }
             // refresh
             await fetchDumps();
+            // mark success briefly (server listDumps may update the status)
+            setDownloadResult((s) => ({ ...s, [type]: 'ok' }));
+            window.setTimeout(() => setDownloadResult((s) => ({ ...s, [type]: 'idle' })), 2500);
         } catch (e: any) {
             setError(e?.message ?? String(e));
+            // mark error so the dot becomes error-colored briefly
+            setDownloadResult((s) => ({ ...s, [type]: 'error' }));
+            window.setTimeout(() => setDownloadResult((s) => ({ ...s, [type]: 'idle' })), 5000);
         } finally {
             setDownloading((s) => ({ ...s, [type]: false }));
         }
     }
 
-    function renderStatusDot(status: string) {
+    function renderStatusDot(status: string, type?: string) {
+        // precedence: transient downloadResult -> downloading (EN_COURS) -> server status
+        if (type) {
+            const dr = downloadResult[type];
+            if (dr === 'loading') {
+                return <span title="En cours" className="inline-flex h-3 w-3 items-center justify-center rounded-full bg-orange-400" />;
+            }
+            if (dr === 'ok') {
+                return <span title="Téléchargement réussi" className="inline-flex h-3 w-3 items-center justify-center rounded-full bg-emerald-500" />;
+            }
+            if (dr === 'error') {
+                return <span title="Erreur" className="inline-flex h-3 w-3 items-center justify-center rounded-full bg-red-700" />;
+            }
+            if (downloading[type]) {
+                return <span title="En cours" className="inline-flex h-3 w-3 items-center justify-center rounded-full bg-orange-400" />;
+            }
+        }
+
         const statusColorMap: Record<string, string> = {
             A_JOUR: "bg-green-500",
             EN_COURS: "bg-yellow-500",
@@ -316,7 +342,7 @@ export default function SettingsDialog() {
                                     className="flex items-center justify-between gap-2 rounded-md border p-2"
                                 >
                                     <div className="flex items-center gap-2">
-                                        {renderStatusDot(d.status)}
+                                        {renderStatusDot(d.status, d.type)}
                                         <div className="flex flex-col">
                                             <div className="text-sm font-medium">
                                                 {d.label}
