@@ -68,30 +68,38 @@ function parseGeoJSONToGoogleMaps(contourString: string): LatLngLiteral[] {
 
 // Fonction pour vérifier si une ville est dans les Alpes-Maritimes
 function isInAlpesMaritimes(city: any): boolean {
-  // Vérifier le code département
+  // DOIT avoir le code département 06
   if (city.codeDepartement !== "06") {
     return false;
   }
   
-  // Vérifier les coordonnées géographiques (bbox des Alpes-Maritimes)
-  if (city.geoData && city.geoData.centreLat && city.geoData.centreLon) {
-    const lat = city.geoData.centreLat;
-    const lng = city.geoData.centreLon;
-    
-    // Limites approximatives des Alpes-Maritimes
-    // Latitude: 43.4 à 44.4 (du littoral au nord montagneux)
-    // Longitude: 6.6 à 7.7 → ÉLARGI à 6.0-7.8 pour inclure toutes les villes du 06
-    const isInBounds = lat >= 43.4 && lat <= 44.4 && lng >= 6.0 && lng <= 7.8;
-    
-    // Log les villes filtrées pour debug
-    if (!isInBounds) {
-      console.log(`❌ Ville filtrée: ${city.name} (lat: ${lat}, lng: ${lng}) - hors limites géographiques`);
-    }
-    
-    return isInBounds;
+  // DOIT avoir des coordonnées géographiques valides
+  if (!city.geoData || !city.geoData.centreLat || !city.geoData.centreLon) {
+    console.log(`⚠️ Ville ${city.name} (06) sans coordonnées - ignorée`);
+    return false;
   }
   
-  return true; // Si pas de coordonnées, on garde par défaut
+  const lat = city.geoData.centreLat;
+  const lng = city.geoData.centreLon;
+  
+  // Limites des Alpes-Maritimes (06) avec tolérance pour données imprécises
+  // Latitude: 43.4 à 44.4 (du littoral aux montagnes)
+  // Longitude: 6.0 à 7.8 (de Grasse/ouest à Menton/est) - élargi pour capturer toutes les villes du 06
+  // 
+  // Filtre agressif pour exclure les homonymes aberrants (autres départements)
+  // Ex: Castillon en Gironde (lng=0.6), Marie dans le Nord (lat=50.1), etc.
+  const isInBounds = 
+    lat >= 43.4 && lat <= 44.4 &&  // Latitude raisonnable pour le 06
+    lng >= 6.0 && lng <= 7.8 &&     // Longitude raisonnable pour le 06
+    !(lat > 45 || lat < 43) &&      // Exclure aberrations nord/sud
+    !(lng < 5 || lng > 8);          // Exclure aberrations est/ouest
+  
+  // Log les villes filtrées pour debug
+  if (!isInBounds) {
+    console.log(`❌ ${city.name} (code 06) MAIS coordonnées aberrantes: lat=${lat.toFixed(4)}, lng=${lng.toFixed(4)} → probablement homonyme autre département`);
+  }
+  
+  return isInBounds;
 }
 
 // Créer l'objet cityPolygons à partir de db_cities.json
