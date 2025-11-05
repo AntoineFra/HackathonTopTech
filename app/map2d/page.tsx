@@ -57,34 +57,56 @@ export default function Map2DPage() {
     if (!map || typeof window === 'undefined' || !window.google) return;
     const maps = window.google.maps;
 
-    console.log(`🗺️ Chargement de ${Object.keys(cityPolygons).length} polygones de villes`);
+    console.log(`🗺️ Chargement de ${Object.keys(cityPolygons).length} villes`);
     console.log(`📊 Villes disponibles:`, Object.keys(cityPolygons).slice(0, 10).join(', '), '...');
 
-    Object.entries(cityPolygons).forEach(([city, coords]) => {
-      const polygon = new maps.Polygon({
-        paths: coords,
-        strokeColor: "#888",
-        strokeOpacity: 0.5,
-        strokeWeight: 1,
-        fillColor: "#888",
-        fillOpacity: 0.2,
-        map,
-      });
+    let totalPolygons = 0;
 
-      // Effet survol
-      polygon.addListener("mouseover", () => {
-        polygon.setOptions({ fillColor: "#00bcd4", fillOpacity: 0.5 });
-        const data = cityData[city];
-        if (data) {
-          setHoveredCity({ name: city, ...data });
+    Object.entries(cityPolygons).forEach(([city, polygonsArray]) => {
+      // polygonsArray est maintenant un array de polygones (pour gérer MultiPolygon)
+      // Chaque polygone est un array de {lat, lng}
+      
+      if (!Array.isArray(polygonsArray) || polygonsArray.length === 0) {
+        console.warn(`⚠️ Ville ${city} sans polygones valides`);
+        return;
+      }
+
+      // Créer un polygone Google Maps pour CHAQUE polygone de la ville
+      polygonsArray.forEach((polygonCoords, index) => {
+        if (!Array.isArray(polygonCoords) || polygonCoords.length < 3) {
+          console.warn(`⚠️ ${city} - polygone ${index} invalide (< 3 points)`);
+          return;
         }
-      });
 
-      polygon.addListener("mouseout", () => {
-        polygon.setOptions({ fillColor: "#888", fillOpacity: 0.2 });
-        setHoveredCity(null);
+        const polygon = new maps.Polygon({
+          paths: polygonCoords, // Un seul polygone ici
+          strokeColor: "#888",
+          strokeOpacity: 0.5,
+          strokeWeight: 1,
+          fillColor: "#888",
+          fillOpacity: 0.2,
+          map,
+        });
+
+        totalPolygons++;
+
+        // Effet survol - tous les polygones d'une ville partagent le même survol
+        polygon.addListener("mouseover", () => {
+          polygon.setOptions({ fillColor: "#00bcd4", fillOpacity: 0.5 });
+          const data = cityData[city];
+          if (data) {
+            setHoveredCity({ name: city, ...data });
+          }
+        });
+
+        polygon.addListener("mouseout", () => {
+          polygon.setOptions({ fillColor: "#888", fillOpacity: 0.2 });
+          setHoveredCity(null);
+        });
       });
     });
+
+    console.log(`✅ ${totalPolygons} polygones créés au total`);
   }, [map]);
 
   return (
