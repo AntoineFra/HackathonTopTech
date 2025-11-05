@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import SettingsDialog from "@/components/settings-dialog";
 
 type NavLink = {
     label: string;
@@ -18,8 +19,8 @@ type NavbarProps = {
 };
 
 const defaultLinks: NavLink[] = [
-    { label: "Home", href: "/" },
-    { label: "Chat", href: "/chat" },
+    { label: "Accueil", href: "/" },
+    { label: "Discussion", href: "/chat" },
     { label: "Contact", href: "/contact" },
 ];
 
@@ -39,7 +40,7 @@ const Navbar: React.FC<NavbarProps> = ({
                     <Link
                         href="/"
                         className="text-foreground inline-flex items-center gap-2 text-base font-semibold"
-                        aria-label="Homepage"
+                        aria-label="Accueil"
                     >
                         {brand ?? (
                             <>
@@ -82,7 +83,7 @@ const Navbar: React.FC<NavbarProps> = ({
                     <button
                         className="text-foreground inline-flex items-center justify-center rounded-md p-1 focus:ring-2 focus:ring-sky-300 focus:outline-none md:hidden"
                         aria-expanded={open}
-                        aria-label={open ? "Close menu" : "Open menu"}
+                        aria-label={open ? "Fermer le menu" : "Ouvrir le menu"}
                         onClick={() => setOpen((s) => !s)}
                     >
                         <span className="sr-only">Menu</span>
@@ -100,7 +101,7 @@ const Navbar: React.FC<NavbarProps> = ({
 
                 <nav
                     className={`${open ? "bg-background dark:bg-card absolute top-[var(--header-height)] right-0 left-0 z-50 block border-b p-4" : "hidden"} md:static md:block md:pl-4`}
-                    aria-label="Primary navigation"
+                    aria-label="Navigation principale"
                 >
                     <ul
                         className={`m-0 flex list-none p-0 ${open ? "flex-col gap-2" : "gap-4"} items-center md:flex-row md:gap-4`}
@@ -130,6 +131,9 @@ const Navbar: React.FC<NavbarProps> = ({
                         ))}
                         <li>
                             <ThemeToggle />
+                        </li>
+                        <li>
+                            <SettingsDialog />
                         </li>
                     </ul>
                 </nav>
