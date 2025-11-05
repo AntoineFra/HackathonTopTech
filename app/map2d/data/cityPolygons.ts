@@ -66,11 +66,37 @@ function parseGeoJSONToGoogleMaps(contourString: string): LatLngLiteral[] {
   }
 }
 
+// Fonction pour vérifier si une ville est dans les Alpes-Maritimes
+function isInAlpesMaritimes(city: any): boolean {
+  // Vérifier le code département
+  if (city.codeDepartement !== "06") {
+    return false;
+  }
+  
+  // Vérifier les coordonnées géographiques (bbox des Alpes-Maritimes)
+  if (city.geoData && city.geoData.centreLat && city.geoData.centreLon) {
+    const lat = city.geoData.centreLat;
+    const lng = city.geoData.centreLon;
+    
+    // Limites approximatives des Alpes-Maritimes
+    // Latitude: 43.4 à 44.4
+    // Longitude: 6.6 à 7.7
+    return lat >= 43.4 && lat <= 44.4 && lng >= 6.6 && lng <= 7.7;
+  }
+  
+  return true; // Si pas de coordonnées, on garde par défaut
+}
+
 // Créer l'objet cityPolygons à partir de db_cities.json
 export const cityPolygons: CityPolygonsType = {};
 export const cityData: CityDataMap = {};
 
 citiesData.forEach(city => {
+  // Filtrer uniquement les villes des Alpes-Maritimes
+  if (!isInAlpesMaritimes(city)) {
+    return;
+  }
+  
   if (city.geoData && city.geoData.contour) {
     const polygonCoords = parseGeoJSONToGoogleMaps(city.geoData.contour);
     
@@ -95,4 +121,4 @@ citiesData.forEach(city => {
   }
 });
 
-console.log(`${Object.keys(cityPolygons).length} villes chargées avec leurs polygones`);
+console.log(`${Object.keys(cityPolygons).length} villes chargées avec leurs polygones (filtrées pour Alpes-Maritimes)`);
