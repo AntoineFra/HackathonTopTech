@@ -109,3 +109,13 @@ Projet développé pour le hackathon CCI Nice Côte d'Azur 2025.
 ## 📄 Licence
 
 © 2025 CCI Nice Côte d'Azur - Tous droits réservés
+
+
+## Liens Utiles
+Historique des populations : https://www.insee.fr/fr/statistiques/3698339
+Recensement de la population (banque de données) :
+https://www.insee.fr/fr/information/8568899
+Dossier complet INSEE (inspiration pour le type de résultats attendus en fonction des sources
+utilisées) : https://www.insee.fr/fr/statistiques/2011101?geo=DEP-06#graphique-POP_G2
+Fichier SIRENE (StockEtablissement) : https://www.data.gouv.fr/datasets/base-sirene-des-entreprises-et-de-leurs-etablissements-siren-siret/
+
