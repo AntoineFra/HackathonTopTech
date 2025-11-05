@@ -23,7 +23,7 @@ function getBackendUrl(): string {
 export async function apiFetch(path: string, options: RequestInit = {}) {
     const base = getBackendUrl();
     const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-    const url = `${base}${normalizedPath}`;
+    const url = `${base}/api${normalizedPath}`;
 
     const headers = {
         Accept: "application/json",
