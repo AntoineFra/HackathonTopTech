@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 
 export default function Home() {
     return (
-        <div className="from-background to-secondary/20 flex min-h-screen items-center bg-gradient-to-b">
-            <main className="container mx-auto max-w-7xl px-4 py-8">
+        <div className="from-background to-secondary/20 min-h-[calc(screen - var(--header-height))] flex items-center bg-gradient-to-b">
+            <main className="container mx-auto mt-16 max-w-7xl px-4 py-8">
                 <div className="mb-12 space-y-4 text-center">
                     <div className="mb-4 flex items-center justify-center gap-3">
                         <BarChart3 className="text-primary h-12 w-12" />
