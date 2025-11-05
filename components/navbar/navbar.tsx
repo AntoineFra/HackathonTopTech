@@ -19,6 +19,8 @@ type NavbarProps = {
 const defaultLinks: NavLink[] = [
     { label: "Home", href: "/" },
     { label: "Chat", href: "/chat" },
+    { label: "Map Three.js", href: "/map-threejs" },
+    { label: "Département 06", href: "/map-department" },
     { label: "Contact", href: "/contact" },
 ];
 
