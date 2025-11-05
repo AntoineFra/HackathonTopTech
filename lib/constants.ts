@@ -42,7 +42,7 @@ export const QUERY_EXAMPLES = [
 ] as const;
 
 export const API_ENDPOINTS = {
-    QUERY: "/api/query",
-    INDICATORS: "/api/indicators",
-    CATEGORIES: "/api/categories",
+    AI: "/api/ai",
+    DUMP: "/api/dump",
+    USERS: "/api/users",
 } as const;
