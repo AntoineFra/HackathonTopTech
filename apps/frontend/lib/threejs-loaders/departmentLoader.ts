@@ -59,8 +59,8 @@ function latLonToCartesian(
  */
 export async function loadAllCities(): Promise<CityWithGeoData[]> {
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000';
-    const response = await fetch(`${backendUrl}/trois-d/cities`);
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL!;
+    const response = await fetch(`${backendUrl}/api/trois-d/cities`);
     if (!response.ok) {
       throw new Error(`Failed to fetch cities: ${response.statusText}`);
     }

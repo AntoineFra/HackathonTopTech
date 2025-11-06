@@ -206,8 +206,8 @@ function DepartmentScene({ onLoadingChange, onCityCountChange, onCenterCalculate
     const fetchCityAndCenter = async () => {
       try {
         console.log(`🎯 Chargement des données de ${selectedCityName}...`);
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000';
-        const response = await fetch(`${backendUrl}/trois-d/cities/${selectedCityName}`);
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL!;
+        const response = await fetch(`${backendUrl}/api/trois-d/cities/${selectedCityName}`);
         if (!response.ok) {
           const errorData = await response.text();
           console.error(`❌ Erreur ${response.status}:`, errorData);
