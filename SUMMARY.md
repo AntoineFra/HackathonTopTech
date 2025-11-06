@@ -16,6 +16,7 @@
 ## Features
 
 - [🤖 AI Integration](docs/AI_INTEGRATION.md)
+- [🤖 AI SQL RAG Service (Python)](docs/AI_SQL_RAG_SERVICE.md)
 - [🗺️ 3D Map](docs/MAP_3D_GUIDE.md)
 - [🗺️ Map 3D Summary](docs/MAP_3D_SUMMARY.md)
 

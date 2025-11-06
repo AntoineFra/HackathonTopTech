@@ -671,17 +671,21 @@ def run_legacy_cli() -> None:
 
     # Générer le SQL
     prompt = f"""
-### Task
-Generate a SQL query to answer [QUESTION]{question}[/QUESTION]
-Never use COUNT or SUM functions in your query.
-When a CHECK IN constraint is defined on a column, you will have one row per value of the constraint.
+### Tâche
+Génère une requête SQL pour répondre à [QUESTION]{question}[/QUESTION]
+N'utilise jamais les fonctions COUNT ou SUM dans ta requête.
+Lorsqu'une contrainte CHECK IN est définie sur une colonne, il y a une ligne par valeur de cette contrainte.
 
-### Database Schema
-The query will run on a database with the following schema:
+Spécifique aux données d'historique de population:
+- Si la question concerne l'historique/évolution de la population d'une commune, privilégie la table 'pop_hist_population' (niveau commune).
+- N'utilise la table 'pop_hist_population_by_commune' que si la question demande explicitement une comparaison multi‑communes au niveau du département (base 06000).
+
+### Schéma de base de données
+La requête sera exécutée sur une base avec le schéma suivant:
 {ddl_statements}
 
-### Answer
-Given the database schema, here is the SQL query that [QUESTION]{question}[/QUESTION]
+### Réponse
+Compte tenu du schéma, fournis uniquement la requête SQL pour [QUESTION]{question}[/QUESTION]
 [SQL]
 """
     res = google_llm.invoke(prompt)
@@ -799,17 +803,17 @@ def _pipeline_internal(question_text: str, max_communes: Optional[int], override
 
     # 2) Génération SQL via Google
     prompt = f"""
-### Task
-Generate a SQL query to answer [QUESTION]{question_text}[/QUESTION]
-Never use COUNT or SUM functions in your query.
-When a CHECK IN constraint is defined on a column, you will have one row per value of the constraint.
+### Tâche
+Génère une requête SQL pour répondre à [QUESTION]{question_text}[/QUESTION]
+N'utilise jamais les fonctions COUNT ou SUM dans ta requête.
+Lorsqu'une contrainte CHECK IN est définie sur une colonne, il y a une ligne par valeur de cette contrainte.
 
-### Database Schema
-The query will run on a database with the following schema:
+### Schéma de base de données
+La requête sera exécutée sur une base avec le schéma suivant:
 {ddl_statements}
 
-### Answer
-Given the database schema, here is the SQL query that [QUESTION]{question_text}[/QUESTION]
+### Réponse
+Compte tenu du schéma, fournis uniquement la requête SQL pour [QUESTION]{question_text}[/QUESTION]
 [SQL]
 """
     _log_step("[SQL] Génération de la requête via Google…")
