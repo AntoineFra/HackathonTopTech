@@ -2,7 +2,7 @@
 import fs from "fs/promises";
 import path from "path";
 
-const SETTINGS_PATH = path.resolve(process.cwd(), "apps/backend/data/settings.json");
+const SETTINGS_PATH = path.resolve(process.cwd(), "settings.json");
 
 export interface AppSettings {
     aiTimeout: number; // en millisecondes
@@ -18,6 +18,7 @@ async function ensureDefaults(): Promise<void> {
         // If file doesn't exist, write defaults
         try {
             await fs.access(SETTINGS_PATH);
+            console.log(`[Settings Service] Settings file exists at ${SETTINGS_PATH}`);
             // exists -> nothing to do
         } catch (e) {
             await fs.writeFile(SETTINGS_PATH, JSON.stringify(DEFAULT_SETTINGS, null, 2), "utf-8");
