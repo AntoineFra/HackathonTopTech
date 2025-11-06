@@ -152,9 +152,12 @@ export default function SettingsDialog() {
             // If the server sends a `data` field, export that only
             const contentToExport = dumpRes?.data ?? dumpRes;
             if (contentToExport) {
-                const blob = new Blob([JSON.stringify(contentToExport, null, 2)], {
-                    type: "application/json",
-                });
+                const blob = new Blob(
+                    [JSON.stringify(contentToExport, null, 2)],
+                    {
+                        type: "application/json",
+                    },
+                );
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
                 a.href = url;
@@ -386,7 +389,8 @@ export default function SettingsDialog() {
                                         Timeout IA (ms)
                                     </div>
                                     <div className="text-muted-foreground text-xs">
-                                        Temps maximum d'attente pour les requêtes IA
+                                        Temps maximum d'attente pour les
+                                        requêtes IA
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -395,7 +399,9 @@ export default function SettingsDialog() {
                                         type="number"
                                         min={0}
                                         value={editingAiTimeout}
-                                        onChange={(e) => setEditingAiTimeout(e.target.value)}
+                                        onChange={(e) =>
+                                            setEditingAiTimeout(e.target.value)
+                                        }
                                     />
                                     <Button
                                         variant="ghost"
@@ -403,16 +409,14 @@ export default function SettingsDialog() {
                                         onClick={saveSettings}
                                         disabled={savingSettings}
                                     >
-                                        {savingSettings ? (
-                                            "..."
-                                        ) : (
-                                            "Enregistrer"
-                                        )}
+                                        {savingSettings ? "..." : "Enregistrer"}
                                     </Button>
                                 </div>
                             </div>
                             {settingsMessage && (
-                                <div className="mt-2 text-xs">{settingsMessage}</div>
+                                <div className="mt-2 text-xs">
+                                    {settingsMessage}
+                                </div>
                             )}
                         </div>
                     </div>
@@ -488,7 +492,7 @@ export default function SettingsDialog() {
                                                 "Téléchargement..."
                                             ) : (
                                                 <>
-                                                    <Download className="h-4 w-4" /> {" "}
+                                                    <Download className="h-4 w-4" />{" "}
                                                     Télécharger
                                                 </>
                                             )}

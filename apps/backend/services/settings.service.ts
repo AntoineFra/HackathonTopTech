@@ -1,4 +1,3 @@
-
 import fs from "fs/promises";
 import path from "path";
 
@@ -18,11 +17,19 @@ async function ensureDefaults(): Promise<void> {
         // If file doesn't exist, write defaults
         try {
             await fs.access(SETTINGS_PATH);
-            console.log(`[Settings Service] Settings file exists at ${SETTINGS_PATH}`);
+            console.log(
+                `[Settings Service] Settings file exists at ${SETTINGS_PATH}`,
+            );
             // exists -> nothing to do
         } catch (e) {
-            await fs.writeFile(SETTINGS_PATH, JSON.stringify(DEFAULT_SETTINGS, null, 2), "utf-8");
-            console.log(`[Settings Service] Created default settings at ${SETTINGS_PATH}`);
+            await fs.writeFile(
+                SETTINGS_PATH,
+                JSON.stringify(DEFAULT_SETTINGS, null, 2),
+                "utf-8",
+            );
+            console.log(
+                `[Settings Service] Created default settings at ${SETTINGS_PATH}`,
+            );
         }
     } catch (err) {
         console.warn("[Settings Service] Could not ensure settings file:", err);
@@ -34,7 +41,10 @@ async function readSettings(): Promise<AppSettings> {
         const raw = await fs.readFile(SETTINGS_PATH, "utf-8");
         const parsed = JSON.parse(raw) as Partial<AppSettings>;
         return {
-            aiTimeout: typeof parsed.aiTimeout === "number" ? parsed.aiTimeout : DEFAULT_SETTINGS.aiTimeout,
+            aiTimeout:
+                typeof parsed.aiTimeout === "number"
+                    ? parsed.aiTimeout
+                    : DEFAULT_SETTINGS.aiTimeout,
         };
     } catch (err) {
         // If anything goes wrong, return defaults
@@ -55,7 +65,9 @@ export async function getAITimeout(): Promise<number> {
     return s.aiTimeout;
 }
 
-export async function updateSettings(partial: Partial<AppSettings>): Promise<AppSettings> {
+export async function updateSettings(
+    partial: Partial<AppSettings>,
+): Promise<AppSettings> {
     const current = await readSettings();
     const next: AppSettings = {
         ...current,
@@ -71,4 +83,3 @@ export default {
     getAITimeout,
     updateSettings,
 };
-

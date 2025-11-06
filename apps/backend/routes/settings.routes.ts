@@ -93,4 +93,3 @@ router.get("/", (req, res) => settingsController.getSettings(req, res));
 router.put("/", (req, res) => settingsController.updateSettings(req, res));
 
 export default router;
-

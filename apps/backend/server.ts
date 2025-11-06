@@ -51,10 +51,14 @@ app.use(
 );
 
 // Swagger documentation routes
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-    customCss: '.swagger-ui .topbar { display: none }',
-    customSiteTitle: "Hackathon TopTech API Documentation",
-}));
+app.use(
+    "/api-docs",
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerSpec, {
+        customCss: ".swagger-ui .topbar { display: none }",
+        customSiteTitle: "Hackathon TopTech API Documentation",
+    }),
+);
 
 // JSON version of the swagger spec
 app.get("/api-docs.json", (req, res) => {
@@ -95,8 +99,12 @@ app.use(
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`📚 API Documentation available at http://localhost:${PORT}/api-docs`);
-    console.log(`📄 OpenAPI Spec (JSON) available at http://localhost:${PORT}/api-docs.json`);
+    console.log(
+        `📚 API Documentation available at http://localhost:${PORT}/api-docs`,
+    );
+    console.log(
+        `📄 OpenAPI Spec (JSON) available at http://localhost:${PORT}/api-docs.json`,
+    );
 });
 
 process.on("SIGINT", async () => {

@@ -1,5 +1,11 @@
 import type { Request, Response } from "express";
-import { dumpLegalUnit, dumpCities, getAllCities, dumpPopulationData, type DumpResult } from "../services/dump.services.js";
+import {
+    dumpLegalUnit,
+    dumpCities,
+    getAllCities,
+    dumpPopulationData,
+    type DumpResult,
+} from "../services/dump.services.js";
 import { prisma } from "../server.js";
 import { DumpStatus } from "../generated/prisma/enums.js";
 
@@ -47,7 +53,11 @@ export async function getDumpList(req: Request, res: Response) {
     }
 }
 
-async function updateDumpStatus(dumpType: DumpType, status: DumpStatus, lastUpdate?: Date) {
+async function updateDumpStatus(
+    dumpType: DumpType,
+    status: DumpStatus,
+    lastUpdate?: Date,
+) {
     return prisma.dump.upsert({
         where: { type: dumpType as any },
         update: { status, ...(lastUpdate && { lastUpdate }) },

@@ -27,7 +27,8 @@ export async function downloadAndExtractZip(url: string) {
     const writer = fs.createWriteStream(zipPath);
     let downloaded = 0;
     let lastPercent = 0;
-    const isTTY = process.stdout.isTTY && typeof process.stdout.clearLine === 'function';
+    const isTTY =
+        process.stdout.isTTY && typeof process.stdout.clearLine === "function";
 
     response.data.on("data", (chunk: string | any[]) => {
         downloaded += chunk.length;
