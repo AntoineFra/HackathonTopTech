@@ -61,7 +61,8 @@ export async function downloadAndExtractZip(url: string, name: string) {
                     throw permErr;
                 }
 
-                await extractLargeZip(zipPath, extractPath);
+              await extract(zipPath, { dir: extractPath });
+              //await extractLargeZip(zipPath, extractPath);
                 console.log("✅ ZIP extracted to:", extractPath);
                 console.log("✨ Done.");
                 return;
