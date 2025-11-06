@@ -16,7 +16,7 @@ done
 echo "✅ Ollama is ready!"
 
 # Récupérer le modèle depuis la variable d'environnement
-MODEL=${OLLAMA_MODEL:-"llama2:7b-chat-q4_K_S"}
+MODEL=${OLLAMA_MODEL:-"phi3:mini"}
 
 # Vérifier si le modèle existe déjà
 if ollama list | grep -q "$MODEL"; then
