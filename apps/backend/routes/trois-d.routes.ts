@@ -79,6 +79,31 @@ router.get("/cities", (req, res) => troisDController.getAllCities(req, res));
  */
 router.get("/cities/:name", (req, res) => troisDController.getCity(req, res));
 
+/**
+ * @swagger
+ * /api/trois-d/cities/by-code/{codeINSEE}:
+ *   get:
+ *     summary: Récupère une ville par son code INSEE
+ *     description: Récupère les détails d'une ville spécifique avec ses données géographiques
+ *     tags: [3D]
+ *     parameters:
+ *       - in: path
+ *         name: codeINSEE
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Code INSEE de la ville
+ *         example: 06088
+ *     responses:
+ *       200:
+ *         description: Ville trouvée avec succès
+ *       404:
+ *         description: Ville non trouvée
+ *       500:
+ *         description: Erreur serveur
+ */
+router.get("/cities/by-code/:codeINSEE", (req, res) => troisDController.getCityByCode(req, res));
+
 router.get("/population", (req, res) =>
     troisDController.getPopulationData(req, res),
 );

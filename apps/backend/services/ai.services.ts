@@ -228,33 +228,82 @@ export function buildAIPrompt(parsed: ParsedQuestion): string {
     return `Question: ${parsed.text}`;
 }
 
-export interface AIResponse {
-    responseText: string;
-    confidence: number; // 0 to 1
-    graphs?: "bar" | "line";
-    sql_query?: string[];
+
+export interface AIRequest {
+    query: string;
+    maxCommunes?: number;
+    codes?: string[];
+    legendType?: string;
 }
 
-export async function getAIResponse(prompt: string) {
+export interface AIServiceResponse {
+  success: boolean;
+  query: string;
+  answer: string;
+  confidence?: number;
+  model?: string;
+  source?: string;
+  error?: string | null;
+  legendType?: "population" | "economy" | "tourism";
+  chart?: {
+    type: "bar" | "line" | "pie" | "area" | "radar" | "radial";
+    data: any[];
+    title?: string;
+    description?: string;
+  };
+  sqlQuery?: string;
+  selected_codes?: string[];
+}
+
+
+// Fonction pour appeler l'IA locale externe
+async function answerQuestionWithLocalAI(question: string, history: ChatMessage[] = []) {
     try {
-        // replace URL with actual AI service endpoint
-        const response = await fetch("https://api.example.com/ai", {
+        const response = await fetch("http://10.120.0.56:8000/api/ask", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify({ prompt }),
+            body: JSON.stringify({
+                query: question,
+                maxCommunes: 5,
+            }),
         });
 
         if (!response.ok) {
-            throw new Error(`AI API error: ${response.statusText}`);
+            console.error(`Local AI API error: ${response.status} ${response.statusText}`);
+            return {
+                success: false,
+                query: question,
+                answer: "",
+                error: `Local AI API error: ${response.statusText}`,
+                source: "local",
+            };
         }
 
         const data = await response.json();
-        return data as AIResponse;
+        console.log("Local AI response data:", data);
+        return {
+            success: data.success || true,
+            query: data.query || question,
+            answer: data.answer || "",
+            confidence: data.confidence,
+            model: data.model || "local-ai",
+            source: "local",
+            legendType: data.legendType,
+            chart: data.chart,
+            prismaQuery: data.sqlQuery,
+            selected_codes: data.selected_codes,
+        };
     } catch (error) {
-        console.error("Error fetching AI response:", error);
-        throw error;
+        console.error("Error fetching Local AI response:", error);
+        return {
+            success: false,
+            query: question,
+            answer: "",
+            error: error instanceof Error ? error.message : "Unknown error",
+            source: "local",
+        };
     }
 }
 
@@ -262,7 +311,7 @@ export async function getAIResponse(prompt: string) {
 export async function answerQuestion(
     question: string,
     history: ChatMessage[] = [],
-    provider: "ollama" | "gemini" = DEFAULT_AI_PROVIDER,
+    provider: "ollama" | "gemini" | "local" = DEFAULT_AI_PROVIDER,
 ) {
     if (!question) throw new Error("Question is required");
 
@@ -277,10 +326,14 @@ export async function answerQuestion(
         }));
 
     // Utiliser le provider sélectionné
-    const response =
-        provider === "gemini"
-            ? await answerQuestionWithGemini(question, geminiHistory)
-            : await answerQuestionWithOllama(question, history);
+    let response;
+    if (provider === "local") {
+        response = await answerQuestionWithLocalAI(question, history);
+    } else if (provider === "gemini") {
+        response = await answerQuestionWithGemini(question, geminiHistory);
+    } else {
+        response = await answerQuestionWithOllama(question, history);
+    }
 
     if (!response.success) {
         throw new Error(
@@ -298,6 +351,7 @@ export async function answerQuestion(
         legendType: response.legendType,
         chart: response.chart,
         prismaQuery: response.prismaQuery,
+        selected_codes: response.selected_codes,
     };
 }
 

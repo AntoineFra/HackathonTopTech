@@ -49,6 +49,7 @@ export interface AIServiceResponse {
     source?: string;
     error?: string;
     legendType?: "population" | "economy" | "tourism"; // Type de légende à activer
+    selected_codes?: string[];
     chart?: {
         type: "bar" | "line" | "pie";
         data: any[];
