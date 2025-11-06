@@ -18,6 +18,7 @@ import {
   setCityColor,
   setHoveredCityColor,
 } from '@/lib/threejs-loaders/departmentLoader';
+import { Map3DChatBox } from './Map3DChatBox';
 
 function DepartmentScene({ onLoadingChange, onCityCountChange, onCenterCalculated, onSelectedCity, selectedCityName, citiesListRef, controlsRef }: {
   onLoadingChange: (loading: boolean) => void;
@@ -338,6 +339,7 @@ export default function Map3DDepartment() {
   const [mapCenter, setMapCenter] = useState({ x: 0, y: 5000, z: 0 });
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
   const [currentCityIndex, setCurrentCityIndex] = useState(0);
+  const [aiResponse, setAiResponse] = useState<string>("");
   const citiesListRef = useRef<string[]>([]);
   const controlsRef = useRef<any>(null);
 
@@ -350,11 +352,21 @@ export default function Map3DDepartment() {
 
   const handleCitySelected = (cityName: string | null) => {
     setSelectedCity(cityName);
+    setAiResponse(""); // Reset AI response when manually selecting a city
     if (cityName) {
       const index = citiesListRef.current.indexOf(cityName);
       if (index !== -1) {
         setCurrentCityIndex(index);
       }
+    }
+  };
+
+  const handleAICityDetected = (cityName: string, response: string) => {
+    setSelectedCity(cityName);
+    setAiResponse(response);
+    const index = citiesListRef.current.indexOf(cityName);
+    if (index !== -1) {
+      setCurrentCityIndex(index);
     }
   };
 
@@ -368,12 +380,14 @@ export default function Map3DDepartment() {
         const newIndex = (currentCityIndex + 1) % citiesListRef.current.length;
         setCurrentCityIndex(newIndex);
         setSelectedCity(citiesListRef.current[newIndex]);
+        setAiResponse(""); // Reset AI response on manual navigation
         console.log(`➡️ Ville suivante: ${citiesListRef.current[newIndex]}`);
       } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
         e.preventDefault();
         const newIndex = currentCityIndex === 0 ? citiesListRef.current.length - 1 : currentCityIndex - 1;
         setCurrentCityIndex(newIndex);
         setSelectedCity(citiesListRef.current[newIndex]);
+        setAiResponse(""); // Reset AI response on manual navigation
         console.log(`⬅️ Ville précédente: ${citiesListRef.current[newIndex]}`);
       }
     };
@@ -383,7 +397,7 @@ export default function Map3DDepartment() {
   }, [currentCityIndex]);
 
   return (
-    <div className="relative w-full h-screen">
+    <div className="relative w-full h-[70vh]">
       <Canvas>
         <PerspectiveCamera
           makeDefault
@@ -412,51 +426,63 @@ export default function Map3DDepartment() {
 
       {/* Loading */}
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-lg p-8 text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-            <h2 className="text-xl font-bold">Chargement...</h2>
-            {cityCount > 0 && <p className="text-sm text-green-600 mt-2">{cityCount} communes</p>}
+        <div className="absolute inset-0 flex items-center justify-center bg-black/50 dark:bg-black/60">
+          <div className="bg-card rounded-lg p-8 text-center shadow-lg border border-border">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-primary mx-auto mb-4"></div>
+            <h2 className="text-xl font-bold text-foreground">Chargement...</h2>
+            {cityCount > 0 && <p className="text-sm text-primary mt-2">{cityCount} communes</p>}
           </div>
         </div>
       )}
 
       {/* Info */}
-      <div className="absolute top-4 left-4 bg-white rounded-lg shadow-lg p-4 min-w-[280px]">
-        <h2 className="text-lg font-bold">Département 06</h2>
-        <p className="text-sm text-gray-600">{cityCount} communes</p>
+      <div className="absolute top-4 left-4 bg-card rounded-lg shadow-lg border border-border p-4 min-w-[280px]">
+        <h2 className="text-lg font-bold text-foreground">Département 06</h2>
+        <p className="text-sm text-muted-foreground">{cityCount} communes</p>
 
-        <div className="mt-3 p-2 bg-blue-50 rounded text-xs">
-          <p className="font-semibold mb-1">Navigation :</p>
-          <p>• ← → : Ville précédente / suivante</p>
-          <p>• ↑ ↓ : Parcourir les communes</p>
+        <div className="mt-3 p-2 bg-primary/10 dark:bg-primary/20 rounded text-xs">
+          <p className="font-semibold mb-1 text-foreground">Navigation :</p>
+          <p className="text-muted-foreground">• ← → : Ville précédente / suivante</p>
+          <p className="text-muted-foreground">• ↑ ↓ : Parcourir les communes</p>
         </div>
-
-        <button
-          onClick={handleRecenter}
-          className="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-4 rounded transition-colors"
-        >
-          Recentrer la vue
-        </button>
       </div>
 
       {/* Ville sélectionnée - Card à droite */}
       {selectedCity && (
-        <div className="absolute top-4 right-4 bg-white rounded-lg shadow-lg p-6 min-w-[320px] border border-gray-200">
+        <div className="absolute top-4 right-4 bg-card rounded-lg shadow-lg p-6 min-w-[320px] max-w-[400px] border border-border">
           <div className="space-y-3">
             <div>
               <p className="text-sm text-muted-foreground">Commune sélectionnée</p>
               <h3 className="text-2xl font-bold text-foreground mt-1">{selectedCity}</h3>
             </div>
-            <div className="flex items-center justify-between pt-2 border-t">
+
+            {/* Réponse de l'IA si disponible */}
+            {aiResponse && (
+              <div className="pt-3 border-t border-border">
+                <p className="text-xs text-muted-foreground mb-2">Réponse de l'IA :</p>
+                <p className="text-sm text-foreground bg-muted/50 p-3 rounded-lg whitespace-pre-wrap">
+                  {aiResponse}
+                </p>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between pt-2 border-t border-border">
               <span className="text-sm text-muted-foreground">Position</span>
-              <span className="text-sm font-medium">
+              <span className="text-sm font-medium text-foreground">
                 {currentCityIndex + 1} / {citiesListRef.current.length}
               </span>
             </div>
           </div>
         </div>
       )}
+
+      {/* Chat IA - en bas à gauche */}
+      <div className="absolute bottom-4 left-4 w-full max-w-md">
+        <Map3DChatBox
+          citiesList={citiesListRef.current}
+          onCityDetected={handleAICityDetected}
+        />
+      </div>
     </div>
   );
 }
