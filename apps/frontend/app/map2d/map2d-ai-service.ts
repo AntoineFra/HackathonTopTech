@@ -34,12 +34,26 @@ export async function queryMap2DAI(question: string): Promise<Map2DQueryResponse
 
   // Requêtes sur les villes les plus peuplées
   if (
-    lowerQuestion.includes('plus peupl') ||
-    lowerQuestion.includes('population') && (lowerQuestion.includes('top') || lowerQuestion.includes('plus'))
+    lowerQuestion.includes('peupl') ||
+    (lowerQuestion.includes('population') && (lowerQuestion.includes('top') || lowerQuestion.includes('plus') || lowerQuestion.includes('quelle')))
   ) {
-    // Extraire le nombre de villes demandées
-    const numberMatch = lowerQuestion.match(/(\d+)\s*villes?/i);
-    const count = numberMatch ? parseInt(numberMatch[1]) : 3;
+    // Extraire le nombre de villes demandées - plus flexible
+    let count = 3; // Par défaut
+    
+    // Patterns pour détecter le singulier
+    if (lowerQuestion.match(/\b(la|quelle|1)\s+(ville|commune)\b/i)) {
+      count = 1;
+    }
+    // Patterns pour détecter les nombres
+    else if (lowerQuestion.match(/(\d+)\s*(villes?|communes?)/i)) {
+      const match = lowerQuestion.match(/(\d+)\s*(villes?|communes?)/i);
+      count = match ? parseInt(match[1]) : 3;
+    }
+    // "top 5", "top 10"
+    else if (lowerQuestion.match(/top\s*(\d+)/i)) {
+      const match = lowerQuestion.match(/top\s*(\d+)/i);
+      count = match ? parseInt(match[1]) : 3;
+    }
 
     // Trier les villes par population
     const sortedCities = Object.entries(cityData)
@@ -57,13 +71,15 @@ export async function queryMap2DAI(question: string): Promise<Map2DQueryResponse
 
     const citiesList = sortedCities
       .map(([name, data], index) => 
-        `${index + 1}. ${name} (${data.population.toLocaleString()} habitants)`
+        count === 1 
+          ? `${name} avec ${data.population.toLocaleString()} habitants`
+          : `${index + 1}. ${name} (${data.population.toLocaleString()} habitants)`
       )
       .join('\n');
 
-    textResponse =
-      `Voici les ${count} communes les plus peuplées des Alpes-Maritimes :\n\n${citiesList}\n\n` +
-      `Ces villes sont maintenant mises en surbrillance sur la carte.`;
+    textResponse = count === 1
+      ? `La ville la plus peuplée des Alpes-Maritimes est :\n\n${citiesList}\n\nElle est maintenant mise en surbrillance sur la carte.`
+      : `Voici les ${count} communes les plus peuplées des Alpes-Maritimes :\n\n${citiesList}\n\nCes villes sont maintenant mises en surbrillance sur la carte.`;
   }
   // Requêtes sur les entreprises
   else if (
@@ -71,9 +87,18 @@ export async function queryMap2DAI(question: string): Promise<Map2DQueryResponse
     lowerQuestion.includes('business') ||
     lowerQuestion.includes('économi')
   ) {
-    // Extraire le nombre
-    const numberMatch = lowerQuestion.match(/(\d+)\s*villes?/i);
-    const count = numberMatch ? parseInt(numberMatch[1]) : 5;
+    // Extraire le nombre - plus flexible
+    let count = 5; // Par défaut
+    
+    if (lowerQuestion.match(/\b(la|quelle|1)\s+(ville|commune)\b/i)) {
+      count = 1;
+    } else if (lowerQuestion.match(/(\d+)\s*(villes?|communes?)/i)) {
+      const match = lowerQuestion.match(/(\d+)\s*(villes?|communes?)/i);
+      count = match ? parseInt(match[1]) : 5;
+    } else if (lowerQuestion.match(/top\s*(\d+)/i)) {
+      const match = lowerQuestion.match(/top\s*(\d+)/i);
+      count = match ? parseInt(match[1]) : 5;
+    }
 
     const sortedCities = Object.entries(cityData)
       .sort(([, a], [, b]) => b.entreprises - a.entreprises)
@@ -90,13 +115,15 @@ export async function queryMap2DAI(question: string): Promise<Map2DQueryResponse
 
     const citiesList = sortedCities
       .map(([name, data], index) => 
-        `${index + 1}. ${name} (${data.entreprises.toLocaleString()} entreprises)`
+        count === 1
+          ? `${name} avec ${data.entreprises.toLocaleString()} entreprises`
+          : `${index + 1}. ${name} (${data.entreprises.toLocaleString()} entreprises)`
       )
       .join('\n');
 
-    textResponse =
-      `Top ${count} des communes avec le plus d'entreprises :\n\n${citiesList}\n\n` +
-      `Survolées en cyan sur la carte.`;
+    textResponse = count === 1
+      ? `La ville avec le plus d'entreprises est :\n\n${citiesList}\n\nSurvolée en cyan sur la carte.`
+      : `Top ${count} des communes avec le plus d'entreprises :\n\n${citiesList}\n\nSurvolées en cyan sur la carte.`;
   }
   // Requêtes sur le tourisme
   else if (
@@ -104,8 +131,17 @@ export async function queryMap2DAI(question: string): Promise<Map2DQueryResponse
     lowerQuestion.includes('tourist') ||
     lowerQuestion.includes('touristique')
   ) {
-    const numberMatch = lowerQuestion.match(/(\d+)\s*villes?/i);
-    const count = numberMatch ? parseInt(numberMatch[1]) : 5;
+    let count = 5; // Par défaut
+    
+    if (lowerQuestion.match(/\b(la|quelle|1)\s+(ville|commune|destination)\b/i)) {
+      count = 1;
+    } else if (lowerQuestion.match(/(\d+)\s*(villes?|communes?|destinations?)/i)) {
+      const match = lowerQuestion.match(/(\d+)\s*(villes?|communes?|destinations?)/i);
+      count = match ? parseInt(match[1]) : 5;
+    } else if (lowerQuestion.match(/top\s*(\d+)/i)) {
+      const match = lowerQuestion.match(/top\s*(\d+)/i);
+      count = match ? parseInt(match[1]) : 5;
+    }
 
     const sortedCities = Object.entries(cityData)
       .sort(([, a], [, b]) => b.tourisme - a.tourisme)
@@ -122,15 +158,59 @@ export async function queryMap2DAI(question: string): Promise<Map2DQueryResponse
 
     const citiesList = sortedCities
       .map(([name, data], index) => 
-        `${index + 1}. ${name} (score: ${data.tourisme}/100)`
+        count === 1
+          ? `${name} avec un score de ${data.tourisme}/100`
+          : `${index + 1}. ${name} (score: ${data.tourisme}/100)`
       )
       .join('\n');
 
-    textResponse =
-      `Top ${count} des destinations touristiques :\n\n${citiesList}\n\n` +
-      `Ces communes sont maintenant mises en évidence.`;
+    textResponse = count === 1
+      ? `La destination touristique la plus attractive est :\n\n${citiesList}\n\nCette commune est maintenant mise en évidence.`
+      : `Top ${count} des destinations touristiques :\n\n${citiesList}\n\nCes communes sont maintenant mises en évidence.`;
   }
-  // Focus sur une ville spécifique
+  // Focus sur une ville spécifique - détection intelligente
+  else if (
+    lowerQuestion.includes('focus') ||
+    lowerQuestion.includes('zoom') ||
+    lowerQuestion.includes('montre') && (lowerQuestion.includes('ville') || lowerQuestion.includes('commune'))
+  ) {
+    // Chercher un nom de ville dans la question
+    let foundCity: string | null = null;
+    
+    // Chercher parmi toutes les villes disponibles
+    for (const cityName of Object.keys(cityData)) {
+      const cityLower = cityName.toLowerCase();
+      if (lowerQuestion.includes(cityLower)) {
+        foundCity = cityName;
+        break;
+      }
+    }
+
+    if (foundCity) {
+      mapActions.push({
+        type: 'focus',
+        focusCity: foundCity,
+        animate: true,
+        duration: 1500,
+      });
+
+      const data = cityData[foundCity];
+      textResponse =
+        `Focus sur ${foundCity}.\n\n` +
+        `👥 Population : ${data.population.toLocaleString()} habitants\n` +
+        `🏢 Entreprises : ${data.entreprises.toLocaleString()}\n` +
+        `🏖️ Score touristique : ${data.tourisme}/100\n` +
+        `💼 Emploi : ${data.emploi}%\n` +
+        `💰 Revenu moyen : ${data.revenu.toLocaleString()}€`;
+    } else {
+      textResponse = 
+        "Je n'ai pas trouvé de ville dans votre demande. Essayez par exemple :\n" +
+        "• Focus sur Nice\n" +
+        "• Montre-moi Cannes\n" +
+        "• Zoom sur Antibes";
+    }
+  }
+  // Villes spécifiques nommées (fallback pour compatibilité)
   else if (lowerQuestion.includes('nice')) {
     mapActions.push({
       type: 'focus',
@@ -197,20 +277,23 @@ export async function queryMap2DAI(question: string): Promise<Map2DQueryResponse
     textResponse =
       'Je peux vous aider à explorer les communes des Alpes-Maritimes ! Exemples de questions :\n\n' +
       '📊 Top villes :\n' +
-      '• Montre-moi les 3 villes les plus peuplées\n' +
-      '• Quelles sont les 5 villes avec le plus d\'entreprises ?\n' +
-      '• Top 5 destinations touristiques\n\n' +
+      '• Quelle est la ville la plus peuplée ?\n' +
+      '• Montre-moi les 5 villes les plus peuplées\n' +
+      '• Top 3 villes avec le plus d\'entreprises\n' +
+      '• Quelle destination touristique est la plus attractive ?\n\n' +
       '🏙️ Villes spécifiques :\n' +
-      '• Focus sur Nice/Cannes/Antibes';
+      '• Focus sur [nom de ville]\n' +
+      '• Montre-moi Nice/Cannes/Antibes/Menton...\n' +
+      '• Zoom sur Grasse';
   }
   // Réponse par défaut
   else {
     textResponse =
       'Je n\'ai pas compris votre demande. Essayez :\n' +
-      '• "Montre-moi les 3 villes les plus peuplées"\n' +
-      '• "Quelles sont les top 5 villes avec le plus d\'entreprises ?"\n' +
+      '• "Quelle est la ville la plus peuplée ?"\n' +
+      '• "Top 5 destinations touristiques"\n' +
       '• "Focus sur Nice"\n' +
-      '• "Top 5 destinations touristiques"\n\n' +
+      '• "Ville avec le plus d\'entreprises"\n\n' +
       'Dites "aide" pour plus d\'exemples.';
   }
 
@@ -226,9 +309,9 @@ export async function queryMap2DAI(question: string): Promise<Map2DQueryResponse
  */
 export function getMap2DSuggestions(): string[] {
   return [
-    'Montre-moi les 3 villes les plus peuplées',
-    'Quelles sont les 5 villes avec le plus d\'entreprises ?',
+    'Quelle est la ville la plus peuplée ?',
     'Top 5 destinations touristiques',
-    'Focus sur Nice',
+    'Ville avec le plus d\'entreprises',
+    'Focus sur Cannes',
   ];
 }
