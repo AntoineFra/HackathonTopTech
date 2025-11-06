@@ -167,3 +167,79 @@ export function isPointInPolygon(
 
     return inside;
 }
+
+/**
+ * Safely load Google Maps JavaScript API
+ * Prevents duplicate script loading which causes errors
+ */
+let googleMapsPromise: Promise<typeof google.maps> | null = null;
+
+export function loadGoogleMaps(apiKey: string): Promise<typeof google.maps> {
+    // Return existing promise if already loading
+    if (googleMapsPromise) {
+        return googleMapsPromise;
+    }
+
+    // Check if already loaded
+    if (typeof window !== 'undefined' && window.google && window.google.maps) {
+        return Promise.resolve(window.google.maps);
+    }
+
+    // Check if script is already in the DOM
+    const existingScript = typeof document !== 'undefined'
+        ? document.querySelector('script[src*="maps.googleapis.com"]')
+        : null;
+
+    if (existingScript) {
+        // Script exists, wait for it to load
+        googleMapsPromise = new Promise<typeof google.maps>((resolve, reject) => {
+            const checkLoaded = () => {
+                if (window.google && window.google.maps) {
+                    resolve(window.google.maps);
+                } else {
+                    setTimeout(checkLoaded, 100);
+                }
+            };
+
+            existingScript.addEventListener('load', checkLoaded);
+            existingScript.addEventListener('error', () => {
+                reject(new Error('Failed to load Google Maps'));
+            });
+
+            // Also check immediately in case it's already loaded
+            checkLoaded();
+        });
+        return googleMapsPromise;
+    }
+
+    // Create and load the script
+    googleMapsPromise = new Promise<typeof google.maps>((resolve, reject) => {
+        if (typeof document === 'undefined') {
+            reject(new Error('Document is not available'));
+            return;
+        }
+
+        const script = document.createElement("script");
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`;
+        script.async = true;
+        script.defer = true;
+
+        script.onload = () => {
+            if (window.google && window.google.maps) {
+                resolve(window.google.maps);
+            } else {
+                reject(new Error('Google Maps failed to load'));
+            }
+        };
+
+        script.onerror = () => {
+            googleMapsPromise = null; // Reset on error to allow retry
+            reject(new Error('Failed to load Google Maps script'));
+        };
+
+        document.head.appendChild(script);
+    });
+
+    return googleMapsPromise;
+}
+

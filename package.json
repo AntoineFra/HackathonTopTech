@@ -20,6 +20,8 @@
         "clean": "docker compose down -v && rm -rf apps/*/node_modules apps/*/.next",
         "prisma:generate": "cd apps/backend && pnpm prisma generate",
         "prisma:push": "cd apps/backend && pnpm prisma db push",
+        "prisma:reset": "cd apps/backend && pnpm prisma migrate reset --force",
+        "prisma:all": "pnpm prisma:generate && pnpm prisma:push",
         "prisma:studio": "cd apps/backend && pnpm prisma studio",
         "prisma:generate:docker": "docker compose exec backend pnpm prisma generate",
         "prisma:push:docker": "docker compose exec backend pnpm prisma db push --accept-data-loss",

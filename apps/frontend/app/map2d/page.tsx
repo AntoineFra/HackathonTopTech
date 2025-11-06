@@ -3,10 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { cityPolygons, cityData } from "./data/cityPolygons";
 import type { CityDataType } from "./data/cityPolygons";
+import { loadGoogleMaps } from "@/lib/map-utils";
 
 interface HoveredCity extends CityDataType {
   name: string;
 }
+
+const GOOGLE_MAPS_API_KEY = "AIzaSyDYqP19MDyDR5PXp50uUbxHva-e_k2aMj0";
 
 export default function Map2DPage() {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -15,25 +18,7 @@ export default function Map2DPage() {
 
   // --- Initialisation Google Maps ---
   useEffect(() => {
-    const loadGoogleMaps = () => {
-      return new Promise<typeof google.maps>((resolve, reject) => {
-        if (typeof window !== 'undefined' && window.google && window.google.maps) {
-          resolve(window.google.maps);
-          return;
-        }
-
-        const script = document.createElement("script");
-        script.src =
-          "https://maps.googleapis.com/maps/api/js?key=AIzaSyDYqP19MDyDR5PXp50uUbxHva-e_k2aMj0";
-        script.async = true;
-        script.defer = true;
-        script.onload = () => resolve(window.google.maps);
-        script.onerror = () => reject(new Error("Erreur de chargement de Google Maps"));
-        document.head.appendChild(script);
-      });
-    };
-
-    loadGoogleMaps().then((maps) => {
+    loadGoogleMaps(GOOGLE_MAPS_API_KEY).then((maps) => {
       if (!mapRef.current) return;
       
       const newMap = new maps.Map(mapRef.current, {
