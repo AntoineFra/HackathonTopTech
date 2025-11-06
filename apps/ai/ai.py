@@ -1,6 +1,7 @@
 import re
 import os
 import json
+from datetime import datetime
 
 os.environ["GOOGLE_API_KEY"] = "AIzaSyCoFnPPRP8d0NXtoGqi7pYOEAVK0AGw0yc"
 import chromadb
@@ -318,6 +319,15 @@ communes = [
     {"name": "Tende", "code": "06163"},
 ]
 
+
+def _log_step(message: str) -> None:
+    """Print a concise, timestamped log line for each pipeline step."""
+    try:
+        ts = datetime.now().strftime("%H:%M:%S")
+    except Exception:
+        ts = "--:--:--"
+    print(f"[{ts}] {message}")
+
 def get_table_def(table_name):
     pattern = re.compile(
         rf"CREATE\s+TABLE\s+['\"]?{re.escape(table_name)}['\"]?", re.IGNORECASE
@@ -386,14 +396,41 @@ def extract_sql(text: str) -> str:
     return text.strip().strip("`").rstrip(";")
 
 
+def extract_chart_from_text(text: str) -> dict | None:
+    """Extract a JSON chart block from model output inside ```chart ... ``` fences.
+    Returns a parsed dict or None if not found/parsable.
+    """
+    if not text:
+        return None
+    m = re.search(r"```chart\s*([\s\S]*?)```", text, re.IGNORECASE)
+    if not m:
+        return None
+    inner = m.group(1).strip()
+    # Try to parse inner as JSON; be forgiving for trailing commas or markdown
+    try:
+        return json.loads(inner)
+    except Exception:
+        # Try to extract a JSON object within the inner text
+        jmatch = re.search(r"(\{[\s\S]*\})", inner)
+        if jmatch:
+            try:
+                return json.loads(jmatch.group(1))
+            except Exception:
+                return None
+    return None
 
-def prompt_with_df(question_text: str, df: pd.DataFrame) -> str | None:
-    """Envoie un prompt concis à Google en se basant uniquement sur le DataFrame résultat."""
+
+
+def prompt_with_df(question_text: str, df: pd.DataFrame) -> tuple[str | None, dict | None]:
+    """Envoie un prompt concis à Google en se basant uniquement sur le DataFrame résultat.
+
+    Returns a tuple (response_text_or_None, chart_dict_or_None).
+    """
     if df is None or df.empty:
         print(
             "Aucune donnée retournée par la requête SQL. Impossible de formuler une réponse basée sur les données."
         )
-        return None
+        return None, None
 
     try:
         data_json = df.to_json(orient="records", force_ascii=False)
@@ -411,6 +448,19 @@ def prompt_with_df(question_text: str, df: pd.DataFrame) -> str | None:
     - Indique l'unité (%, nombre) si visible dans les colonnes.
     - Si plusieurs communes sont présentes, compare-les explicitement. Les colonnes 'commune_code' et 'commune_name' identifient la source.
     - Si plusieurs lignes sont pertinentes, propose une synthèse claire.
+        - Si la question demande explicitement un graphique, OU si un graphique rend la compréhension plus claire, propose un graphique.
+            - Fournis un bloc JSON dans des balises ```chart ... ``` APRÈS la réponse textuelle.
+            - Respecte strictement les noms de colonnes existants; n'invente pas de colonnes.
+            - Choisis un type parmi: bar, line, pie, area, radar, radial.
+            - Structure attendue du bloc:
+                        ```chart
+                        {{
+                            "type": "bar|line|pie|area|radar|radial",
+                            "data": [ ... ],
+                            "title": "<titre court>",
+                            "description": "<pourquoi ce graphique est pertinent en une phrase>"
+                        }}
+                        ```
 
     Question: {question_text}
 
@@ -421,12 +471,48 @@ def prompt_with_df(question_text: str, df: pd.DataFrame) -> str | None:
     try:
         ans = google_llm.invoke(followup_prompt)
         output = ans if isinstance(ans, str) else getattr(ans, "content", str(ans))
+        output_str = str(output)
         print("\nRéponse basée sur les données (Google):")
-        print(output)
-        return str(output)
+        print(output_str)
+        chart = extract_chart_from_text(output_str)
+        # Remove the chart block from the returned text so callers receive a clean answer
+        output_no_chart = re.sub(r"```chart\s*([\s\S]*?)```", "", output_str, flags=re.IGNORECASE).strip()
+        return output_no_chart, chart
     except Exception as e:
         print("Erreur lors de l'appel Google pour l'analyse des données:", e)
-        return None
+        return None, None
+
+
+def build_sql_fix_prompt(question_text: str, ddl_subset: str, sql_text: str, error_message: str | None) -> str:
+    """Return a concise prompt to help an LLM or a human fix the SQL without changing its core intent."""
+    err = error_message or ""
+    return (
+        "Tu es un expert SQL sur SQLite.\n"
+        "Objectif: corriger MINIMALEMENT la requête pour qu'elle s'exécute, sans changer son intention ni sa logique centrale.\n"
+        "Règles:\n"
+        "- Ne pas introduire d'agrégations interdites (p.ex. COUNT, SUM) s'il n'y en a pas.\n"
+        "- Respecter les noms de tables/colonnes du DDL fourni.\n"
+        "- Adapter la syntaxe au dialecte SQLite.\n"
+        "- Répondre uniquement par le SQL corrigé entre balises ```sql ... ```.\n\n"
+        f"Question: {question_text}\n\n"
+        f"Erreur: {err}\n\n"
+        "DDL (extrait):\n"
+        f"{ddl_subset}\n\n"
+        "Requête à corriger:\n"
+        f"```sql\n{sql_text}\n```\n"
+    )
+
+
+def try_fix_sql_via_google(question_text: str, ddl_subset: str, sql_text: str, error_message: str | None) -> str:
+    """Ask Google to minimally fix the SQL. Returns a new SQL or empty string on failure."""
+    prompt = build_sql_fix_prompt(question_text, ddl_subset, sql_text, error_message)
+    try:
+        res = google_llm.invoke(prompt)
+        content = res if isinstance(res, str) else getattr(res, "content", str(res))
+        fixed = extract_sql(str(content))
+        return fixed.strip()
+    except Exception as _:
+        return ""
 
 
 def _build_communes_catalog_formats(communes_catalog: list[dict]) -> tuple[str, str]:
@@ -457,6 +543,7 @@ def ask_google_for_commune_codes(
     - Respecte un maximum de communes si max_communes est fourni.
     Réponse attendue STRICTEMENT au format JSON: {"codes": ["06000", "06088", ...]}
     """
+    _log_step("[Codes] Résolution du périmètre géographique en cours…")
     try:
         # Construire deux formats de catalogue: table Markdown et JSON compact
         table_catalog, json_catalog = _build_communes_catalog_formats(communes_catalog)
@@ -481,7 +568,6 @@ Catalogue (TABLE):
 Catalogue (JSON):
 {json_catalog}
 """
-
         res = google_llm.invoke(prompt)
         raw = res if isinstance(res, str) else getattr(res, "content", str(res))
         # Tenter un parse JSON direct
@@ -532,10 +618,12 @@ Catalogue (JSON):
                 cleaned = cleaned[:max_communes]
 
             if cleaned:
+                _log_step(f"[Codes] Codes retenus: {', '.join(cleaned)}")
                 return cleaned
     except Exception as e:
         print("Erreur pendant la résolution des communes:", e)
     # Secours: département complet
+    _log_step("[Codes] Aucun code exploitable renvoyé, bascule sur ['06000']")
     return ["06000"]
 
 
@@ -680,14 +768,18 @@ class AskRequest(BaseModel):
 
 def _pipeline_internal(question_text: str, max_communes: Optional[int], override_codes: Optional[List[str]]):
     # 1) RAG: récupérer DDL cible
+    _log_step(f"[Pipeline] START – question: {question_text}")
+    _log_step("[RAG] Recherche des tables pertinentes…")
     try:
         results = collection.query(query_texts=[question_text], n_results=5)
+        _log_step(f"[RAG] Candidats tables: {sum(len(x) for x in results.get('ids', []))}")
         ddl_statements = ""
         for table_names in results.get("ids", []):
             for table_name in table_names:
                 table_def = get_table_def(table_name)
                 ddl_statements += (table_def or "") + "\n"
     except Exception as e:
+        _log_step(f"[RAG] Echec: {e}")
         return {
             "success": False,
             "query": question_text,
@@ -715,6 +807,7 @@ The query will run on a database with the following schema:
 Given the database schema, here is the SQL query that [QUESTION]{question_text}[/QUESTION]
 [SQL]
 """
+    _log_step("[SQL] Génération de la requête via Google…")
     try:
         res = google_llm.invoke(prompt)
         sql_req = ""
@@ -725,6 +818,7 @@ Given the database schema, here is the SQL query that [QUESTION]{question_text}[
     except Exception as e:
         sql_req = ""
     if not sql_req:
+        _log_step("[SQL] Aucune requête SQL générée")
         return {
             "success": False,
             "query": question_text,
@@ -740,8 +834,10 @@ Given the database schema, here is the SQL query that [QUESTION]{question_text}[
     # 3) Résolution communes
     if override_codes:
         selected_codes = [c for c in override_codes if isinstance(c, str)]
+        _log_step(f"[Codes] Codes fournis par l'appel: {', '.join(selected_codes) if selected_codes else '—'}")
     else:
         selected_codes = ask_google_for_commune_codes(question_text, communes, max_communes)
+        _log_step(f"[Codes] Codes sélectionnés: {', '.join(selected_codes) if selected_codes else '—'}")
 
     # 4) Exécution multi-DB et fusion
     code_to_name = {c.get("code"): c.get("name") for c in communes if isinstance(c, dict)}
@@ -762,6 +858,7 @@ Given the database schema, here is the SQL query that [QUESTION]{question_text}[
                 code_db_pairs.append(fallback)
                 break
     if not code_db_pairs:
+        _log_step("[DB] Aucune base SQLite trouvée pour les codes sélectionnés")
         return {
             "success": False,
             "query": question_text,
@@ -774,24 +871,64 @@ Given the database schema, here is the SQL query that [QUESTION]{question_text}[
             "chart": {"type": "bar", "data": []},
         }
 
+    _log_step(f"[DB] Bases à interroger: {len(code_db_pairs)}")
     dfs: List[pd.DataFrame] = []
-    for code, dbp in code_db_pairs:
-        try:
-            with sqlite3.connect(dbp) as conn:
-                dfp = pd.read_sql_query(sql_req, conn)
-            dfp.insert(0, "commune_code", code)
-            dfp.insert(1, "commune_name", code_to_name.get(code, code))
-            dfs.append(dfp)
-        except Exception as e:
-            print(f"Erreur pour {code} ({dbp}):", e)
+    first_error: str | None = None
+    current_sql = sql_req
+    attempted_retry = False
+    retry_succeeded = False
+
+    def _run_once(sql_to_run: str) -> tuple[list[pd.DataFrame], str | None]:
+        tmp_dfs: list[pd.DataFrame] = []
+        local_err: str | None = None
+        for code, dbp in code_db_pairs:
+            try:
+                _log_step(f"[SQL] Exécution sur {code} ({os.path.basename(dbp)})")
+                with sqlite3.connect(dbp) as conn:
+                    dfp = pd.read_sql_query(sql_to_run, conn)
+                dfp.insert(0, "commune_code", code)
+                dfp.insert(1, "commune_name", code_to_name.get(code, code))
+                tmp_dfs.append(dfp)
+            except Exception as e:
+                msg = str(e)
+                print(f"Erreur pour {code} ({dbp}):", msg)
+                if local_err is None:
+                    local_err = msg
+        return tmp_dfs, local_err
+
+    # First attempt with original SQL
+    dfs, first_error = _run_once(current_sql)
+
+    # One-time retry on SQL execution failure
+    if not dfs and first_error:
+        _log_step("[Retry] Echec d'exécution SQL – tentative de correction minimale…")
+        attempted_retry = True
+        fixed_sql = try_fix_sql_via_google(question_text, ddl_statements, current_sql, first_error)
+        if fixed_sql:
+            _log_step("[Retry] SQL corrigé par LLM – nouvelle tentative…")
+            current_sql = fixed_sql
+            dfs, second_error = _run_once(current_sql)
+            retry_succeeded = len(dfs) > 0
+            if not retry_succeeded:
+                first_error = second_error or first_error
+        else:
+            _log_step("[Retry] Impossible d'obtenir une correction SQL")
 
     if not dfs:
+        _log_step("[SQL] Aucune donnée retournée sur les bases interrogées")
+        # Build a fix prompt for the caller to iterate manually
+        fix_prompt = build_sql_fix_prompt(question_text, ddl_statements, current_sql, first_error)
         return {
             "success": True,
             "query": question_text,
             "answer": "",
             "error": "no_data",
             "sqlQuery": sql_req,
+            "sqlQueryFixed": current_sql if attempted_retry else "",
+            "retryAttempted": attempted_retry,
+            "retrySucceeded": False,
+            "retryError": first_error,
+            "sqlFixPrompt": fix_prompt,
             "selected_codes": selected_codes,
             "model": "gemini-2.5-flash",
             "source": "sqlite",
@@ -799,7 +936,13 @@ Given the database schema, here is the SQL query that [QUESTION]{question_text}[
         }
 
     df_all = pd.concat(dfs, ignore_index=True, sort=False)
-    answer = prompt_with_df(question_text, df_all) or ""
+    _log_step(f"[Data] Fusion des résultats: shape={df_all.shape}")
+    _log_step("[LLM] Génération de la réponse finale basée sur les données…")
+    ans_text, chart = prompt_with_df(question_text, df_all)
+    answer = ans_text or ""
+    _log_step("[Pipeline] DONE")
+
+    chart = chart or {"type": "bar", "data": []}
 
     return {
         "success": True,
@@ -807,15 +950,21 @@ Given the database schema, here is the SQL query that [QUESTION]{question_text}[
         "answer": answer,
         "error": None,
         "sqlQuery": sql_req,
+        "sqlQueryFixed": current_sql if attempted_retry else "",
+        "retryAttempted": attempted_retry,
+        "retrySucceeded": retry_succeeded,
+        "retryError": None if retry_succeeded else (first_error or ""),
+        "sqlFixPrompt": build_sql_fix_prompt(question_text, ddl_statements, current_sql, None if retry_succeeded else first_error),
         "selected_codes": selected_codes,
         "model": "gemini-2.5-flash",
         "source": "sqlite",
-        "chart": {"type": "bar", "data": []},
+        "chart": chart,
     }
 
 
 @app.post("/api/ask")
 def api_ask(req: AskRequest):
+    _log_step(f"[HTTP] POST /api/ask – query='{req.query}'" )
     result = _pipeline_internal(req.query, req.maxCommunes, req.codes)
     # Add optional fields presence according to requested DTO
     return result

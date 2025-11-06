@@ -98,14 +98,12 @@ def download_insee_csvs(
     return summary
 
 
-if __name__ == "__main__":
-	#download range of city codes
-	for code in range(6015, 6164):
-		city_code = str(code).zfill(5)
-		result = download_insee_csvs(city_code, pause=0.2)
-		print(f"Download summary for city code {city_code}:")
-		print(f"  Successful downloads: {len(result['ok'])}")
-		print(f"  Failed downloads: {len(result['failed'])}")
-		if result["failed"]:
-			for failure in result["failed"]:
-				print(f"    - {failure['file']}: {failure['error']}")
+# if __name__ == "__main__":
+# 	#download range of city codes
+# 	for code in range(6015, 6164):
+# 		city_code = str(code).zfill(5)
+# 		result = download_insee_csvs(city_code, pause=0.2)
+# 		print(f"Download summary for city code {city_code}: Successful downloads: {len(result['ok'])}, Failed downloads: {len(result['failed'])}")
+# 		if result["failed"]:
+# 			for failure in result["failed"]:
+# 				print(f"    - {failure['file']}: {failure['error']}")
