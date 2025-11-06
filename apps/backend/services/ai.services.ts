@@ -6,10 +6,16 @@ import type {
 import {
     answerQuestionWithOllama,
     checkOllamaHealth as checkOllamaHealthService,
-    type ChatMessage,
+    type ChatMessage as OllamaMessage,
 } from "./ollama.services.js";
+import {
+    answerQuestionWithGemini,
+    type ChatMessage as GeminiMessage,
+} from "./gemini.services.js";
 
-export type { ChatMessage };
+export type ChatMessage = OllamaMessage;
+
+const DEFAULT_AI_PROVIDER = (process.env.DEFAULT_AI_PROVIDER || "ollama") as "ollama" | "gemini";
 
 export interface ParsedQuestion {
     text: string;
@@ -254,11 +260,21 @@ export async function getAIResponse(prompt: string) {
 export async function answerQuestion(
     question: string,
     history: ChatMessage[] = [],
+    provider: "ollama" | "gemini" = DEFAULT_AI_PROVIDER,
 ) {
     if (!question) throw new Error("Question is required");
 
-    // Utiliser Ollama pour répondre
-    const response = await answerQuestionWithOllama(question, history);
+    console.log(`[AI Service] Using provider: ${provider}`);
+
+    // Convertir l'historique pour Gemini si nécessaire (filtrer les messages system)
+    const geminiHistory = history
+        .filter(msg => msg.role !== "system")
+        .map(msg => ({ role: msg.role as "user" | "assistant", content: msg.content }));
+
+    // Utiliser le provider sélectionné
+    const response = provider === "gemini"
+        ? await answerQuestionWithGemini(question, geminiHistory)
+        : await answerQuestionWithOllama(question, history);
 
     if (!response.success) {
         throw new Error(
@@ -273,6 +289,9 @@ export async function answerQuestion(
         confidence: response.confidence || 0.85,
         model: response.model,
         source: response.source,
+        legendType: response.legendType,
+        chart: response.chart,
+        prismaQuery: response.prismaQuery,
     };
 }
 

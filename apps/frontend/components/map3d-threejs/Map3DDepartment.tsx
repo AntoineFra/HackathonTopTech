@@ -18,7 +18,14 @@ import {
     setCityColor,
     setHoveredCityColor,
 } from "@/lib/threejs-loaders/departmentLoader";
+import {
+    applyPopulationGradient,
+    resetCityColors,
+} from "@/lib/threejs-loaders/colorGradient";
 import { Map3DChatBox } from "./Map3DChatBox";
+import Map3DLegends, { LegendType } from "./Map3DLegends";
+import { PopulationChart } from "./PopulationChart";
+import { AIGeneratedChart } from "./AIGeneratedChart";
 
 function DepartmentScene({
     onLoadingChange,
@@ -28,6 +35,8 @@ function DepartmentScene({
     selectedCityName,
     citiesListRef,
     controlsRef,
+    populationData,
+    activeLegends,
 }: {
     onLoadingChange: (loading: boolean) => void;
     onCityCountChange: (count: number) => void;
@@ -36,6 +45,8 @@ function DepartmentScene({
     selectedCityName: string | null;
     citiesListRef: React.MutableRefObject<string[]>;
     controlsRef: React.MutableRefObject<any>;
+    populationData: any[];
+    activeLegends: Set<string>;
 }) {
     const { scene, camera, gl } = useThree();
     const loadedRef = useRef(false);
@@ -308,6 +319,7 @@ function DepartmentScene({
                 const avgLon = sumLon / allCoordinates.length;
 
                 // Convertir en coordonnées cartésiennes
+                if (!centerLatLonRef.current) return;
                 const { centerLat, centerLon } = centerLatLonRef.current;
                 const R = 6371000;
                 const lat1 = (centerLat * Math.PI) / 180;
@@ -389,6 +401,23 @@ function DepartmentScene({
         }
     });
 
+    // Appliquer le gradient de couleurs quand les données de population changent
+    useEffect(() => {
+        if (populationData.length > 0 && activeLegends.has("population")) {
+            console.log("🎨 Application du gradient de population...");
+            applyPopulationGradient(scene, populationData);
+            // Réappliquer le hover/sélection après le gradient
+            setHoveredCityColor(scene, hoveredCity, selectedCityName);
+        } else {
+            // Réinitialiser les couleurs si la légende est désactivée
+            if (!activeLegends.has("population")) {
+                resetCityColors(scene);
+                // Réappliquer le hover/sélection après la réinitialisation
+                setHoveredCityColor(scene, hoveredCity, selectedCityName);
+            }
+        }
+    }, [populationData, activeLegends, scene, hoveredCity, selectedCityName]);
+
     // Changer la couleur de la ville sélectionnée et survolée
     useEffect(() => {
         setHoveredCityColor(scene, hoveredCity, selectedCityName);
@@ -404,6 +433,9 @@ export default function Map3DDepartment() {
     const [selectedCity, setSelectedCity] = useState<string | null>(null);
     const [currentCityIndex, setCurrentCityIndex] = useState(0);
     const [aiResponse, setAiResponse] = useState<string>("");
+    const [activeLegends, setActiveLegends] = useState<Set<LegendType>>(new Set());
+    const [populationData, setPopulationData] = useState<any[]>([]);
+    const [selectedCityPopulation, setSelectedCityPopulation] = useState<any>(null);
     const citiesListRef = useRef<string[]>([]);
     const controlsRef = useRef<any>(null);
 
@@ -414,14 +446,41 @@ export default function Map3DDepartment() {
         }
     };
 
-    const handleCitySelected = (cityName: string | null) => {
+    const handleCitySelected = async (cityName: string | null) => {
         setSelectedCity(cityName);
         setAiResponse(""); // Reset AI response when manually selecting a city
+
         if (cityName) {
             const index = citiesListRef.current.indexOf(cityName);
             if (index !== -1) {
                 setCurrentCityIndex(index);
             }
+
+            // Charger les données de population si la légende est active
+            if (activeLegends.has("population")) {
+                try {
+                    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL!;
+                    // Trouver le codeINSEE de la ville depuis les données globales
+                    const cityData = populationData.find(
+                        (city) => city.libelle?.toLowerCase() === cityName.toLowerCase()
+                    );
+
+                    if (cityData) {
+                        console.log(`📊 Chargement population pour ${cityName} (${cityData.codeGeo})`);
+                        const response = await fetch(
+                            `${backendUrl}/api/trois-d/population/${cityData.codeGeo}`
+                        );
+                        if (response.ok) {
+                            const data = await response.json();
+                            setSelectedCityPopulation(data[0]); // Premier résultat
+                        }
+                    }
+                } catch (error) {
+                    console.error("❌ Erreur chargement population ville:", error);
+                }
+            }
+        } else {
+            setSelectedCityPopulation(null);
         }
     };
 
@@ -434,6 +493,46 @@ export default function Map3DDepartment() {
         }
     };
 
+    const handleLegendActivate = async (legendType: LegendType) => {
+        console.log(`🤖 L'IA suggère d'activer la légende: ${legendType}`);
+
+        // Activer la légende si elle n'est pas déjà active
+        if (!activeLegends.has(legendType)) {
+            await handleLegendChange(legendType, true);
+        }
+    };
+
+    const handleLegendChange = async (legendType: LegendType, enabled: boolean) => {
+        const newLegends = new Set(activeLegends);
+        if (enabled) {
+            newLegends.add(legendType);
+
+            // Si c'est la population, charger les données
+            if (legendType === "population") {
+                try {
+                    console.log("📊 Chargement des données de population...");
+                    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL!;
+                    const response = await fetch(`${backendUrl}/api/trois-d/population`);
+                    if (!response.ok) {
+                        console.error("❌ Erreur lors du chargement des données de population");
+                        return;
+                    }
+                    const data = await response.json();
+                    setPopulationData(data);
+                    console.log(`✅ ${data.length} enregistrements de population chargés`);
+                } catch (error) {
+                    console.error("❌ Erreur:", error);
+                }
+            }
+        } else {
+            newLegends.delete(legendType);
+            if (legendType === "population") {
+                setPopulationData([]);
+            }
+        }
+        setActiveLegends(newLegends);
+    };
+
     // Navigation avec les flèches
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -444,10 +543,10 @@ export default function Map3DDepartment() {
                 const newIndex =
                     (currentCityIndex + 1) % citiesListRef.current.length;
                 setCurrentCityIndex(newIndex);
-                setSelectedCity(citiesListRef.current[newIndex]);
-                setAiResponse(""); // Reset AI response on manual navigation
+                const newCity = citiesListRef.current[newIndex];
+                handleCitySelected(newCity);
                 console.log(
-                    `➡️ Ville suivante: ${citiesListRef.current[newIndex]}`,
+                    `➡️ Ville suivante: ${newCity}`,
                 );
             } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
                 e.preventDefault();
@@ -456,20 +555,22 @@ export default function Map3DDepartment() {
                         ? citiesListRef.current.length - 1
                         : currentCityIndex - 1;
                 setCurrentCityIndex(newIndex);
-                setSelectedCity(citiesListRef.current[newIndex]);
-                setAiResponse(""); // Reset AI response on manual navigation
+                const newCity = citiesListRef.current[newIndex];
+                handleCitySelected(newCity);
                 console.log(
-                    `⬅️ Ville précédente: ${citiesListRef.current[newIndex]}`,
+                    `⬅️ Ville précédente: ${newCity}`,
                 );
             }
         };
 
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [currentCityIndex]);
+    }, [currentCityIndex, activeLegends, populationData]);
 
     return (
-        <div className="relative h-[70vh] w-full">
+        <div className="flex flex-col">
+            {/* Carte 3D */}
+            <div className="relative h-[70vh] w-full">
             <Canvas>
                 <PerspectiveCamera
                     makeDefault
@@ -493,6 +594,8 @@ export default function Map3DDepartment() {
                     selectedCityName={selectedCity}
                     citiesListRef={citiesListRef}
                     controlsRef={controlsRef}
+                    populationData={populationData}
+                    activeLegends={activeLegends}
                 />
             </Canvas>
 
@@ -548,6 +651,40 @@ export default function Map3DDepartment() {
                             </h3>
                         </div>
 
+                        {/* Données de population si légende active */}
+                        {activeLegends.has("population") && selectedCityPopulation && (
+                            <div className="border-border border-t pt-3">
+                                <p className="text-muted-foreground mb-3 text-xs font-semibold">
+                                    Évolution de la population
+                                </p>
+                                <PopulationChart populationData={selectedCityPopulation} />                                {/* Stats rapides */}
+                                <div className="mt-3 grid grid-cols-2 gap-2">
+                                    <div className="bg-muted/50 rounded p-2">
+                                        <p className="text-muted-foreground text-[10px]">
+                                            Population 2022
+                                        </p>
+                                        <p className="text-foreground text-base font-bold">
+                                            {selectedCityPopulation.pop2022?.toLocaleString()}
+                                        </p>
+                                    </div>
+                                    <div className="bg-muted/50 rounded p-2">
+                                        <p className="text-muted-foreground text-[10px]">
+                                            Évolution 1999-2022
+                                        </p>
+                                        <p className={`text-base font-bold ${
+                                            (selectedCityPopulation.pop2022 || 0) > (selectedCityPopulation.pop1999 || 0)
+                                                ? "text-green-500"
+                                                : "text-red-500"
+                                        }`}>
+                                            {selectedCityPopulation.pop2022 && selectedCityPopulation.pop1999
+                                                ? `${(((selectedCityPopulation.pop2022 - selectedCityPopulation.pop1999) / selectedCityPopulation.pop1999) * 100).toFixed(1)}%`
+                                                : "N/A"}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Réponse de l'IA si disponible */}
                         {aiResponse && (
                             <div className="border-border border-t pt-3">
@@ -573,13 +710,23 @@ export default function Map3DDepartment() {
                 </div>
             )}
 
-            {/* Chat IA - en bas à gauche */}
-            <div className="absolute bottom-4 left-4 w-full max-w-md">
-                <Map3DChatBox
-                    citiesList={citiesListRef.current}
-                    onCityDetected={handleAICityDetected}
+            {/* Légendes - en bas à gauche */}
+            <div className="absolute bottom-4 left-4">
+                <Map3DLegends
+                    onLegendChange={handleLegendChange}
+                    activeLegends={activeLegends}
                 />
             </div>
         </div>
+
+        {/* Chat IA - Section en dessous de la carte */}
+        <div className="w-full max-w-4xl mx-auto py-6 px-4">
+            <Map3DChatBox
+                citiesList={citiesListRef.current}
+                onCityDetected={handleAICityDetected}
+                onLegendActivate={handleLegendActivate}
+            />
+        </div>
+    </div>
     );
 }
