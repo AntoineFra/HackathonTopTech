@@ -2,8 +2,8 @@
 import citiesData from './db_cities.json';
 
 interface GeoJSONGeometry {
-  type: string;
-  coordinates: number[][][];
+  type: 'Polygon' | 'MultiPolygon';
+  coordinates: any; // Can be number[][][] for Polygon or number[][][][] for MultiPolygon
 }
 
 export interface CityDataType {
@@ -25,41 +25,67 @@ interface LatLngLiteral {
   lng: number;
 }
 
+// Pour Google Maps, on peut avoir plusieurs polygones par ville (MultiPolygon)
 interface CityPolygonsType {
-  [key: string]: LatLngLiteral[];
+  [key: string]: LatLngLiteral[][]; // Array de polygones (chaque polygone est un array de points)
 }
 
 interface CityDataMap {
   [key: string]: CityDataType;
 }
 
-// Fonction pour convertir les coordonnées GeoJSON en format Google Maps
-function parseGeoJSONToGoogleMaps(contourString: string): LatLngLiteral[] {
+/**
+ * Fonction pour convertir les coordonnées GeoJSON en format Google Maps
+ * Gère correctement Polygon ET MultiPolygon en retournant TOUS les polygones
+ * 
+ * @param contourString - String JSON du contour GeoJSON
+ * @returns Array de polygones, chaque polygone étant un array de LatLngLiteral
+ */
+function parseGeoJSONToGoogleMaps(contourString: string): LatLngLiteral[][] {
   try {
     const geoJSON = JSON.parse(contourString) as GeoJSONGeometry;
     
-    if (!geoJSON || !geoJSON.coordinates) {
+    if (!geoJSON || !geoJSON.coordinates || !geoJSON.type) {
+      console.warn('GeoJSON invalide ou vide');
       return [];
     }
 
-    // Gérer MultiPolygon et Polygon
-    let coordinates: any = geoJSON.coordinates;
-    
-    if (geoJSON.type === 'MultiPolygon') {
-      // Prendre le premier polygone du MultiPolygon
-      coordinates = coordinates[0];
-    }
-    
+    const allPolygons: LatLngLiteral[][] = [];
+
     if (geoJSON.type === 'Polygon') {
-      // Prendre le contour externe (premier élément)
-      coordinates = coordinates[0];
+      // Polygon: coordinates = [exterior_ring, ...holes]
+      // On ne prend que le contour extérieur (premier élément)
+      const exteriorRing = geoJSON.coordinates[0];
+      
+      if (Array.isArray(exteriorRing) && exteriorRing.length >= 3) {
+        const polygon = exteriorRing.map((coord: number[]) => ({
+          lat: coord[1],  // GeoJSON est [lng, lat]
+          lng: coord[0]
+        }));
+        allPolygons.push(polygon);
+      }
+      
+    } else if (geoJSON.type === 'MultiPolygon') {
+      // MultiPolygon: coordinates = [[exterior_ring, ...holes], ...]
+      // On parcourt TOUS les polygones
+      geoJSON.coordinates.forEach((polygonCoords: any) => {
+        if (!Array.isArray(polygonCoords) || polygonCoords.length === 0) return;
+        
+        // Prendre le contour extérieur de ce polygone
+        const exteriorRing = polygonCoords[0];
+        
+        if (Array.isArray(exteriorRing) && exteriorRing.length >= 3) {
+          const polygon = exteriorRing.map((coord: number[]) => ({
+            lat: coord[1],  // GeoJSON est [lng, lat]
+            lng: coord[0]
+          }));
+          allPolygons.push(polygon);
+        }
+      });
     }
 
-    // Convertir [lng, lat] en {lat, lng}
-    return coordinates.map((coord: number[]) => ({
-      lat: coord[1],
-      lng: coord[0]
-    }));
+    return allPolygons;
+    
   } catch (error) {
     console.error('Erreur parsing GeoJSON:', error);
     return [];
