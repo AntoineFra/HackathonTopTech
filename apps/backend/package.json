@@ -1,12 +1,16 @@
 {
-    "name": "hackabacktek",
+    "name": "backend",
     "version": "1.0.0",
     "description": "",
     "main": "index.js",
     "scripts": {
         "dev": "tsx watch server.ts",
         "start": "npx tsx server.ts",
-        "update": "pnpm prisma db push"
+        "build": "echo 'Backend build - No build needed for Express'",
+        "prisma:generate": "prisma generate",
+        "prisma:push": "prisma db push",
+        "prisma:studio": "prisma studio",
+        "format": "prettier --write \"**/*.{ts,js,json}\""
     },
     "keywords": [],
     "author": "",
@@ -18,6 +22,8 @@
         "@types/express": "^5.0.5",
         "@types/morgan": "^1.9.10",
         "@types/node": "^24.10.0",
+        "@types/swagger-jsdoc": "^6.0.4",
+        "@types/swagger-ui-express": "^4.1.8",
         "@types/unzipper": "^0.10.11",
         "prettier": "^3.6.2",
         "prisma": "^6.19.0",
@@ -33,6 +39,9 @@
         "express": "^5.1.0",
         "extract-zip": "^2.0.1",
         "morgan": "^1.10.1",
-        "unzipper": "^0.12.3"
+        "swagger-jsdoc": "^6.2.8",
+        "swagger-ui-express": "^5.0.1",
+        "unzipper": "^0.12.3",
+        "xlsx": "^0.18.5"
     }
 }

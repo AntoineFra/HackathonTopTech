@@ -1,10 +1,10 @@
 import type { Express } from "express";
-import { PrismaClient } from "../generated/prisma/client.js";
 
 import dumpRoutes from "./dump.routes.js";
 import usersRoutes from "./users.routes.js";
 import aiRoutes from "./ai.routes.js";
 import troisDRoutes from "./trois-d.routes.js";
+import settingsRoutes from "./settings.routes.js";
 
 export default function registerRoutes(app: Express) {
     // Mount grouped routes under their base paths
@@ -12,5 +12,5 @@ export default function registerRoutes(app: Express) {
     app.use("/api/users", usersRoutes);
     app.use("/api/ai", aiRoutes);
     app.use("/api/trois-d", troisDRoutes);
-
+    app.use("/api/settings", settingsRoutes);
 }

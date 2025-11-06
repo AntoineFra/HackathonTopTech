@@ -1,32 +1,41 @@
 import type { Request, Response } from "express";
-import { dumpLegalUnit, dumpCities } from "../services/dump.services.js";
-import * as dump_srvc from "../services/dump.services.js";
+import { dumpLegalUnit, dumpCities, getAllCities, dumpPopulationData, type DumpResult } from "../services/dump.services.js";
 import { prisma } from "../server.js";
+import { DumpStatus } from "../generated/prisma/enums.js";
 
 enum DumpType {
     LEGAL_UNITS = "legal_unit",
     CITIES = "cities",
+    POPULATION = "population",
 }
 
 enum DumpTypeFrench {
     LEGAL_UNITS = "Unités légales",
     CITIES = "Villes",
+    POPULATION = "Population",
 }
+
+const DUMP_TYPE_LABELS: Record<DumpType, string> = {
+    [DumpType.LEGAL_UNITS]: DumpTypeFrench.LEGAL_UNITS,
+    [DumpType.CITIES]: DumpTypeFrench.CITIES,
+    [DumpType.POPULATION]: DumpTypeFrench.POPULATION,
+};
+
+type DumpFunction = () => Promise<DumpResult>;
+
+const DUMP_HANDLERS: Record<DumpType, DumpFunction> = {
+    [DumpType.LEGAL_UNITS]: () => dumpLegalUnit(),
+    [DumpType.CITIES]: async () => dumpCities(await getAllCities("06")),
+    [DumpType.POPULATION]: async () => dumpPopulationData(),
+};
 
 export async function getDumpList(req: Request, res: Response) {
     try {
-        const db: any = prisma;
-        const dumps = await db.dump.findMany({ orderBy: { id: "asc" } });
-
-        // Map DB dump.type values to their French display names for the response only
-        const typeToFrench: Record<string, string> = {
-            [DumpType.LEGAL_UNITS]: DumpTypeFrench.LEGAL_UNITS,
-            [DumpType.CITIES]: DumpTypeFrench.CITIES,
-        };
+        const dumps = await prisma.dump.findMany({ orderBy: { id: "asc" } });
 
         const dumpsForResponse = dumps.map((d: any) => ({
             ...d,
-            label: typeToFrench[d.type] ?? d.type,
+            label: DUMP_TYPE_LABELS[d.type as DumpType] ?? d.type,
         }));
 
         return res.json({ status: "ok", dumps: dumpsForResponse });
@@ -38,59 +47,46 @@ export async function getDumpList(req: Request, res: Response) {
     }
 }
 
+async function updateDumpStatus(dumpType: DumpType, status: DumpStatus, lastUpdate?: Date) {
+    return prisma.dump.upsert({
+        where: { type: dumpType as any },
+        update: { status, ...(lastUpdate && { lastUpdate }) },
+        create: { type: dumpType as any, status },
+    });
+}
+
+async function executeDump(dumpType: DumpType): Promise<DumpResult> {
+    const handler = DUMP_HANDLERS[dumpType];
+    return await handler();
+}
+
 export async function dumpData(req: Request, res: Response) {
+    const dumpType = req.params.dumpType as DumpType;
+
+    if (!Object.values(DumpType).includes(dumpType)) {
+        return res.status(400).json({ error: "Invalid dump type" });
+    }
+
     try {
-        const dumpType = req.params.dumpType as DumpType;
-        const validTypes = Object.values(DumpType);
+        await updateDumpStatus(dumpType, DumpStatus.EN_COURS);
 
-        if (!validTypes.includes(dumpType)) {
-            return res.status(400).json({ error: "Invalid dump type" });
-        }
+        const dumpResult = await executeDump(dumpType);
 
-        const db: any = prisma;
-        // Mark dump as "EN_COURS"
-        await db.dump.upsert({
-            where: { type: dumpType as any },
-            update: { status: "EN_COURS" },
-            create: { type: dumpType as any, status: "EN_COURS" },
+        await updateDumpStatus(dumpType, DumpStatus.A_JOUR, new Date());
+
+        return res.json({
+            success: true,
+            message: `${DUMP_TYPE_LABELS[dumpType]} dumped successfully`,
+            data: dumpResult,
         });
-
-        const dumpFunctionMap: { [key in DumpType]: () => Promise<void> } = {
-            [DumpType.LEGAL_UNITS]: async () => dumpLegalUnit(),
-            [DumpType.CITIES]: async () =>
-                dumpCities(await dump_srvc.getAllCities("06")),
-        };
-
-        try {
-            await dumpFunctionMap[dumpType]();
-
-            await db.dump.update({
-                where: { type: dumpType as any },
-                data: { status: "A_JOUR", lastUpdate: new Date() },
-            });
-
-            return res.json({
-                success: true,
-                message: `${dumpType} dumped successfully`,
-            });
-        } catch (innerErr) {
-            console.error("Error during dump execution:", innerErr);
-            // on error set to PAS_A_JOUR
-            await db.dump.update({
-                where: { type: dumpType as any },
-                data: { status: "PAS_A_JOUR" },
-            });
-            return res
-                .status(500)
-                .json({
-                    error: "Failed to run dump",
-                    details: String(innerErr),
-                });
-        }
     } catch (err) {
-        console.log("Error during dumpData:", err);
-        return res
-            .status(500)
-            .json({ error: "Failed to dump database", details: err });
+        console.error("Error during dump execution:", err);
+
+        await updateDumpStatus(dumpType, DumpStatus.PAS_A_JOUR);
+
+        return res.status(500).json({
+            error: "Failed to run dump",
+            details: String(err),
+        });
     }
 }

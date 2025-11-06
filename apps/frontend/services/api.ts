@@ -40,8 +40,24 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
         headers["Content-Type"] = "application/json";
     }
 
+    // If we're sending JSON content and body is not a string or FormData, stringify it
+    const finalOptions: RequestInit = { ...options, headers };
+    if (
+        finalOptions.body &&
+        !(finalOptions.body instanceof FormData) &&
+        headers["Content-Type"] === "application/json" &&
+        typeof finalOptions.body !== "string"
+    ) {
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            finalOptions.body = JSON.stringify(finalOptions.body);
+        } catch (e) {
+            console.warn("apiFetch: could not stringify body", e);
+        }
+    }
+
     console.log(`➡️  ${options.method || "GET"} ${url}`, headers);
-    const res = await fetch(url, { ...options, headers });
+    const res = await fetch(url, finalOptions);
     console.log("⬅️  ", res);
 
     if (!res.ok) {

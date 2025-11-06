@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Send, Loader2, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 
 interface HoveredCity extends CityDataType {
-  name: string;
+    name: string;
 }
 
 const GOOGLE_MAPS_API_KEY = "AIzaSyDYqP19MDyDR5PXp50uUbxHva-e_k2aMj0";

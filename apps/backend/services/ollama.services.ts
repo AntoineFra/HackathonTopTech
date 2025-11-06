@@ -2,9 +2,12 @@
 // Ollama AI Service pour le backend
 // ==================================
 
+import settingsService from "./settings.service.js";
+
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "mistral";
-const OLLAMA_TIMEOUT = parseInt(process.env.OLLAMA_TIMEOUT || "30000");
+// Keep a fallback env-based default; actual timeout will be read from settings at call time
+const FALLBACK_OLLAMA_TIMEOUT = parseInt(process.env.OLLAMA_TIMEOUT || "30000");
 
 export interface ChatMessage {
     role: "user" | "assistant" | "system";
@@ -122,9 +125,22 @@ export async function generateWithOllama(
     };
 
     console.log(`[Ollama Service] Calling Ollama with model: ${OLLAMA_MODEL}`);
+    console.log(`[Ollama Service] URL: ${OLLAMA_BASE_URL}/api/generate`);
+    console.log(`[Ollama Service] Prompt length: ${prompt.length} chars`);
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), OLLAMA_TIMEOUT);
+    // Read dynamic timeout from settings; fallback to env-based default
+    let timeoutMs = FALLBACK_OLLAMA_TIMEOUT;
+    try {
+        const s = await settingsService.getAITimeout();
+        if (typeof s === "number" && Number.isFinite(s) && s > 0) {
+            timeoutMs = s;
+        }
+    } catch (e) {
+        // ignore and use fallback
+    }
+
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
         const response = await fetch(`${OLLAMA_BASE_URL}/api/generate`, {
@@ -139,8 +155,15 @@ export async function generateWithOllama(
         clearTimeout(timeoutId);
 
         if (!response.ok) {
+            let errorDetails = "";
+            try {
+                const errorBody = await response.text();
+                errorDetails = errorBody ? `: ${errorBody}` : "";
+            } catch {
+                // Ignore if can't read body
+            }
             throw new Error(
-                `Ollama API error: ${response.status} ${response.statusText}`,
+                `Ollama API error: ${response.status} ${response.statusText}${errorDetails}`,
             );
         }
 

@@ -116,6 +116,7 @@ model PostalCode {
 enum DumpType {
   legal_unit
   cities
+  population
 }
 
 enum DumpStatus {
@@ -129,4 +130,57 @@ model Dump {
   type       DumpType   @unique
   status     DumpStatus @default(PAS_A_JOUR)
   lastUpdate DateTime?
+}
+
+// Historical population data from 1876 to 2022
+model PopulationHistory {
+  id              Int    @id @default(autoincrement())
+  codeGeo         String // Code géographique (CODGEO)
+  region          String // Région (REG)
+  departement     String // Département (DEP)
+  libelle         String // Libellé géographique (LIBGEO)
+
+  // Population data from 2006 to 2022 (recent data)
+  pop2022         Int?
+  pop2021         Int?
+  pop2020         Int?
+  pop2019         Int?
+  pop2018         Int?
+  pop2017         Int?
+  pop2016         Int?
+  pop2015         Int?
+  pop2014         Int?
+  pop2013         Int?
+  pop2012         Int?
+  pop2011         Int?
+  pop2010         Int?
+  pop2009         Int?
+  pop2008         Int?
+  pop2007         Int?
+  pop2006         Int?
+
+  // Population data from 1954 to 1999 (intermediate historical data)
+  pop1999         Int?
+  pop1990         Int?
+  pop1982         Int?
+  pop1975         Int?
+  pop1968         Int?
+  pop1962         Int?
+  pop1954         Int?
+
+  // Population data from 1876 to 1936 (older historical data)
+  pop1936         Int?
+  pop1931         Int?
+  pop1926         Int?
+  pop1921         Int?
+  pop1911         Int?
+  pop1906         Int?
+  pop1901         Int?
+  pop1896         Int?
+  pop1891         Int?
+  pop1886         Int?
+  pop1881         Int?
+  pop1876         Int?
+
+  @@unique([codeGeo])
 }

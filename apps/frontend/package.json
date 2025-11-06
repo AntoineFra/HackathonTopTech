@@ -1,12 +1,13 @@
 {
-    "name": "hackathon",
+    "name": "frontend",
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "dev": "next dev",
+        "dev": "next dev -p 8080",
         "build": "next build",
-        "start": "next start",
-        "lint": "eslint"
+        "start": "next start -p 8080",
+        "lint": "eslint",
+        "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\""
     },
     "dependencies": {
         "@radix-ui/react-slot": "^1.2.3",
