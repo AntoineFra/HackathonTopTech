@@ -27,15 +27,23 @@ export async function downloadAndExtractZip(url: string) {
     const writer = fs.createWriteStream(zipPath);
     let downloaded = 0;
     let lastPercent = 0;
+    const isTTY = process.stdout.isTTY && typeof process.stdout.clearLine === 'function';
 
     response.data.on("data", (chunk: string | any[]) => {
         downloaded += chunk.length;
         if (totalLength > 0) {
             const percent = Math.floor((downloaded / totalLength) * 100);
             if (percent !== lastPercent && percent % 2 === 0) {
-                process.stdout.clearLine(0);
-                process.stdout.cursorTo(0);
-                process.stdout.write(`📥 Downloading... ${percent}%`);
+                if (isTTY) {
+                    process.stdout.clearLine(0);
+                    process.stdout.cursorTo(0);
+                    process.stdout.write(`📥 Downloading... ${percent}%`);
+                } else {
+                    // In non-TTY environments (like Docker), just log periodically
+                    if (percent % 10 === 0) {
+                        console.log(`📥 Downloading... ${percent}%`);
+                    }
+                }
                 lastPercent = percent;
             }
         }
@@ -47,7 +55,10 @@ export async function downloadAndExtractZip(url: string) {
         writer.on("error", reject);
     });
 
-    process.stdout.write("\n✅ ZIP downloaded.\n");
+    if (isTTY) {
+        process.stdout.write("\n");
+    }
+    console.log("✅ ZIP downloaded.");
 
     console.log("📦 Extracting ZIP...");
     try {

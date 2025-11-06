@@ -4,11 +4,30 @@ import path from "path";
 import { prisma } from "../server.js";
 import { spawn } from "node:child_process";
 
-export async function dumpLegalUnit() {
+export interface DumpResult {
+    count: number;
+    items?: any[];
+    summary?: Record<string, any>;
+}
+
+export async function dumpLegalUnit(): Promise<DumpResult> {
     if (!process.env.LEGAL_UNIT_URL) {
         throw new Error(
             "LEGAL_UNITS_URL is not defined in environment variables.",
         );
+    }
+    const existingCount = await prisma.legalUnit.count();
+    if (existingCount > 0) {
+        console.log(
+            "Legal units already exist in the database. Skipping dump.",
+        );
+        return {
+            count: existingCount,
+            items: await prisma.legalUnit.findMany(),
+            summary: {
+                message: "Legal units already exist in database",
+            },
+        };
     }
 
     await downloadAndExtractZip(process.env.LEGAL_UNIT_URL);
@@ -21,7 +40,7 @@ export async function dumpLegalUnit() {
 
     const sqliteFile = path.join(process.cwd(), "prisma/dev.db");
 
-    await new Promise<void>((resolve, reject) => {
+    await new Promise<void>((resolve) => {
         const child = spawn("sqlite3", [sqliteFile], {
             stdio: ["pipe", "ignore", "ignore"],
         });
@@ -45,6 +64,15 @@ export async function dumpLegalUnit() {
             resolve();
         });
     });
+
+    const count = await prisma.legalUnit.count();
+    return {
+        count,
+        items: await prisma.legalUnit.findMany(),
+        summary: {
+            message: "Legal units imported successfully"
+        }
+    };
 }
 
 export type City = {
@@ -56,6 +84,17 @@ export type City = {
     codeRegion: string;
     codesPostaux: string[];
     population: number;
+};
+
+type CityWithGeo = {
+    code: string;
+    nom: string;
+    surface?: number;
+    zone?: string;
+    centre?: { coordinates: [number, number] };
+    contour?: any;
+    mairie?: { coordinates: [number, number] };
+    bbox?: any;
 };
 
 export async function getAllCities(code: string) {
@@ -98,11 +137,18 @@ async function fetchCityGeoData(cityName: string): Promise<CityWithGeo | null> {
     }
 }
 
-export async function dumpCities(cities: City[]) {
-    if ((await prisma.city.count()) > 0) {
-        console.log("Cities already exist in the database. Skipping dump.");
-        return;
-    }
+export async function dumpCities(cities: City[]): Promise<DumpResult> {
+  const existingCount = await prisma.city.count();
+  if (existingCount > 0) {
+    console.log("Cities already exist in the database. Skipping dump.");
+    return {
+      count: existingCount,
+      items: await prisma.city.findMany(),
+      summary: {
+        message: "Cities already exist in database",
+        cities: existingCount
+      }
+    };
 
     // Étape 1: Insérer les villes et codes postaux
     const cityData = cities.map((city: City) => ({
@@ -190,10 +236,20 @@ export async function dumpCities(cities: City[]) {
         await new Promise((resolve) => setTimeout(resolve, 50));
     }
 
-    console.log(`\n✅ Geo data inserted for ${geoDataCount} cities.`);
+  console.log(`\n✅ Geo data inserted for ${geoDataCount} cities.`);
+
+  return {
+    count: cities.length,
+    items: await prisma.city.findMany(),
+    summary: {
+      cities: cities.length,
+      postalCodes: postalCodeData.length,
+      geoData: geoDataCount
+    }
+  };
 }
 
-export async function dumpPopulationData() {
+export async function dumpPopulationData(): Promise<DumpResult>  {
   console.log("📊 Starting population data import for department 06...");
 
   const XLSX = await import('xlsx');
@@ -290,5 +346,14 @@ export async function dumpPopulationData() {
     console.log(`✅ Inserted batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(populationData.length / batchSize)}`);
   }
 
-  console.log(`✅ Successfully imported ${populationData.length} population records for department 06!`);
+  console.log(`\n✅ Geo data inserted for ${geoDataCount} cities.`);
+
+const populationHistory = await prisma.populationHistory.findMany();
+  return {
+    count: populationHistory.length,
+    items: populationHistory,
+    summary: {
+      populationHistory: populationHistory.length,
+    }
+  };
 }

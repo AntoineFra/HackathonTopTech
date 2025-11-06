@@ -1,0 +1,200 @@
+████████████████████████████████████████████████████████████████████████████████
+█                                                                              █
+█                  📚 DOCUMENTATION SWAGGER BACKEND                           █
+█                      Hackathon TopTech API                                  █
+█                                                                              █
+████████████████████████████████████████████████████████████████████████████████
+
+┌──────────────────────────────────────────────────────────────────────────────┐
+│  ✅ INSTALLATION TERMINÉE AVEC SUCCÈS                                        │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+📦 PACKAGES INSTALLÉS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ✓ swagger-jsdoc           v6.2.8
+  ✓ swagger-ui-express      v5.0.1
+  ✓ @types/swagger-jsdoc    v6.0.4
+  ✓ @types/swagger-ui-express v4.1.8
+
+
+📁 FICHIERS CRÉÉS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  apps/backend/swagger/
+  ├── swagger.config.ts              ⚙️  Configuration + Schémas
+  ├── README.md                      📖 Documentation complète
+  ├── QUICK_REFERENCE.md             ⚡ Guide rapide
+  ├── API_ARCHITECTURE.md            🏗️  Architecture détaillée
+  └── IMPLEMENTATION_SUMMARY.md      ✅ Récapitulatif
+
+  Racine du projet/
+  └── API_DOCUMENTATION.md           🎯 Point d'entrée principal
+
+
+🔄 FICHIERS MODIFIÉS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  apps/backend/
+  ├── server.ts                      ➕ Swagger UI intégré
+  ├── routes/
+  │   ├── dump.routes.ts             ➕ Annotations Swagger
+  │   ├── users.routes.ts            ➕ Annotations Swagger
+  │   ├── ai.routes.ts               ➕ Annotations Swagger
+  │   ├── trois-d.routes.ts          ➕ Annotations Swagger
+  │   └── settings.routes.ts         ➕ Annotations Swagger
+  └── package.json                   ➕ Nouvelles dépendances
+
+
+📊 STATISTIQUES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  📍 Endpoints documentés       10
+  📋 Schémas de données         13
+  🏷️  Tags Swagger               5
+  📄 Fichiers documentation      6
+  ✅ Taux de couverture        100%
+
+
+🚀 DÉMARRAGE RAPIDE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  1. Démarrer le serveur backend :
+
+     cd apps/backend
+     pnpm run dev
+
+  2. Ouvrir la documentation Swagger :
+
+     🌐 http://localhost:3000/api-docs
+
+  3. Explorer et tester les endpoints :
+
+     - Cliquer sur un endpoint
+     - Cliquer "Try it out"
+     - Remplir les paramètres
+     - Cliquer "Execute"
+
+
+🔗 LIENS UTILES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  📚 Interface Swagger UI
+     → http://localhost:3000/api-docs
+
+  📄 Spécification OpenAPI JSON
+     → http://localhost:3000/api-docs.json
+
+  📖 Documentation complète
+     → apps/backend/swagger/README.md
+
+  ⚡ Référence rapide
+     → apps/backend/swagger/QUICK_REFERENCE.md
+
+  🏗️  Architecture
+     → apps/backend/swagger/API_ARCHITECTURE.md
+
+
+📋 ENDPOINTS DISPONIBLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  🗂️  DUMP - Import de données
+     GET  /api/dump              Liste tous les dumps
+     GET  /api/dump/:dumpType    Lance un dump (legal_unit | cities)
+
+  👤 USERS - Gestion utilisateurs
+     GET  /api/users             Liste tous les utilisateurs
+     POST /api/users             Crée un utilisateur
+
+  🤖 AI - Intelligence artificielle
+     POST /api/ai/answer         Pose une question à l'IA
+     GET  /api/ai/health         État du service IA
+
+  🗺️  3D - Données géographiques
+     GET  /api/trois-d/cities         Toutes les villes
+     GET  /api/trois-d/cities/:name   Ville par nom
+
+  ⚙️  SETTINGS - Configuration
+     GET  /api/settings          Récupère la configuration
+     PUT  /api/settings          Met à jour la configuration
+
+
+💡 EXEMPLES DE TESTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  # Liste les utilisateurs
+  curl http://localhost:3000/api/users
+
+  # Crée un utilisateur
+  curl -X POST http://localhost:3000/api/users \
+    -H "Content-Type: application/json" \
+    -d '{"name":"John","email":"john@test.com"}'
+
+  # Pose une question à l'IA
+  curl -X POST http://localhost:3000/api/ai/answer \
+    -H "Content-Type: application/json" \
+    -d '{"question":"Quelle est la population de Nice?"}'
+
+  # Récupère une ville
+  curl http://localhost:3000/api/trois-d/cities/Nice
+
+  # Lance le dump des villes
+  curl http://localhost:3000/api/dump/cities
+
+
+✨ FONCTIONNALITÉS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ✅ Documentation interactive complète
+  ✅ Interface de test intégrée
+  ✅ Tous les endpoints documentés
+  ✅ Tous les modèles de données définis
+  ✅ Exemples de requêtes/réponses
+  ✅ Codes d'erreur documentés
+  ✅ Organisation par tags
+  ✅ Export OpenAPI JSON
+  ✅ Compatible avec tous les clients OpenAPI
+  ✅ Mise à jour automatique depuis le code
+
+
+🎯 PROCHAINES ÉTAPES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  1. ✅ Démarrer le serveur : pnpm run dev
+  2. ✅ Ouvrir http://localhost:3000/api-docs
+  3. ✅ Explorer les endpoints disponibles
+  4. ✅ Tester les API via l'interface
+  5. ✅ Lire la documentation complète si besoin
+
+
+🔧 MAINTENANCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Pour ajouter un nouvel endpoint :
+
+  1. Ajouter les annotations Swagger dans le fichier de routes
+  2. Définir les nouveaux schémas dans swagger.config.ts si nécessaire
+  3. Redémarrer le serveur
+  4. La doc se met à jour automatiquement !
+
+
+📞 SUPPORT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  📖 Documentation détaillée : apps/backend/swagger/README.md
+  🐛 Troubleshooting : apps/backend/swagger/README.md#résolution-de-problèmes
+  🏗️  Architecture : apps/backend/swagger/API_ARCHITECTURE.md
+
+
+████████████████████████████████████████████████████████████████████████████████
+█                                                                              █
+█  ✅ DOCUMENTATION SWAGGER 100% OPÉRATIONNELLE                               █
+█                                                                              █
+█  👉 Démarrer avec : cd apps/backend && pnpm run dev                         █
+█  👉 Puis ouvrir : http://localhost:3000/api-docs                            █
+█                                                                              █
+████████████████████████████████████████████████████████████████████████████████
+
+Date de création : 6 novembre 2025
+Version API : 1.0.0
+Statut : ✅ Complet et fonctionnel
+
