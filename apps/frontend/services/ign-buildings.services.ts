@@ -110,53 +110,105 @@ function overpassToGeoJSON(overpassData: any): IGNBuildingsResponse {
 }
 
 /**
+ * Cache simple pour éviter de refaire les mêmes requêtes
+ */
+const buildingsCache = new Map<string, IGNBuildingsResponse>();
+
+/**
  * Récupère les bâtiments d'une zone géographique via Overpass API (OpenStreetMap)
  * @param bbox - [minLon, minLat, maxLon, maxLat] en WGS84
  * @param timeout - Timeout de la requête en secondes (défaut: 25)
+ * @param maxRetries - Nombre de tentatives en cas d'échec (défaut: 2)
  */
 export async function fetchBuildingsByBBox(
     bbox: [number, number, number, number],
-    timeout: number = 25
+    timeout: number = 25,
+    maxRetries: number = 2
 ): Promise<IGNBuildingsResponse> {
     const [minLon, minLat, maxLon, maxLat] = bbox;
+    const cacheKey = bbox.join(",");
 
-    // Requête Overpass pour récupérer les bâtiments dans la bbox
+    // Vérifier le cache
+    if (buildingsCache.has(cacheKey)) {
+        console.log(`💾 Cache hit pour bbox ${cacheKey}`);
+        return buildingsCache.get(cacheKey)!;
+    }
+
+    // Limiter le nombre de résultats pour éviter les timeouts
+    const maxElements = 20000; // Augmenté pour Nice (zone dense)
+
+    // Requête Overpass optimisée avec limite de résultats
     const query = `
-        [out:json][timeout:${timeout}];
+        [out:json][timeout:${timeout}][maxsize:536870912];
         (
             way["building"](${minLat},${minLon},${maxLat},${maxLon});
-            relation["building"](${minLat},${minLon},${maxLat},${maxLon});
         );
-        out geom;
+        out geom ${maxElements};
     `;
 
     const url = "https://overpass-api.de/api/interpreter";
 
-    console.log(`🏗️ Fetching buildings from OSM in bbox ${bbox.join(",")}...`);
+    console.log(`🏗️ Fetching buildings from OSM in bbox ${bbox.join(",")} (max ${maxElements})...`);
 
-    try {
-        const response = await fetch(url, {
-            method: "POST",
-            body: query,
-            headers: {
-                "Content-Type": "text/plain",
-            },
-        });
+    // Retry avec backoff exponentiel
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout * 1000 + 5000);
 
-        if (!response.ok) {
-            throw new Error(`OSM Overpass API error: ${response.status} ${response.statusText}`);
+            const response = await fetch(url, {
+                method: "POST",
+                body: query,
+                headers: {
+                    "Content-Type": "text/plain",
+                },
+                signal: controller.signal,
+            });
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                if (response.status === 429) {
+                    // Rate limit - attendre plus longtemps
+                    const waitTime = Math.pow(2, attempt) * 2000;
+                    console.warn(`⏳ Rate limited, attente de ${waitTime}ms avant retry...`);
+                    await new Promise(resolve => setTimeout(resolve, waitTime));
+                    continue;
+                }
+                if (response.status === 504 && attempt < maxRetries) {
+                    // Gateway timeout - réessayer avec un timeout plus long
+                    const newTimeout = timeout + 10;
+                    console.warn(`⏱️ Timeout (504), retry avec timeout=${newTimeout}s...`);
+                    return fetchBuildingsByBBox(bbox, newTimeout, maxRetries - attempt - 1);
+                }
+                throw new Error(`OSM Overpass API error: ${response.status} ${response.statusText}`);
+            }
+
+            const overpassData = await response.json();
+            const geoJSON = overpassToGeoJSON(overpassData);
+
+            // Mettre en cache
+            buildingsCache.set(cacheKey, geoJSON);
+
+            console.log(`✅ OSM: Retrieved ${geoJSON.features.length} buildings`);
+            if (geoJSON.features.length >= maxElements) {
+                console.warn(`⚠️ Limite de ${maxElements} bâtiments atteinte, il y en a peut-être plus dans la zone`);
+            }
+
+            return geoJSON;
+        } catch (error) {
+            if (attempt === maxRetries) {
+                console.error(`❌ Error fetching OSM buildings after ${maxRetries} retries:`, error);
+                throw error;
+            }
+
+            const waitTime = Math.pow(2, attempt) * 1000;
+            console.warn(`⚠️ Attempt ${attempt + 1} failed, retrying in ${waitTime}ms...`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
         }
-
-        const overpassData = await response.json();
-        const geoJSON = overpassToGeoJSON(overpassData);
-
-        console.log(`✅ OSM: Retrieved ${geoJSON.features.length} buildings`);
-
-        return geoJSON;
-    } catch (error) {
-        console.error(`❌ Error fetching OSM buildings:`, error);
-        throw error;
     }
+
+    throw new Error("Failed to fetch buildings after all retries");
 }
 
 /**
@@ -180,12 +232,12 @@ export async function fetchBuildingsByCommune(
     const center = communeCenters[inseeCode];
     if (!center) {
         console.warn(`⚠️ Commune ${inseeCode} not in predefined list, using default bbox`);
-        // Bbox par défaut pour le département 06
-        return fetchBuildingsByBBox([6.6, 43.4, 7.7, 44.3]);
+        // Bbox réduite par défaut (éviter les timeouts)
+        return fetchBuildingsByBBox([6.6, 43.4, 7.7, 44.3], 60); // Timeout plus long pour grande zone
     }
 
     const [lat, lon] = center;
-    const radiusKm = 2;
+    const radiusKm = 0.8; // Réduit de 2km à 0.8km pour éviter les timeouts
 
     // Calculer la bbox à partir du centre et du rayon
     // 1 degré de latitude ≈ 111km
@@ -200,7 +252,79 @@ export async function fetchBuildingsByCommune(
         lat + latDelta,
     ];
 
-    return fetchBuildingsByBBox(bbox);
+    return fetchBuildingsByBBox(bbox, 30); // Timeout de 30s pour zone réduite
+}
+
+/**
+ * Récupère les bâtiments d'une commune de manière intelligente
+ * Si timeout, essaie de diviser la zone en 4 quadrants
+ * @param inseeCode - Code INSEE de la commune
+ * @param centerCoords - Coordonnées [lat, lon] du centre (optionnel)
+ */
+export async function fetchBuildingsByCommuneSmart(
+    inseeCode: string,
+    centerCoords?: [number, number]
+): Promise<IGNBuildingsResponse> {
+    try {
+        // Essayer d'abord avec la méthode normale
+        return await fetchBuildingsByCommune(inseeCode);
+    } catch (error) {
+        console.warn(`⚠️ Erreur lors du chargement standard, tentative avec quadrants...`);
+
+        // Si échec, diviser en 4 quadrants plus petits
+        const communeCenters: Record<string, [number, number]> = {
+            "06088": [43.7102, 7.2620], // Nice
+            "06029": [43.5483, 7.0175], // Cannes
+            "06004": [43.5808, 7.1251], // Antibes
+            "06069": [43.6584, 7.1472], // Grasse
+            "06085": [43.6935, 7.2693], // Menton
+        };
+
+        const center = centerCoords || communeCenters[inseeCode];
+        if (!center) {
+            throw new Error(`Centre inconnu pour ${inseeCode}`);
+        }
+
+        const [lat, lon] = center;
+        const radiusKm = 0.4; // Quadrants plus petits
+        const latDelta = radiusKm / 111;
+        const lonDelta = radiusKm / (111 * Math.cos((lat * Math.PI) / 180));
+
+        // 4 quadrants
+        const quadrants: [number, number, number, number][] = [
+            [lon - lonDelta, lat, lon, lat + latDelta], // NW
+            [lon, lat, lon + lonDelta, lat + latDelta], // NE
+            [lon - lonDelta, lat - latDelta, lon, lat], // SW
+            [lon, lat - latDelta, lon + lonDelta, lat], // SE
+        ];
+
+        console.log(`🔄 Chargement par quadrants (4 zones)...`);
+
+        const results = await Promise.allSettled(
+            quadrants.map((bbox, i) =>
+                fetchBuildingsByBBox(bbox, 25).catch(err => {
+                    console.warn(`⚠️ Quadrant ${i + 1} échoué:`, err.message);
+                    return { type: "FeatureCollection" as const, features: [], totalFeatures: 0 };
+                })
+            )
+        );
+
+        // Fusionner tous les résultats
+        const allFeatures: OSMBuilding[] = [];
+        results.forEach((result, i) => {
+            if (result.status === "fulfilled") {
+                allFeatures.push(...result.value.features);
+                console.log(`✅ Quadrant ${i + 1}: ${result.value.features.length} bâtiments`);
+            }
+        });
+
+        return {
+            type: "FeatureCollection",
+            features: allFeatures,
+            totalFeatures: allFeatures.length,
+            numberReturned: allFeatures.length,
+        };
+    }
 }
 
 /**

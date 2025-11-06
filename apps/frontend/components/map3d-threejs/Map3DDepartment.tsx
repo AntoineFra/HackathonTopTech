@@ -22,7 +22,7 @@ import {
     applyPopulationGradient,
     resetCityColors,
 } from "@/lib/threejs-loaders/colorGradient";
-import { fetchBuildingsByCommune, getBuildingsStats } from "@/services/ign-buildings.services";
+import { fetchBuildingsByCommune, fetchBuildingsByCommuneSmart, getBuildingsStats } from "@/services/ign-buildings.services";
 import { createBuildingsMeshes, applyHeightColorGradient } from "@/lib/threejs-loaders/ignBuildingsLoader";
 import { Map3DChatBox } from "./Map3DChatBox";
 import Map3DLegends, { LegendType } from "./Map3DLegends";
@@ -51,7 +51,7 @@ function DepartmentScene({
     controlsRef: React.MutableRefObject<any>;
     populationData: any[];
     activeLegends: Set<string>;
-    loadBuildingsForCity: (inseeCode: string) => Promise<void>;
+    loadBuildingsForCity: (cityName: string) => Promise<void>;
     buildingsGroupRef: React.MutableRefObject<THREE.Group | null>;
 }) {
     const { scene, camera, gl } = useThree();
@@ -135,6 +135,14 @@ function DepartmentScene({
                         centerLat: bounds.centerLat,
                         centerLon: bounds.centerLon,
                     };
+
+                    // Partager le centre avec le parent pour les bâtiments
+                    if (typeof window !== 'undefined') {
+                        (window as any).departmentCenter = {
+                            centerLat: bounds.centerLat,
+                            centerLon: bounds.centerLon,
+                        };
+                    }
 
                     // Positionner la caméra pour voir TOUS les contours
                     const width = bounds.maxX - bounds.minX;
@@ -439,6 +447,19 @@ function DepartmentScene({
                 console.log("🏗️ Ajout des bâtiments à la scène...");
                 scene.add(buildingsGroupRef.current);
                 console.log(`✅ ${buildingsGroupRef.current.children.length} bâtiments ajoutés à la scène`);
+
+                // Ajouter une box helper pour debug (rouge vif)
+                const box = new THREE.Box3().setFromObject(buildingsGroupRef.current);
+                const helper = new THREE.Box3Helper(box, new THREE.Color(0xff0000));
+                helper.name = "BuildingsDebugBox";
+                scene.add(helper);
+
+                const size = new THREE.Vector3();
+                box.getSize(size);
+                const center = new THREE.Vector3();
+                box.getCenter(center);
+                console.log(`📦 Box helper ajoutée au centre [${center.x.toFixed(1)}, ${center.y.toFixed(1)}, ${center.z.toFixed(1)}]`);
+                console.log(`📏 Taille: ${size.x.toFixed(1)} x ${size.y.toFixed(1)} x ${size.z.toFixed(1)}`);
             }
         }
 
@@ -446,6 +467,9 @@ function DepartmentScene({
         return () => {
             if (buildingsGroupRef.current && scene.children.includes(buildingsGroupRef.current)) {
                 scene.remove(buildingsGroupRef.current);
+                // Retirer aussi la box helper
+                const helper = scene.getObjectByName("BuildingsDebugBox");
+                if (helper) scene.remove(helper);
             }
         };
     }, [buildingsGroupRef.current, scene]);
@@ -467,9 +491,11 @@ export default function Map3DDepartment() {
     const [selectedCityPopulation, setSelectedCityPopulation] = useState<any>(null);
     const [loadingBuildings, setLoadingBuildings] = useState(false);
     const [buildingsLoaded, setBuildingsLoaded] = useState(false);
+    const [buildingsProgress, setBuildingsProgress] = useState<string>("");
     const buildingsGroupRef = useRef<THREE.Group | null>(null);
     const citiesListRef = useRef<string[]>([]);
     const controlsRef = useRef<any>(null);
+    const departmentCenterRef = useRef<{ centerLat: number; centerLon: number } | null>(null);
 
     const handleRecenter = () => {
         if (controlsRef.current) {
@@ -542,40 +568,131 @@ export default function Map3DDepartment() {
     };
 
     // Fonction pour charger les bâtiments d'une commune
-    const loadBuildingsForCity = async (inseeCode: string) => {
-        if (!inseeCode) return;
+    const loadBuildingsForCity = async (cityName: string) => {
+        if (!cityName) return;
 
         setLoadingBuildings(true);
-        console.log(`🏗️ Chargement des bâtiments pour la commune ${inseeCode}...`);
+        setBuildingsProgress("Récupération des informations de la ville...");
+        console.log(`🏗️ Chargement des bâtiments pour ${cityName}...`);
 
         try {
-            // Récupérer les données de l'IGN
-            const buildingsData = await fetchBuildingsByCommune(inseeCode);
+            // Récupérer le code INSEE et les coordonnées de la ville depuis le backend
+            const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL!;
+            const cityInfoResponse = await fetch(
+                `${backendUrl}/api/trois-d/cities/${cityName}`
+            );
+            if (!cityInfoResponse.ok) {
+                console.error(`❌ Impossible de récupérer les infos de ${cityName}`);
+                setBuildingsProgress("❌ Erreur: ville introuvable");
+                return;
+            }
 
-            // Afficher les stats
+            const cityInfo = await cityInfoResponse.json();
+            const inseeCode = cityInfo.codeINSEE;
+            console.log(`📍 Code INSEE de ${cityName}: ${inseeCode}`);
+
+            setBuildingsProgress("Calcul de la position de la ville...");
+
+            // Calculer où est la ville sur la carte (en coordonnées 3D)
+            let cityPositionX = 0;
+            let cityPositionZ = 0;
+            let cityLat = 43.7;
+            let cityLon = 7.25;
+
+            if (cityInfo.geoData?.contour) {
+                const contourData = JSON.parse(cityInfo.geoData.contour);
+                let allCoordinates: [number, number][] = [];
+
+                if (contourData.type === "Polygon") {
+                    allCoordinates = contourData.coordinates[0] || [];
+                } else if (contourData.type === "MultiPolygon") {
+                    contourData.coordinates.forEach((poly: any) => {
+                        if (poly[0]) allCoordinates.push(...poly[0]);
+                    });
+                }
+
+                if (allCoordinates.length > 0) {
+                    let sumLat = 0, sumLon = 0;
+                    allCoordinates.forEach(([lon, lat]) => {
+                        sumLat += lat;
+                        sumLon += lon;
+                    });
+                    cityLat = sumLat / allCoordinates.length;
+                    cityLon = sumLon / allCoordinates.length;
+                    console.log(`📍 Centre géographique de ${cityName}: [${cityLat.toFixed(6)}, ${cityLon.toFixed(6)}]`);
+
+                    // Convertir en coordonnées 3D de la carte
+                    // Utiliser le même calcul que departmentLoader.ts
+                    const deptCenter = (window as any).departmentCenter;
+                    if (deptCenter) {
+                        const R = 6371000;
+                        const lat1 = (deptCenter.centerLat * Math.PI) / 180;
+                        const lat2 = (cityLat * Math.PI) / 180;
+                        const deltaLon = ((cityLon - deptCenter.centerLon) * Math.PI) / 180;
+
+                        cityPositionX = (deltaLon * R * Math.cos(lat1)) / 100;
+                        cityPositionZ = (-(lat2 - lat1) * R) / 100;
+
+                        console.log(`🎯 Position 3D de ${cityName} sur la carte: [${cityPositionX.toFixed(1)}, ${cityPositionZ.toFixed(1)}]`);
+                    }
+                }
+            }
+
+            // Récupérer les données de l'IGN avec retry intelligent
+            setBuildingsProgress("Téléchargement des bâtiments depuis OpenStreetMap...");
+            const buildingsData = await fetchBuildingsByCommuneSmart(
+                inseeCode,
+                [cityLat, cityLon]
+            );
+
+            // Afficher les stats et vérifier le formatage
             if (buildingsData.features.length > 0) {
                 const stats = getBuildingsStats(buildingsData.features);
                 console.log("📊 Statistiques des bâtiments:", stats);
+                console.log(`📐 Données: ${stats.withHeight}/${stats.total} bâtiments avec hauteur (${((stats.withHeight/stats.total)*100).toFixed(1)}%)`);
+                console.log(`📏 Hauteur moyenne: ${stats.avgHeight}m, Types: ${Object.keys(stats.byType).length} différents`);
+                setBuildingsProgress(`Génération de ${buildingsData.features.length} bâtiments en 3D...`);
             }
 
-            // Créer les meshes 3D
+            console.log(`🏗️ Création des bâtiments avec centre local [${cityLat.toFixed(6)}, ${cityLon.toFixed(6)}]`);
+
+            // Créer les meshes 3D en coordonnées LOCALES (centrées sur 0,0)
             const buildingsGroup = createBuildingsMeshes(buildingsData, {
-                defaultHeight: 8,
-                heightScale: 1,
-                centerLat: 43.7, // Centre du 06
-                centerLng: 7.25,
+                defaultHeight: 10,
+                heightScale: 1, // Pas de scale, déjà divisé par 100 dans createBuildingMesh
+                centerLat: cityLat, // Centre de la VILLE (coordonnées locales)
+                centerLng: cityLon, // Centre de la VILLE (coordonnées locales)
             });
 
+            // PUIS translater tout le groupe à la position de la ville sur la carte
+            buildingsGroup.position.set(cityPositionX, 10, cityPositionZ); // Y = 0.1 pour être au-dessus du sol
+            console.log(`📦 Groupe de bâtiments positionné à [${cityPositionX.toFixed(1)}, 0.1, ${cityPositionZ.toFixed(1)}]`);
+
+            setBuildingsProgress("Application des couleurs...");
             // Appliquer le dégradé de couleur selon la hauteur
             applyHeightColorGradient(buildingsGroup);
+
+            // Calculer et afficher les bounds
+            const bounds = buildingsGroup.userData.bounds;
+            if (bounds) {
+                const centerX = (bounds.minX + bounds.maxX) / 2;
+                const centerZ = (bounds.minZ + bounds.maxZ) / 2;
+                const width = bounds.maxX - bounds.minX;
+                const depth = bounds.maxZ - bounds.minZ;
+                console.log(`📍 Centre des bâtiments: [${centerX.toFixed(1)}, ${centerZ.toFixed(1)}]`);
+                console.log(`📐 Dimensions: ${width.toFixed(1)}m x ${depth.toFixed(1)}m`);
+            }
 
             // Stocker la référence et marquer comme chargé
             buildingsGroupRef.current = buildingsGroup;
             setBuildingsLoaded(true);
+            setBuildingsProgress("");
 
             console.log(`✅ ${buildingsData.features.length} bâtiments prêts pour l'affichage`);
         } catch (error) {
             console.error("❌ Erreur lors du chargement des bâtiments:", error);
+            setBuildingsProgress(`❌ Erreur: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
+            setTimeout(() => setBuildingsProgress(""), 5000);
         } finally {
             setLoadingBuildings(false);
         }
@@ -723,7 +840,7 @@ export default function Map3DDepartment() {
                 {/* Bouton charger bâtiments IGN */}
                 <div className="mt-4 border-t border-border pt-3">
                     <button
-                        onClick={() => loadBuildingsForCity("06088")} // Nice pour test
+                        onClick={() => loadBuildingsForCity("Nice")} // Nice pour test
                         disabled={loadingBuildings}
                         className="w-full rounded-md bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
@@ -735,12 +852,17 @@ export default function Map3DDepartment() {
                         ) : buildingsLoaded ? (
                             "🏗️ Bâtiments chargés !"
                         ) : (
-                            "🏗️ Charger bâtiments IGN (Nice)"
+                            "🏗️ Charger bâtiments (Nice)"
                         )}
                     </button>
-                    {buildingsLoaded && buildingsGroupRef.current && (
+                    {buildingsProgress && (
+                        <p className="text-muted-foreground mt-2 text-xs text-center animate-pulse">
+                            {buildingsProgress}
+                        </p>
+                    )}
+                    {buildingsLoaded && buildingsGroupRef.current && !loadingBuildings && (
                         <p className="text-muted-foreground mt-2 text-xs text-center">
-                            {buildingsGroupRef.current.children.length} bâtiments affichés
+                            ✅ {buildingsGroupRef.current.children.length} bâtiments affichés
                         </p>
                     )}
                 </div>
@@ -804,18 +926,6 @@ export default function Map3DDepartment() {
                                         </div>
                                     </div>
                                 )}
-
-                            {/* Réponse de l'IA si disponible */}
-                            {aiResponse && (
-                                <div className="border-border border-t pt-3">
-                                    <p className="text-muted-foreground mb-2 text-xs">
-                                        Réponse de l'IA :
-                                    </p>
-                                    <p className="text-foreground bg-muted/50 rounded-lg p-3 text-sm whitespace-pre-wrap">
-                                        {aiResponse}
-                                    </p>
-                                </div>
-                            )}
 
                             <div className="border-border flex items-center justify-between border-t pt-2">
                                 <span className="text-muted-foreground text-sm">

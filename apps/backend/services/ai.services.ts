@@ -293,6 +293,7 @@ async function answerQuestionWithLocalAI(question: string, history: ChatMessage[
             legendType: data.legendType,
             chart: data.chart,
             prismaQuery: data.sqlQuery,
+            selected_codes: data.selected_codes,
         };
     } catch (error) {
         console.error("Error fetching Local AI response:", error);
@@ -350,6 +351,7 @@ export async function answerQuestion(
         legendType: response.legendType,
         chart: response.chart,
         prismaQuery: response.prismaQuery,
+        selected_codes: response.selected_codes,
     };
 }
 

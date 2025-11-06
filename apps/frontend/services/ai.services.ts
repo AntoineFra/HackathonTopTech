@@ -49,6 +49,7 @@ export async function aiAnswerLocal(
         description?: string;
     };
     prismaQuery?: string;
+    selected_codes?: string[];
 }> {
     // Utiliser la même route backend mais avec provider="local"
     return apiFetch("/ai/answer", {
@@ -81,6 +82,7 @@ export async function aiAnswer(
         description?: string;
     };
     prismaQuery?: string;
+    selected_codes?: string[];
 }> {
     // Si provider est "local", utiliser la fonction dédiée
     if (provider === "local") {

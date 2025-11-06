@@ -370,20 +370,9 @@ export function AIGeneratedChart({
                 </div>
             </CardHeader>
             <CardContent className="pb-4">
+                {console.log("AIGeneratedChart - data:", data)}
+                {console.log("AIGeneratedChart - prismaQuery:", prismaQuery)}
                 <div className="h-[280px]">{renderChart()}</div>
-
-                {/* Debug: Afficher la requête Prisma si disponible */}
-                {prismaQuery && (
-                    <details className="mt-4">
-                        <summary className="text-muted-foreground flex cursor-pointer items-center gap-2 text-xs">
-                            <Code className="h-3 w-3" />
-                            Voir la requête Prisma
-                        </summary>
-                        <pre className="bg-muted text-foreground mt-2 overflow-x-auto rounded p-2 text-xs">
-                            {prismaQuery}
-                        </pre>
-                    </details>
-                )}
             </CardContent>
         </Card>
     );

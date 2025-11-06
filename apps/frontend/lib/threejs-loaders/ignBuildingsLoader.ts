@@ -21,11 +21,7 @@ export interface BuildingRenderOptions {
 
 /**
  * Convertit des coordonnées lat/lng en coordonnées cartésiennes locales
- * @param lat Latitude
- * @param lng Longitude
- * @param centerLat Latitude du centre de projection
- * @param centerLng Longitude du centre de projection
- * @returns [x, z] en mètres relatifs au centre
+ * Version SIMPLE qui marche - avec échelle 1:100 comme la carte
  */
 function latLngToLocalXZ(
     lat: number,
@@ -38,8 +34,12 @@ function latLngToLocalXZ(
     const latScale = 111000; // mètres par degré de latitude
     const lngScale = 111000 * Math.cos((centerLat * Math.PI) / 180);
 
-    const x = (lng - centerLng) * lngScale;
-    const z = -(lat - centerLat) * latScale; // -z car Three.js a z inversé par rapport aux cartes
+    let x = (lng - centerLng) * lngScale;
+    let z = -(lat - centerLat) * latScale; // -z car Three.js a z inversé par rapport aux cartes
+
+    // Diviser par 100 pour l'échelle 1:100 comme la carte
+    x = x / 100;
+    z = z / 100;
 
     return [x, z];
 }
@@ -87,14 +87,15 @@ export function createBuildingMesh(
 ): THREE.Mesh | THREE.Group | null {
     const {
         defaultHeight = 10,
-        heightScale = 1,
+        heightScale = 1, // Pas de scale par défaut
         color = 0xcccccc,
         opacity = 1,
         centerLat = 43.7, // Centre approximatif du 06
         centerLng = 7.25,
     } = options;
 
-    const height = (building.properties.height || defaultHeight) * heightScale;
+    // Hauteur avec échelle 1:100 comme la carte
+    const height = ((building.properties.height || defaultHeight) * heightScale) / 100;
 
     try {
         if (building.geometry.type === "Polygon") {
@@ -133,7 +134,8 @@ export function createBuildingMesh(
             mesh.userData = {
                 osmId: building.id,
                 buildingType: building.properties.building,
-                height: building.properties.height,
+                height: height, // Hauteur réelle utilisée (avec scale)
+                heightOriginal: building.properties.height, // Hauteur originale OSM
                 name: building.properties.name,
                 amenity: building.properties.amenity,
                 shop: building.properties.shop,
@@ -172,6 +174,12 @@ export function createBuildingMesh(
                 mesh.castShadow = true;
                 mesh.receiveShadow = true;
 
+                // Stocker la hauteur dans chaque mesh
+                mesh.userData = {
+                    height: height,
+                    heightOriginal: building.properties.height,
+                };
+
                 group.add(mesh);
             }
 
@@ -209,6 +217,9 @@ export function createBuildingsMeshes(
 
     let successCount = 0;
     let failCount = 0;
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+    let minZ = Infinity, maxZ = -Infinity;
 
     console.log(`🏗️ Creating meshes for ${buildingsData.features.length} buildings...`);
 
@@ -217,18 +228,38 @@ export function createBuildingsMeshes(
         if (mesh) {
             group.add(mesh);
             successCount++;
+
+            // Calculer les bounds
+            mesh.traverse((child) => {
+                if (child instanceof THREE.Mesh) {
+                    child.geometry.computeBoundingBox();
+                    const bbox = child.geometry.boundingBox;
+                    if (bbox) {
+                        const worldPos = new THREE.Vector3();
+                        child.getWorldPosition(worldPos);
+                        minX = Math.min(minX, worldPos.x + bbox.min.x);
+                        maxX = Math.max(maxX, worldPos.x + bbox.max.x);
+                        minY = Math.min(minY, worldPos.y + bbox.min.y);
+                        maxY = Math.max(maxY, worldPos.y + bbox.max.y);
+                        minZ = Math.min(minZ, worldPos.z + bbox.min.z);
+                        maxZ = Math.max(maxZ, worldPos.z + bbox.max.z);
+                    }
+                }
+            });
         } else {
             failCount++;
         }
     }
 
     console.log(`✅ Created ${successCount} building meshes (${failCount} failed)`);
+    console.log(`📦 Bounds: X[${minX.toFixed(1)} to ${maxX.toFixed(1)}], Y[${minY.toFixed(1)} to ${maxY.toFixed(1)}], Z[${minZ.toFixed(1)} to ${maxZ.toFixed(1)}]`);
 
     group.userData = {
         totalBuildings: buildingsData.features.length,
         successCount,
         failCount,
         source: "IGN_BDTOPO_V3",
+        bounds: { minX, maxX, minY, maxY, minZ, maxZ },
     };
 
     return group;
@@ -278,20 +309,27 @@ export function applyHeightColorGradient(group: THREE.Group) {
     const heights: number[] = [];
 
     group.traverse((child) => {
-        if (child.userData.hauteur) {
-            heights.push(child.userData.hauteur);
+        if (child.userData.height !== undefined && child.userData.height > 0) {
+            heights.push(child.userData.height);
         }
     });
+
+    if (heights.length === 0) {
+        console.warn('⚠️ Aucune hauteur trouvée pour le gradient');
+        return;
+    }
 
     const minHeight = Math.min(...heights);
     const maxHeight = Math.max(...heights);
 
+    console.log(`🎨 Hauteurs trouvées: ${heights.length} bâtiments, min=${minHeight.toFixed(2)}m, max=${maxHeight.toFixed(2)}m`);
+
     group.traverse((child) => {
-        if (child instanceof THREE.Mesh && child.userData.hauteur) {
-            const color = getColorByHeight(child.userData.hauteur, minHeight, maxHeight);
+        if (child instanceof THREE.Mesh && child.userData.height !== undefined && child.userData.height > 0) {
+            const color = getColorByHeight(child.userData.height, minHeight, maxHeight);
             (child.material as THREE.MeshStandardMaterial).color.setHex(color);
         }
     });
 
-    console.log(`🎨 Applied height gradient (${minHeight.toFixed(1)}m - ${maxHeight.toFixed(1)}m)`);
+    console.log(`✅ Gradient appliqué (${minHeight.toFixed(1)}m - ${maxHeight.toFixed(1)}m)`);
 }
