@@ -29,4 +29,4 @@ RUN mkdir -p tmp data prisma
 EXPOSE 3000
 
 # Start development server with hot reload
-CMD ["sh", "-c", "pnpm prisma db push --accept-data-loss && pnpm dev"]
+CMD ["sh", "-c", "pnpm prisma generate && pnpm prisma db push --accept-data-loss && pnpm dev"]

@@ -51,13 +51,14 @@ services:
     volumes:
       - ./apps/backend:/app
       - /app/node_modules
+      - backend-generated:/app/generated
       - backend-db:/app/prisma
     depends_on:
       - ollama
     networks:
       - paca-network
     restart: unless-stopped
-    command: pnpm dev
+    command: sh /app/start-dev.sh
 
   # ====================
   # Ollama - Local AI
@@ -123,3 +124,5 @@ volumes:
     name: paca-ollama-models
   backend-db:
     name: paca-backend-db
+  backend-generated:
+    name: paca-backend-generated
