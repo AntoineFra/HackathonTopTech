@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Github, Twitter, Mail } from "lucide-react";
+import Image from "next/image";
 
 export default function Footer() {
     const year = new Date().getFullYear();
@@ -18,31 +19,14 @@ export default function Footer() {
                             className="inline-flex items-center gap-2"
                         >
                             <span className="bg-primary/10 inline-block rounded-md p-2">
-                                {/* simple mark */}
-                                <svg
-                                    width="20"
-                                    height="20"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    className="text-primary"
-                                >
-                                    <path
-                                        d="M3 12h18"
-                                        stroke="currentColor"
-                                        strokeWidth="1.5"
-                                        strokeLinecap="round"
-                                    />
-                                    <path
-                                        d="M12 3v18"
-                                        stroke="currentColor"
-                                        strokeWidth="1.5"
-                                        strokeLinecap="round"
-                                    />
-                                </svg>
+                                <Image
+                                    src="/logo.svg"
+                                    alt="Logo"
+                                    width={32}
+                                    height={32}
+                                />
                             </span>
-                            <span className="font-semibold">
-                                PACA Analytics
-                            </span>
+                            <span className="font-semibold">06 Analytics</span>
                         </Link>
 
                         <p className="text-muted-foreground text-sm">
@@ -56,42 +40,6 @@ export default function Footer() {
                         aria-label="Pied de page"
                         className="flex flex-wrap gap-6"
                     >
-                        <div className="flex flex-col">
-                            <span className="mb-2 text-sm font-medium">
-                                Produits
-                            </span>
-                            <Link
-                                href="/features"
-                                className="text-muted-foreground hover:text-foreground text-sm"
-                            >
-                                Fonctionnalités
-                            </Link>
-                            <Link
-                                href="/pricing"
-                                className="text-muted-foreground hover:text-foreground mt-1 text-sm"
-                            >
-                                Tarifs
-                            </Link>
-                        </div>
-
-                        <div className="flex flex-col">
-                            <span className="mb-2 text-sm font-medium">
-                                Entreprise
-                            </span>
-                            <Link
-                                href="/about"
-                                className="text-muted-foreground hover:text-foreground text-sm"
-                            >
-                                À propos
-                            </Link>
-                            <Link
-                                href="/careers"
-                                className="text-muted-foreground hover:text-foreground mt-1 text-sm"
-                            >
-                                Recrutement
-                            </Link>
-                        </div>
-
                         <div className="flex flex-col">
                             <span className="mb-2 text-sm font-medium">
                                 Support

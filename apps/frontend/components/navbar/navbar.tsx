@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import SettingsDialog from "@/components/settings-dialog";
+import Image from "next/image";
 
 type NavLink = {
     label: string;
@@ -46,37 +47,14 @@ const Navbar: React.FC<NavbarProps> = ({
                     >
                         {brand ?? (
                             <>
-                                <svg
-                                    width="28"
-                                    height="28"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    aria-hidden
-                                >
-                                    <rect
-                                        x="3"
-                                        y="3"
-                                        width="18"
-                                        height="18"
-                                        rx="4"
-                                        fill="#2563eb"
-                                    />
-                                    <path
-                                        d="M7 12h10"
-                                        stroke="white"
-                                        strokeWidth="1.5"
-                                        strokeLinecap="round"
-                                    />
-                                    <path
-                                        d="M12 7v10"
-                                        stroke="white"
-                                        strokeWidth="1.5"
-                                        strokeLinecap="round"
-                                    />
-                                </svg>
+                                <Image
+                                    src="/logo.svg"
+                                    alt="Logo"
+                                    width={32}
+                                    height={32}
+                                />
                                 <span className="hidden md:inline-block">
-                                    PACA Analytics
+                                    06 Analytics
                                 </span>
                             </>
                         )}

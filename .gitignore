@@ -39,6 +39,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# turborepo
+.turbo
+
 # typescript
 *.tsbuildinfo
 **/next-env.d.ts
@@ -62,3 +65,11 @@ apps/**/generated/
 
 # Backup files
 *.old
+
+# GitBook
+_book/
+.gitbook/build/
+node_modules/
+*.epub
+*.mobi
+*.pdf

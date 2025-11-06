@@ -1,0 +1,164 @@
+/* Custom styles for PACA Analytics GitBook */
+
+/* Brand colors */
+:root {
+    --brand-primary: #0ea5e9;
+    --brand-secondary: #8b5cf6;
+    --brand-accent: #10b981;
+}
+
+/* Headers */
+.markdown-section h1,
+.markdown-section h2,
+.markdown-section h3 {
+    color: var(--brand-primary);
+}
+
+.markdown-section h1 {
+    border-bottom: 3px solid var(--brand-primary);
+    padding-bottom: 0.5rem;
+}
+
+/* Links */
+.markdown-section a {
+    color: var(--brand-primary);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-bottom 0.2s;
+}
+
+.markdown-section a:hover {
+    border-bottom: 1px solid var(--brand-primary);
+}
+
+/* Code blocks */
+.markdown-section pre {
+    background: #1e293b;
+    border-radius: 8px;
+    border-left: 4px solid var(--brand-primary);
+}
+
+.markdown-section code {
+    background: #f1f5f9;
+    color: #e11d48;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+/* Blockquotes */
+.markdown-section blockquote {
+    border-left: 4px solid var(--brand-accent);
+    background: #f0fdf4;
+    padding: 1rem;
+    border-radius: 4px;
+    margin: 1rem 0;
+}
+
+/* Tables */
+.markdown-section table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1rem 0;
+}
+
+.markdown-section table thead {
+    background: var(--brand-primary);
+    color: white;
+}
+
+.markdown-section table th,
+.markdown-section table td {
+    padding: 0.75rem;
+    border: 1px solid #e2e8f0;
+}
+
+.markdown-section table tbody tr:hover {
+    background: #f8fafc;
+}
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin: 0.25rem;
+}
+
+.badge-primary {
+    background: var(--brand-primary);
+    color: white;
+}
+
+.badge-success {
+    background: var(--brand-accent);
+    color: white;
+}
+
+.badge-warning {
+    background: #f59e0b;
+    color: white;
+}
+
+/* Callouts */
+.callout {
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 8px;
+    border-left: 4px solid;
+}
+
+.callout-info {
+    background: #eff6ff;
+    border-color: #3b82f6;
+}
+
+.callout-success {
+    background: #f0fdf4;
+    border-color: #10b981;
+}
+
+.callout-warning {
+    background: #fffbeb;
+    border-color: #f59e0b;
+}
+
+.callout-danger {
+    background: #fef2f2;
+    border-color: #ef4444;
+}
+
+/* Navigation */
+.book-summary {
+    background: #f8fafc;
+}
+
+.book-summary .chapter.active > a {
+    color: var(--brand-primary);
+    font-weight: 600;
+}
+
+/* Search */
+.book-search input {
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    transition: border-color 0.2s;
+}
+
+.book-search input:focus {
+    border-color: var(--brand-primary);
+    outline: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .markdown-section h1 {
+        font-size: 1.75rem;
+    }
+
+    .markdown-section h2 {
+        font-size: 1.5rem;
+    }
+}

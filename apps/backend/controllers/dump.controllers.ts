@@ -6,16 +6,19 @@ import { DumpStatus } from "../generated/prisma/enums.js";
 enum DumpType {
     LEGAL_UNITS = "legal_unit",
     CITIES = "cities",
+    POPULATION = "population",
 }
 
 enum DumpTypeFrench {
     LEGAL_UNITS = "Unités légales",
     CITIES = "Villes",
+    POPULATION = "Population",
 }
 
 const DUMP_TYPE_LABELS: Record<DumpType, string> = {
     [DumpType.LEGAL_UNITS]: DumpTypeFrench.LEGAL_UNITS,
     [DumpType.CITIES]: DumpTypeFrench.CITIES,
+    [DumpType.POPULATION]: DumpTypeFrench.POPULATION,
 };
 
 type DumpFunction = () => Promise<DumpResult>;
@@ -23,6 +26,7 @@ type DumpFunction = () => Promise<DumpResult>;
 const DUMP_HANDLERS: Record<DumpType, DumpFunction> = {
     [DumpType.LEGAL_UNITS]: () => dumpLegalUnit(),
     [DumpType.CITIES]: async () => dumpCities(await getAllCities("06")),
+    [DumpType.POPULATION]: async () => dump_srvc.dumpPopulationData(),
 };
 
 export async function getDumpList(req: Request, res: Response) {
