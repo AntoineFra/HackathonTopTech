@@ -12,7 +12,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Send, Loader2, Sparkles, ChevronDown, ChevronUp, Settings } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Send, Loader2, Sparkles, ChevronDown, ChevronUp, Settings, Building2, Users, MapPin, Briefcase, Euro, Factory, Hash, Map as MapIcon } from "lucide-react";
 import { useAIProvider } from "@/contexts/AIProviderContext";
 
 interface HoveredCity extends CityDataType {
@@ -286,69 +287,65 @@ export default function Map2DPage() {
             {/* Carte */}
             <div ref={mapRef} style={{ height: "100%", width: "100%" }} />
 
-            {/* Bulle d'infos à droite */}
+            {/* Carte d'infos ville à droite */}
             {hoveredCity && (
-                <div
-                    style={{
-                        position: "absolute",
-                        top: "50%",
-                        right: "2rem",
-                        transform: "translateY(-50%)",
-                        background: "#1e1e1e",
-                        color: "#f0f0f0",
-                        padding: "1.5rem",
-                        borderRadius: "16px",
-                        boxShadow: "0 4px 15px rgba(0,0,0,0.5)",
-                        fontFamily: "sans-serif",
-                        width: "280px",
-                        zIndex: 10,
-                    }}
-                >
-                    <h2
-                        style={{
-                            margin: 0,
-                            fontSize: "1.3rem",
-                            color: "#00bcd4",
-                        }}
-                    >
-                        {hoveredCity.name}
-                    </h2>
-                    <hr style={{ borderColor: "#333", margin: "8px 0" }} />
-                    <p style={{ margin: "6px 0", fontSize: "0.9rem" }}>
-                        <b>🏢 Entreprises :</b> {hoveredCity.entreprises}
-                    </p>
-                    <p style={{ margin: "6px 0", fontSize: "0.9rem" }}>
-                        <b>👥 Population :</b>{" "}
-                        {hoveredCity.population.toLocaleString()} habitants
-                    </p>
-                    <p style={{ margin: "6px 0", fontSize: "0.9rem" }}>
-                        <b>📏 Surface :</b>{" "}
-                        {hoveredCity.surface
-                            ? hoveredCity.surface.toFixed(2) + " hectares"
-                            : "N/A"}
-                    </p>
-                    <p style={{ margin: "6px 0", fontSize: "0.9rem" }}>
-                        <b>🌴 Tourisme :</b> {hoveredCity.tourisme}/100
-                    </p>
-                    <p style={{ margin: "6px 0", fontSize: "0.9rem" }}>
-                        <b>💼 Emploi :</b> {hoveredCity.emploi}%
-                    </p>
-                    <p style={{ margin: "6px 0", fontSize: "0.9rem" }}>
-                        <b>💶 Revenu moyen :</b> {hoveredCity.revenu} €
-                    </p>
-                    <p style={{ margin: "6px 0", fontSize: "0.9rem" }}>
-                        <b>🏭 Secteur dominant :</b> {hoveredCity.secteur}
-                    </p>
-                    <p style={{ margin: "6px 0", fontSize: "0.9rem" }}>
-                        <b>📍 Code INSEE :</b> {hoveredCity.code || "N/A"}
-                    </p>
-                    <p style={{ margin: "6px 0", fontSize: "0.9rem" }}>
-                        <b>🏙️ Zone :</b>{" "}
-                        {hoveredCity.zone === "metro"
-                            ? "Métropolitaine"
-                            : hoveredCity.zone}
-                    </p>
-                </div>
+                <Card className="absolute top-1/2 right-8 -translate-y-1/2 w-80 z-10 border-border">
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-xl text-primary flex items-center gap-2">
+                            <MapPin className="h-5 w-5" />
+                            {hoveredCity.name}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm">
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Entreprises:</span>
+                            <span className="font-medium ml-auto">{hoveredCity.entreprises}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Population:</span>
+                            <span className="font-medium ml-auto">{hoveredCity.population.toLocaleString()} hab.</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                            <MapIcon className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Surface:</span>
+                            <span className="font-medium ml-auto">
+                                {hoveredCity.surface ? hoveredCity.surface.toFixed(2) + " ha" : "N/A"}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                            <Sparkles className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Tourisme:</span>
+                            <span className="font-medium ml-auto">{hoveredCity.tourisme}/100</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                            <Briefcase className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Emploi:</span>
+                            <span className="font-medium ml-auto">{hoveredCity.emploi}%</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                            <Euro className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Revenu moyen:</span>
+                            <span className="font-medium ml-auto">{hoveredCity.revenu} €</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                            <Factory className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Secteur:</span>
+                            <span className="font-medium ml-auto">{hoveredCity.secteur}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                            <Hash className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">Code INSEE:</span>
+                            <span className="font-medium ml-auto">{hoveredCity.code || "N/A"}</span>
+                        </div>
+                        <div className="pt-2 border-t border-border">
+                            <Badge variant="secondary" className="text-xs">
+                                {hoveredCity.zone === "metro" ? "🏙️ Zone Métropolitaine" : `📍 ${hoveredCity.zone}`}
+                            </Badge>
+                        </div>
+                    </CardContent>
+                </Card>
             )}
 
             {/* Interface Chat IA en bas */}

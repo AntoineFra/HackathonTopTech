@@ -140,8 +140,8 @@ export function AIGeneratedChart({
         switch (chartType) {
             case "bar":
                 return (
-                    <ChartContainer config={chartConfig}>
-                        <BarChart data={data}>
+                    <ChartContainer config={chartConfig} className="w-full h-full">
+                        <BarChart data={data} width={undefined} height={undefined}>
                             <CartesianGrid
                                 strokeDasharray="3 3"
                                 className="stroke-muted"
@@ -171,8 +171,8 @@ export function AIGeneratedChart({
 
             case "line":
                 return (
-                    <ChartContainer config={chartConfig}>
-                        <LineChart data={data}>
+                    <ChartContainer config={chartConfig} className="w-full h-full">
+                        <LineChart data={data} width={undefined} height={undefined}>
                             <CartesianGrid
                                 strokeDasharray="3 3"
                                 className="stroke-muted"
@@ -204,8 +204,8 @@ export function AIGeneratedChart({
 
             case "area":
                 return (
-                    <ChartContainer config={chartConfig}>
-                        <AreaChart data={data}>
+                    <ChartContainer config={chartConfig} className="w-full h-full">
+                        <AreaChart data={data} width={undefined} height={undefined}>
                             <CartesianGrid
                                 strokeDasharray="3 3"
                                 className="stroke-muted"
@@ -242,8 +242,8 @@ export function AIGeneratedChart({
 
             case "pie":
                 return (
-                    <ChartContainer config={chartConfig}>
-                        <PieChart>
+                    <ChartContainer config={chartConfig} className="w-full h-full">
+                        <PieChart width={undefined} height={undefined}>
                             <Pie
                                 data={data}
                                 dataKey={yKeys[0]} // Premier yKey pour le pie
@@ -272,8 +272,8 @@ export function AIGeneratedChart({
 
             case "radar":
                 return (
-                    <ChartContainer config={chartConfig}>
-                        <RadarChart data={data}>
+                    <ChartContainer config={chartConfig} className="w-full h-full">
+                        <RadarChart data={data} width={undefined} height={undefined}>
                             <PolarGrid className="stroke-muted" />
                             <PolarAngleAxis
                                 dataKey={xKey}
@@ -307,9 +307,11 @@ export function AIGeneratedChart({
 
             case "radial":
                 return (
-                    <ChartContainer config={chartConfig}>
+                    <ChartContainer config={chartConfig} className="w-full h-full">
                         <RadialBarChart
                             data={data}
+                            width={undefined}
+                            height={undefined}
                             innerRadius="10%"
                             outerRadius="80%"
                             startAngle={90}

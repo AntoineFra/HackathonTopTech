@@ -447,19 +447,6 @@ function DepartmentScene({
                 console.log("🏗️ Ajout des bâtiments à la scène...");
                 scene.add(buildingsGroupRef.current);
                 console.log(`✅ ${buildingsGroupRef.current.children.length} bâtiments ajoutés à la scène`);
-
-                // Ajouter une box helper pour debug (rouge vif)
-                const box = new THREE.Box3().setFromObject(buildingsGroupRef.current);
-                const helper = new THREE.Box3Helper(box, new THREE.Color(0xff0000));
-                helper.name = "BuildingsDebugBox";
-                scene.add(helper);
-
-                const size = new THREE.Vector3();
-                box.getSize(size);
-                const center = new THREE.Vector3();
-                box.getCenter(center);
-                console.log(`📦 Box helper ajoutée au centre [${center.x.toFixed(1)}, ${center.y.toFixed(1)}, ${center.z.toFixed(1)}]`);
-                console.log(`📏 Taille: ${size.x.toFixed(1)} x ${size.y.toFixed(1)} x ${size.z.toFixed(1)}`);
             }
         }
 
@@ -467,9 +454,6 @@ function DepartmentScene({
         return () => {
             if (buildingsGroupRef.current && scene.children.includes(buildingsGroupRef.current)) {
                 scene.remove(buildingsGroupRef.current);
-                // Retirer aussi la box helper
-                const helper = scene.getObjectByName("BuildingsDebugBox");
-                if (helper) scene.remove(helper);
             }
         };
     }, [buildingsGroupRef.current, scene]);
@@ -659,7 +643,7 @@ export default function Map3DDepartment() {
             // Créer les meshes 3D en coordonnées LOCALES (centrées sur 0,0)
             const buildingsGroup = createBuildingsMeshes(buildingsData, {
                 defaultHeight: 10,
-                heightScale: 1, // Pas de scale, déjà divisé par 100 dans createBuildingMesh
+                heightScale: 2, // Scale x2 pour les screenshots
                 centerLat: cityLat, // Centre de la VILLE (coordonnées locales)
                 centerLng: cityLon, // Centre de la VILLE (coordonnées locales)
             });

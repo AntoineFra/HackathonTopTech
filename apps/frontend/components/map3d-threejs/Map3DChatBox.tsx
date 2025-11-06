@@ -291,10 +291,11 @@ export function Map3DChatBox({
             )}
 
             <div
-              className={`max-w-[80%] rounded-lg ${message.role === "user"
+              className={`max-w-[80%] rounded-lg overflow-hidden ${
+                message.role === "user"
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted/50"
-                }`}
+              }`}
             >
               <div className="p-3">
                 {message.loading ? (

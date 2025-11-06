@@ -452,7 +452,7 @@ export function ChatInterface({
                         )}
 
                         <div
-                            className={`max-w-[80%] rounded-lg ${
+                            className={`max-w-[80%] rounded-lg overflow-hidden ${
                                 message.role === "user"
                                     ? "bg-primary text-primary-foreground"
                                     : "bg-muted/50"
@@ -483,6 +483,18 @@ export function ChatInterface({
                                                     %
                                                 </span>
                                             </div>
+                                        )}
+                                        {/* Afficher la requête SQL si disponible */}
+                                        {message.chartData?.prismaQuery && (
+                                            <details className="mt-2">
+                                                <summary className="flex cursor-pointer items-center gap-2 text-xs opacity-70 hover:opacity-100">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+                                                    Voir la requête SQL
+                                                </summary>
+                                                <pre className="bg-muted/50 text-foreground mt-2 overflow-x-auto rounded p-2 text-xs">
+                                                    {message.chartData.prismaQuery}
+                                                </pre>
+                                            </details>
                                         )}
                                         {/* Graphique généré par l'IA */}
                                         {message.chartData && (
