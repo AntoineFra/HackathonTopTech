@@ -1,13 +1,30 @@
 import axios from "axios";
 import fs from "fs";
 import path from "path";
-import extract from "extract-zip";
+import { createReadStream } from "fs";
+import * as unzipper from "unzipper";
+
+export async function extractLargeZip(zipPath: string, extractPath: string) {
+  return new Promise<void>((resolve, reject) => {
+    createReadStream(zipPath)
+      .pipe(unzipper.Extract({ path: extractPath }))
+      .on("close", resolve)
+      .on("error", reject);
+  });
+}
 
 export async function downloadAndExtractZip(url: string) {
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-    const zipFileName = `tmp/data-${timestamp}.zip`;
+    const zipFileName = `tmp/data-${url}.zip`;
     const zipPath = path.join(process.cwd(), zipFileName);
     const extractPath = path.join(process.cwd(), "data");
+
+    // Ensure tmp directory exists
+    const tmpDir = path.join(process.cwd(), "tmp");
+    if (!fs.existsSync(tmpDir)) {
+        fs.mkdirSync(tmpDir, { recursive: true });
+        console.log(`📁 Created directory: ${tmpDir}`);
+    }
 
     console.log(`⬇️ Downloading ZIP (${zipFileName})...`);
 
@@ -63,7 +80,23 @@ export async function downloadAndExtractZip(url: string) {
 
     console.log("📦 Extracting ZIP...");
     try {
-        await extract(zipPath, { dir: extractPath });
+        // Ensure the extraction directory exists with proper permissions
+        if (!fs.existsSync(extractPath)) {
+            fs.mkdirSync(extractPath, { recursive: true, mode: 0o755 });
+            console.log(`📁 Created directory: ${extractPath}`);
+        }
+
+        // Verify write permissions
+        try {
+            fs.accessSync(extractPath, fs.constants.W_OK);
+            console.log(`✓ Write permissions verified for: ${extractPath}`);
+        } catch (permErr) {
+            console.error(`❌ No write permission for ${extractPath}`);
+            console.error(`   Please run: sudo chown -R $USER:$USER ${extractPath}`);
+            throw permErr;
+        }
+
+        await extractLargeZip(zipPath, extractPath);
         console.log("✅ ZIP extracted to:", extractPath);
     } catch (err) {
         console.error("❌ Extraction failed:", err);

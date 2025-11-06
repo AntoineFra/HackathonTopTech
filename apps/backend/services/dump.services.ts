@@ -405,22 +405,23 @@ export async function dumpEstablishments(): Promise<DumpResult> {
 
   const sqliteFile = path.join(process.cwd(), "prisma/dev.db");
 
-  await new Promise<void>((resolve) => {
+  await new Promise<void>((resolve, reject) => {
     const child = spawn("sqlite3", [sqliteFile], {
-      stdio: ["pipe", "ignore", "ignore"],
+      stdio: ["pipe", "inherit", "inherit"],
     });
 
-    // commande SQLite pour importer le CSV
+    // Configure SQLite to use semicolon as separator and skip header
     child.stdin.write(`.mode csv\n`);
+    child.stdin.write(`.separator ";"\n`);
     child.stdin.write(
-      `.import 'data/GeolocalisationEtablissement_Sirene_pour_etudes_statistiques_utf8.csv' Establishment\n`,
+      `.import --skip 1 'data/GeolocalisationEtablissement_Sirene_pour_etudes_statistiques_utf8.csv' Establishment\n`,
     );
     child.stdin.end();
 
     child.on("close", (code) => {
       if (code === 0) {
         console.log("✅ CSV imported successfully!");
-        //fs.unlinkSync(data/GeolocalisationEtablissement_Sirene_pour_etudes_statistiques_utf8.csv);
+        //fs.unlinkSync("data/GeolocalisationEtablissement_Sirene_pour_etudes_statistiques_utf8.csv");
         console.log("🧹 Temporary CSV removed.");
       } else {
         console.log(`❌ SQLite process exited with code ${code}`);
