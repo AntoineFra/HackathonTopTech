@@ -6,11 +6,13 @@ import { prisma } from "../server.js";
 enum DumpType {
     LEGAL_UNITS = "legal_unit",
     CITIES = "cities",
+    POPULATION = "population",
 }
 
 enum DumpTypeFrench {
     LEGAL_UNITS = "Unités légales",
     CITIES = "Villes",
+    POPULATION = "Population",
 }
 
 export async function getDumpList(req: Request, res: Response) {
@@ -22,6 +24,7 @@ export async function getDumpList(req: Request, res: Response) {
         const typeToFrench: Record<string, string> = {
             [DumpType.LEGAL_UNITS]: DumpTypeFrench.LEGAL_UNITS,
             [DumpType.CITIES]: DumpTypeFrench.CITIES,
+            [DumpType.POPULATION]: DumpTypeFrench.POPULATION,
         };
 
         const dumpsForResponse = dumps.map((d: any) => ({
@@ -59,6 +62,8 @@ export async function dumpData(req: Request, res: Response) {
             [DumpType.LEGAL_UNITS]: async () => dumpLegalUnit(),
             [DumpType.CITIES]: async () =>
                 dumpCities(await dump_srvc.getAllCities("06")),
+            [DumpType.POPULATION]: async () =>
+                dump_srvc.dumpPopulationData(),
         };
 
         try {
