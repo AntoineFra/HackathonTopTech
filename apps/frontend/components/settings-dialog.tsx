@@ -149,8 +149,10 @@ export default function SettingsDialog() {
         setError(null);
         try {
             const dumpRes = await getDump(type);
-            if (dumpRes?.data) {
-                const blob = new Blob([JSON.stringify(dumpRes.data, null, 2)], {
+            // If the server sends a `data` field, export that only
+            const contentToExport = dumpRes?.data ?? dumpRes;
+            if (contentToExport) {
+                const blob = new Blob([JSON.stringify(contentToExport, null, 2)], {
                     type: "application/json",
                 });
                 const url = URL.createObjectURL(blob);
