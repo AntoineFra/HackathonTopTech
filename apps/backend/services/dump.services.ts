@@ -31,7 +31,7 @@ export async function dumpLegalUnit(): Promise<DumpResult> {
         };
     }
 
-    await downloadAndExtractZip(process.env.LEGAL_UNIT_URL);
+    await downloadAndExtractZip(process.env.LEGAL_UNIT_URL, "legal_units");
 
     if (!fs.existsSync("data/StockUniteLegale_utf8.csv")) {
         throw new Error("CSV file not found after extraction.");
@@ -395,9 +395,11 @@ export async function dumpEstablishments(): Promise<DumpResult> {
     };
   }
 
-  await downloadAndExtractZip(process.env.ESTABLISHMENT_URL);
+  await downloadAndExtractZip(process.env.ESTABLISHMENT_URL, "establishments");
 
-  if (!fs.existsSync("data/GeolocalisationEtablissement_Sirene_pour_etudes_statistiques_utf8.csv")) {
+  const csvPath = path.join(process.cwd(), "data/GeolocalisationEtablissement_Sirene_pour_etudes_statistiques_utf8.csv");
+
+  if (!fs.existsSync(csvPath)) {
     throw new Error("CSV file not found after extraction.");
   }
 
@@ -407,21 +409,21 @@ export async function dumpEstablishments(): Promise<DumpResult> {
 
   await new Promise<void>((resolve, reject) => {
     const child = spawn("sqlite3", [sqliteFile], {
-      stdio: ["pipe", "inherit", "inherit"],
+      stdio: ["pipe", "ignore", "ignore"],
     });
 
     // Configure SQLite to use semicolon as separator and skip header
     child.stdin.write(`.mode csv\n`);
     child.stdin.write(`.separator ";"\n`);
     child.stdin.write(
-      `.import --skip 1 'data/GeolocalisationEtablissement_Sirene_pour_etudes_statistiques_utf8.csv' Establishment\n`,
+      `.import --skip 1 '${csvPath}' Establishment\n`,
     );
     child.stdin.end();
 
     child.on("close", (code) => {
       if (code === 0) {
         console.log("✅ CSV imported successfully!");
-        //fs.unlinkSync("data/GeolocalisationEtablissement_Sirene_pour_etudes_statistiques_utf8.csv");
+        //fs.unlinkSync(csvPath);
         console.log("🧹 Temporary CSV removed.");
       } else {
         console.log(`❌ SQLite process exited with code ${code}`);
