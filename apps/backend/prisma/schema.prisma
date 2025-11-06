@@ -79,7 +79,30 @@ model City {
   codeEpci        String
   codeRegion      String
   population      Int
+  surface         Float?       // Surface en hectares
+  zone            String?      // "metro" ou autre
   postalCodes     PostalCode[]
+  geoData         CityGeoData?
+}
+
+model CityGeoData {
+  id            Int     @id @default(autoincrement())
+  cityCodeINSEE String  @unique
+  city          City    @relation(fields: [cityCodeINSEE], references: [codeINSEE])
+
+  // Centre (Point GeoJSON)
+  centreLat     Float?
+  centreLon     Float?
+
+  // Mairie (Point GeoJSON)
+  mairieLat     Float?
+  mairieLon     Float?
+
+  // Contour (Polygon GeoJSON) - stocké en JSON
+  contour       String? // JSON stringifié
+
+  // BBox (Polygon GeoJSON) - stocké en JSON
+  bbox          String? // JSON stringifié
 }
 
 model PostalCode {
