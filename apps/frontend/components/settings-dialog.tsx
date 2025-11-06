@@ -1,11 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Settings, Download, Check, Loader2 } from "lucide-react";
+import { Settings, Download, Check, Loader2, Sparkles, Cpu, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { aiHealth } from "@/services/ai.services";
 import { listDumps, getDump } from "@/services/dump.services";
 import { getSettings, updateSettings } from "@/services/settings.services";
+import { useAIProvider } from "@/contexts/AIProviderContext";
 
 type DumpItem = {
     id: number;
@@ -16,6 +17,7 @@ type DumpItem = {
 };
 
 export default function SettingsDialog() {
+    const { provider, setProvider } = useAIProvider();
     const [open, setOpen] = useState(false);
     const [mounted, setMounted] = useState(false); // DOM mounted
     const dialogRef = useRef<HTMLDivElement | null>(null);
@@ -420,6 +422,82 @@ export default function SettingsDialog() {
                                     {settingsMessage}
                                 </div>
                             )}
+                        </div>
+
+                        {/* AI Provider selection */}
+                        <div className="mt-4 border-t pt-3">
+                            <div className="mb-2">
+                                <div className="text-xs font-medium">
+                                    Fournisseur IA
+                                </div>
+                                <div className="text-muted-foreground text-xs">
+                                    Sélectionnez le modèle IA à utiliser pour tous les chats
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <button
+                                    onClick={() => setProvider("gemini")}
+                                    className={`flex w-full items-center gap-3 rounded-md border p-3 transition-all ${
+                                        provider === "gemini"
+                                            ? "border-primary bg-primary/10"
+                                            : "border-border hover:bg-muted/50"
+                                    }`}
+                                >
+                                    <Sparkles className="h-4 w-4 text-blue-500" />
+                                    <div className="flex-1 text-left">
+                                        <div className="text-sm font-medium">Gemini</div>
+                                        <div className="text-muted-foreground text-xs">
+                                            Google Gemini 2.0 Flash (Cloud)
+                                        </div>
+                                    </div>
+                                    {provider === "gemini" && (
+                                        <Check className="h-4 w-4 text-primary" />
+                                    )}
+                                </button>
+
+                                <button
+                                    onClick={() => setProvider("ollama")}
+                                    className={`flex w-full items-center gap-3 rounded-md border p-3 transition-all ${
+                                        provider === "ollama"
+                                            ? "border-primary bg-primary/10"
+                                            : "border-border hover:bg-muted/50"
+                                    }`}
+                                >
+                                    <Cpu className="h-4 w-4 text-purple-500" />
+                                    <div className="flex-1 text-left">
+                                        <div className="text-sm font-medium">Ollama</div>
+                                        <div className="text-muted-foreground text-xs">
+                                            Mistral 7B (Docker local)
+                                        </div>
+                                    </div>
+                                    {provider === "ollama" && (
+                                        <Check className="h-4 w-4 text-primary" />
+                                    )}
+                                </button>
+
+                                <button
+                                    onClick={() => setProvider("local")}
+                                    className={`flex w-full items-center gap-3 rounded-md border p-3 transition-all ${
+                                        provider === "local"
+                                            ? "border-yellow-500 bg-gradient-to-br from-yellow-400/20 to-yellow-600/20"
+                                            : "border-border hover:bg-muted/50"
+                                    }`}
+                                >
+                                    <Zap className="h-4 w-4 text-yellow-500" />
+                                    <div className="flex-1 text-left">
+                                        <div className="text-sm font-medium flex items-center gap-2">
+                                            Local AI
+                                            <span className="text-xs font-normal text-yellow-600 dark:text-yellow-500">⭐ Recommandé</span>
+                                        </div>
+                                        <div className="text-muted-foreground text-xs">
+                                            IA locale optimisée
+                                        </div>
+                                    </div>
+                                    {provider === "local" && (
+                                        <Check className="h-4 w-4 text-yellow-500" />
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     </div>
 
