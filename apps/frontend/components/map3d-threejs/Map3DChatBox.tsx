@@ -4,10 +4,10 @@ import { useState, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, Bot, X, MessageSquare, Sparkles, Cpu } from "lucide-react";
+import { Send, Loader2, Bot } from "lucide-react";
 import { aiAnswer, type ChatMessage } from "@/services/ai.services";
 import { AIGeneratedChart } from "./AIGeneratedChart";
-import { Badge } from "@/components/ui/badge";
+import { useAIProvider } from "@/contexts/AIProviderContext";
 
 interface Map3DChatBoxProps {
     citiesList: string[];
@@ -28,10 +28,10 @@ export function Map3DChatBox({
     onLegendActivate,
     onChartGenerated,
 }: Map3DChatBoxProps) {
+    const { provider } = useAIProvider();
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [lastResponse, setLastResponse] = useState<string>("");
-    const [aiProvider, setAiProvider] = useState<"ollama" | "gemini">("gemini");
     const [chartData, setChartData] = useState<{
         type: "bar" | "line" | "pie";
         data: any[];
@@ -77,7 +77,7 @@ export function Map3DChatBox({
                 },
             ];
 
-            const result = await aiAnswer(userQuestion, history, aiProvider);
+            const result = await aiAnswer(userQuestion, history, provider);
 
             if (result.success && result.answer) {
                 setLastResponse(result.answer);
@@ -140,31 +140,18 @@ export function Map3DChatBox({
 
     return (
         <Card className="bg-card border-border w-full border shadow-lg">
-            <div className="border-border flex items-center justify-between border-b p-4 shrink-0">
-                <div className="flex items-center gap-3">
-                    <div className="bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-full">
-                        <Bot className="h-5 w-5" />
-                    </div>
-                    <div>
-                        <h3 className="text-foreground text-lg font-semibold">
-                            Assistant IA
-                        </h3>
-                        <p className="text-muted-foreground text-xs">
-                            Posez vos questions sur les communes du 06
-                        </p>
-                    </div>
+            <div className="border-border flex items-center gap-3 border-b p-4 shrink-0">
+                <div className="bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-full">
+                    <Bot className="h-5 w-5" />
                 </div>
-                <Badge
-                    variant={aiProvider === "gemini" ? "default" : "secondary"}
-                    className="text-xs cursor-pointer"
-                    onClick={() => setAiProvider(aiProvider === "gemini" ? "ollama" : "gemini")}
-                >
-                    {aiProvider === "gemini" ? (
-                        <><Sparkles className="h-3 w-3 mr-1" /> Gemini</>
-                    ) : (
-                        <><Cpu className="h-3 w-3 mr-1" /> Ollama</>
-                    )}
-                </Badge>
+                <div>
+                    <h3 className="text-foreground text-lg font-semibold">
+                        Assistant IA
+                    </h3>
+                    <p className="text-muted-foreground text-xs">
+                        Posez vos questions sur les communes du 06
+                    </p>
+                </div>
             </div>
 
             <div className="space-y-3 p-4 overflow-y-auto flex-1">
