@@ -7,8 +7,11 @@ import {
     parseAIGeneratedQuery,
 } from "./query-executor.services.js";
 
+<<<<<<< HEAD
 import settingsService from "./settings.service.js";
 
+=======
+>>>>>>> origin/chatChart
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "mistral";
 // Keep a fallback env-based default; actual timeout will be read from settings at call time
