@@ -1,13 +1,29 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, Bot } from "lucide-react";
-import { aiAnswer, type ChatMessage } from "@/services/ai.services";
+import { useState, useRef, useEffect } from "react";
 import { AIGeneratedChart } from "./AIGeneratedChart";
 import { useAIProvider } from "@/contexts/AIProviderContext";
+import { Send, Loader2, Bot, User, Sparkles } from "lucide-react";
+import { aiAnswer, type ChatMessage } from "@/services/ai.services";
+
+interface Message {
+    id: string;
+    role: "user" | "assistant";
+    content: string;
+    timestamp: Date;
+    loading?: boolean;
+    confidence?: number;
+    chartData?: {
+        type: "bar" | "line" | "pie" | "area" | "radar" | "radial";
+        data: any[];
+        title?: string;
+        description?: string;
+        prismaQuery?: string;
+    };
+}
 
 interface Map3DChatBoxProps {
     citiesList: string[];
@@ -17,7 +33,7 @@ interface Map3DChatBoxProps {
     ) => void;
     onChartGenerated?: (
         chartData: {
-            type: "bar" | "line" | "pie";
+            type: "bar" | "line" | "pie" | "area" | "radar" | "radial";
             data: any[];
             title?: string;
             description?: string;
@@ -33,17 +49,34 @@ export function Map3DChatBox({
     onChartGenerated,
 }: Map3DChatBoxProps) {
     const { provider } = useAIProvider();
+    const [messages, setMessages] = useState<Message[]>([
+        {
+            id: "welcome",
+            role: "assistant",
+            content:
+                "Bonjour ! Je suis votre assistant IA pour les données du territoire 06. Posez-moi vos questions sur les données démographiques, économiques et touristiques des Alpes-Maritimes.",
+            timestamp: new Date(),
+        },
+    ]);
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const [lastResponse, setLastResponse] = useState<string>("");
-    const [chartData, setChartData] = useState<{
-        type: "bar" | "line" | "pie";
-        data: any[];
-        title?: string;
-        description?: string;
-        prismaQuery?: string;
-    } | null>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const messageIdCounter = useRef(0);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    // Generate unique message ID
+    const generateMessageId = (prefix = "") => {
+        messageIdCounter.current += 1;
+        return `${prefix}${Date.now()}-${messageIdCounter.current}`;
+    };
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
 
     const detectCityInResponse = (response: string): string | null => {
         // Normaliser la réponse pour la recherche
@@ -66,45 +99,77 @@ export function Map3DChatBox({
         e?.preventDefault();
         if (!input.trim() || isLoading) return;
 
-        const userQuestion = input.trim();
+        const userMessage: Message = {
+            id: generateMessageId("user-"),
+            role: "user",
+            content: input.trim(),
+            timestamp: new Date(),
+        };
+
+        setMessages((prev) => [...prev, userMessage]);
         setInput("");
         setIsLoading(true);
-        setLastResponse("");
+
+        // Add loading message
+        const loadingMessage: Message = {
+            id: generateMessageId("loading-"),
+            role: "assistant",
+            content: "",
+            timestamp: new Date(),
+            loading: true,
+        };
+        setMessages((prev) => [...prev, loadingMessage]);
 
         try {
-            // Construire l'historique avec contexte géographique
-            const history: ChatMessage[] = [
-                {
-                    role: "assistant",
-                    content:
-                        "Je suis un assistant spécialisé dans les données des communes des Alpes-Maritimes (département 06).",
-                },
-            ];
+            // Build conversation history (last 10 messages)
+            const history: ChatMessage[] = messages
+                .filter((m) => !m.loading && m.id !== "welcome")
+                .slice(-10)
+                .map((m) => ({
+                    role: m.role === "user" ? "user" : "assistant",
+                    content: m.content,
+                }));
 
-            const result = await aiAnswer(userQuestion, history, provider);
+            const result = await aiAnswer(
+                userMessage.content,
+                history,
+                provider,
+            );
 
             if (result.success && result.answer) {
-                setLastResponse(result.answer);
-
-                // Stocker les données du graphique si présentes
-                if (result.chart) {
-                    console.log(
-                        "📊 Données de graphique reçues:",
-                        result.chart,
-                    );
-                    const newChartData = {
-                        type: result.chart.type,
-                        data: result.chart.data,
-                        title: result.chart.title,
-                        description: result.chart.description,
-                        prismaQuery: result.prismaQuery,
+                setMessages((prev) => {
+                    const filtered = prev.filter((m) => !m.loading);
+                    const responseMessage: Message = {
+                        id: generateMessageId("response-"),
+                        role: "assistant",
+                        content:
+                            result.answer ||
+                            "Désolé, je n'ai pas pu traiter votre question.",
+                        timestamp: new Date(),
+                        confidence: result.confidence || 0.85,
                     };
-                    setChartData(newChartData);
-                    onChartGenerated?.(newChartData);
-                } else {
-                    setChartData(null);
-                    onChartGenerated?.(null);
-                }
+
+                    // Handle chart data
+                    if (result.chart) {
+                        console.log(
+                            "📊 Données de graphique reçues:",
+                            result.chart,
+                        );
+                        const chartData = {
+                            type: result.chart.type,
+                            data: result.chart.data,
+                            title: result.chart.title,
+                            description: result.chart.description,
+                            prismaQuery: result.prismaQuery,
+                        };
+                        responseMessage.chartData = chartData;
+                        onChartGenerated?.(chartData);
+                    } else {
+                        onChartGenerated?.(null);
+                    }
+
+                    return [...filtered, responseMessage];
+                });
 
                 // Activer automatiquement la légende si retournée par l'IA
                 if (result.legendType && onLegendActivate) {
@@ -126,15 +191,54 @@ export function Map3DChatBox({
                     console.log("ℹ️ Aucune ville détectée dans la réponse");
                 }
             } else {
-                setLastResponse(
-                    "Désolé, je n'ai pas pu traiter votre question.",
-                );
+                setMessages((prev) => {
+                    const filtered = prev.filter((m) => !m.loading);
+                    return [
+                        ...filtered,
+                        {
+                            id: generateMessageId("error-"),
+                            role: "assistant",
+                            content:
+                                "Désolé, je n'ai pas pu traiter votre question.",
+                            timestamp: new Date(),
+                        },
+                    ];
+                });
             }
         } catch (error) {
             console.error("AI Error:", error);
-            setLastResponse(
-                "Désolé, une erreur s'est produite. Veuillez réessayer.",
-            );
+
+            // Extract error message
+            let errorMessage =
+                "Désolé, une erreur s'est produite. Veuillez réessayer.";
+            if (error instanceof Error) {
+                if (
+                    error.message.includes("Timeout") ||
+                    error.message.includes("timeout")
+                ) {
+                    errorMessage =
+                        "⏱️ La requête a pris trop de temps. Le modèle IA est peut-être en train de démarrer ou surchargé. Veuillez patienter quelques instants et réessayer avec une question plus courte.";
+                } else if (error.message.includes("500")) {
+                    errorMessage =
+                        "❌ Erreur serveur. Le service IA n'est peut-être pas disponible. Vérifiez que Ollama est bien démarré.";
+                } else if (error.message.includes("fetch")) {
+                    errorMessage =
+                        "🔌 Impossible de contacter le serveur. Vérifiez votre connexion.";
+                }
+            }
+
+            setMessages((prev) => {
+                const filtered = prev.filter((m) => !m.loading);
+                return [
+                    ...filtered,
+                    {
+                        id: generateMessageId("error-"),
+                        role: "assistant",
+                        content: errorMessage,
+                        timestamp: new Date(),
+                    },
+                ];
+            });
         } finally {
             setIsLoading(false);
         }
@@ -163,7 +267,98 @@ export function Map3DChatBox({
                 </div>
             </div>
 
-            <div className="flex-1 space-y-3 overflow-y-auto p-4">
+            <div className="flex-1 space-y-4 overflow-y-auto p-4">
+                {/* Messages */}
+                {messages.map((message) => (
+                    <div
+                        key={message.id}
+                        className={`flex gap-3 ${
+                            message.role === "user"
+                                ? "justify-end"
+                                : "justify-start"
+                        }`}
+                    >
+                        {message.role === "assistant" && (
+                            <div className="bg-primary/10 text-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+                                {message.loading ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Bot className="h-4 w-4" />
+                                )}
+                            </div>
+                        )}
+
+                        <div
+                            className={`max-w-[80%] rounded-lg ${
+                                message.role === "user"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-muted/50"
+                            }`}
+                        >
+                            <div className="p-3">
+                                {message.loading ? (
+                                    <div className="flex items-center gap-2">
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        <span className="text-sm">
+                                            Réflexion en cours...
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <p className="text-sm whitespace-pre-wrap">
+                                            {message.content}
+                                        </p>
+                                        {message.confidence && (
+                                            <div className="mt-2 flex items-center gap-2 text-xs opacity-70">
+                                                <Sparkles className="h-3 w-3" />
+                                                <span>
+                                                    Confiance:{" "}
+                                                    {Math.round(
+                                                        message.confidence *
+                                                            100,
+                                                    )}
+                                                    %
+                                                </span>
+                                            </div>
+                                        )}
+                                        {/* Graphique généré par l'IA */}
+                                        {message.chartData && (
+                                            <div className="mt-3">
+                                                <AIGeneratedChart
+                                                    chartType={
+                                                        message.chartData.type
+                                                    }
+                                                    data={
+                                                        message.chartData.data
+                                                    }
+                                                    title={
+                                                        message.chartData.title
+                                                    }
+                                                    description={
+                                                        message.chartData
+                                                            .description
+                                                    }
+                                                    prismaQuery={
+                                                        message.chartData
+                                                            .prismaQuery
+                                                    }
+                                                />
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+                            </div>
+                        </div>
+
+                        {message.role === "user" && (
+                            <div className="bg-primary/10 text-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+                                <User className="h-4 w-4" />
+                            </div>
+                        )}
+                    </div>
+                ))}
+                <div ref={messagesEndRef} />
+
                 {/* Input de question */}
                 <form onSubmit={handleSubmit} className="flex gap-2">
                     <Textarea
@@ -188,39 +383,6 @@ export function Map3DChatBox({
                         )}
                     </Button>
                 </form>
-
-                {/* Zone de chargement */}
-                {isLoading && (
-                    <div className="text-muted-foreground flex items-center justify-center gap-2 py-8">
-                        <Loader2 className="h-6 w-6 animate-spin" />
-                        <span className="text-base">Réflexion en cours...</span>
-                    </div>
-                )}
-
-                {/* Réponse de l'IA */}
-                {lastResponse && (
-                    <div className="space-y-3">
-                        <div className="bg-muted/50 rounded-lg p-4">
-                            <p className="text-muted-foreground mb-2 text-xs font-semibold">
-                                Réponse de l'IA :
-                            </p>
-                            <p className="text-foreground text-sm whitespace-pre-wrap">
-                                {lastResponse}
-                            </p>
-                        </div>
-
-                        {/* Graphique généré par l'IA */}
-                        {chartData && (
-                            <AIGeneratedChart
-                                chartType={chartData.type}
-                                data={chartData.data}
-                                title={chartData.title}
-                                description={chartData.description}
-                                prismaQuery={chartData.prismaQuery}
-                            />
-                        )}
-                    </div>
-                )}
             </div>
         </Card>
     );

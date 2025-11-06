@@ -1,15 +1,15 @@
 "use client";
 
 import { AIResponse } from "@/types";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useSearchParams } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Loader2, Sparkles, User, Bot } from "lucide-react";
 import { aiAnswer, type ChatMessage } from "@/services/ai.services";
 import { useAIProvider } from "@/contexts/AIProviderContext";
+import { AIGeneratedChart } from "@/components/map3d-threejs/AIGeneratedChart";
 
 interface Message {
     id: string;
@@ -18,9 +18,40 @@ interface Message {
     timestamp: Date;
     loading?: boolean;
     response?: AIResponse;
+    chartData?: {
+        type: "bar" | "line" | "pie" | "area" | "radar" | "radial";
+        data: any[];
+        title?: string;
+        description?: string;
+        prismaQuery?: string;
+    };
 }
 
-export function ChatInterface() {
+interface ChatInterfaceProps {
+    onCityDetected?: (cityName: string, aiResponse: string) => void;
+    onLegendActivate?: (
+        legendType: "population" | "economy" | "tourism",
+    ) => void;
+    onChartGenerated?: (
+        chartData: {
+            type: "bar" | "line" | "pie" | "area" | "radar" | "radial";
+            data: any[];
+            title?: string;
+            description?: string;
+            prismaQuery?: string;
+        } | null,
+    ) => void;
+    citiesList?: string[];
+    showSuggestions?: boolean;
+}
+
+export function ChatInterface({
+    onCityDetected,
+    onLegendActivate,
+    onChartGenerated,
+    citiesList = [],
+    showSuggestions = true,
+}: ChatInterfaceProps = {}) {
     const { provider } = useAIProvider();
     const searchParams = useSearchParams();
     const initialQuery = searchParams.get("q");
@@ -30,7 +61,7 @@ export function ChatInterface() {
             id: "welcome",
             role: "assistant",
             content:
-                "Bonjour ! Je suis votre assistant IA pour les données du territoire 06. Posez-moi vos questions sur les indicateurs socio-démographiques, économiques et statistiques de Nice Côte d'Azur.",
+                "Bonjour ! Je suis votre assistant IA pour les données du territoire 06. Posez-moi vos questions sur les données démographiques, économiques et touristiques des Alpes-Maritimes.",
             timestamp: new Date(),
         },
     ]);
@@ -49,12 +80,30 @@ export function ChatInterface() {
         return `${prefix}${Date.now()}-${messageIdCounter.current}`;
     };
 
+    // Detect city in response
+    const detectCityInResponse = useCallback(
+        (response: string): string | null => {
+            if (citiesList.length === 0) return null;
+
+            const normalizedResponse = response.toLowerCase();
+            for (const city of citiesList) {
+                const normalizedCity = city.toLowerCase();
+                const regex = new RegExp(`\\b${normalizedCity}\\b`, "i");
+                if (regex.test(normalizedResponse)) {
+                    return city;
+                }
+            }
+            return null;
+        },
+        [citiesList],
+    );
+
     const suggestions = [
         "Quelle est la population de Nice ?",
-        "Statistiques d'emploi 2025",
+        "Évolution démographique de Grasse",
         "Secteurs économiques du 06",
-        "Indicateurs touristiques",
-        "Démographie des Alpes-Maritimes",
+        "Statistiques touristiques de Cannes",
+        "Comparaison des communes",
     ];
 
     const scrollToBottom = () => {
@@ -120,23 +169,62 @@ export function ChatInterface() {
 
                     setMessages((prev) => {
                         const filtered = prev.filter((m) => !m.loading);
-                        return [
-                            ...filtered,
-                            {
-                                id: generateMessageId("response-"),
-                                role: "assistant",
-                                content:
-                                    result.answer ||
-                                    "Désolé, je n'ai pas pu traiter votre question.",
-                                timestamp: new Date(),
-                                response: {
-                                    success: result.success,
-                                    query: result.query,
-                                    answer: result.answer,
-                                    confidence: result.confidence || 0.85,
-                                },
+                        const responseMessage: Message = {
+                            id: generateMessageId("response-"),
+                            role: "assistant",
+                            content:
+                                result.answer ||
+                                "Désolé, je n'ai pas pu traiter votre question.",
+                            timestamp: new Date(),
+                            response: {
+                                success: result.success,
+                                query: result.query,
+                                answer: result.answer,
+                                confidence: result.confidence || 0.85,
                             },
-                        ];
+                        };
+
+                        // Handle chart data
+                        if (result.chart) {
+                            console.log(
+                                "📊 Données de graphique reçues:",
+                                result.chart,
+                            );
+                            const chartData = {
+                                type: result.chart.type,
+                                data: result.chart.data,
+                                title: result.chart.title,
+                                description: result.chart.description,
+                                prismaQuery: result.prismaQuery,
+                            };
+                            responseMessage.chartData = chartData;
+                            onChartGenerated?.(chartData);
+                        } else {
+                            onChartGenerated?.(null);
+                        }
+
+                        // Handle legend activation
+                        if (result.legendType && onLegendActivate) {
+                            console.log(
+                                `📊 Activation automatique de la légende: ${result.legendType}`,
+                            );
+                            onLegendActivate(result.legendType);
+                        }
+
+                        // Handle city detection
+                        if (result.answer) {
+                            const detectedCity = detectCityInResponse(
+                                result.answer,
+                            );
+                            if (detectedCity && onCityDetected) {
+                                console.log(
+                                    `🏙️ Ville détectée dans la réponse: ${detectedCity}`,
+                                );
+                                onCityDetected(detectedCity, result.answer);
+                            }
+                        }
+
+                        return [...filtered, responseMessage];
                     });
                 } catch (error) {
                     console.error("AI Error:", error);
@@ -179,7 +267,15 @@ export function ChatInterface() {
 
             submitInitialQuery();
         }
-    }, [initialQuery, hasProcessedInitialQuery]);
+    }, [
+        initialQuery,
+        hasProcessedInitialQuery,
+        provider,
+        detectCityInResponse,
+        onChartGenerated,
+        onCityDetected,
+        onLegendActivate,
+    ]);
 
     const handleSubmit = async (e?: React.FormEvent) => {
         e?.preventDefault();
@@ -225,23 +321,60 @@ export function ChatInterface() {
             // Remove loading message and add real response
             setMessages((prev) => {
                 const filtered = prev.filter((m) => !m.loading);
-                return [
-                    ...filtered,
-                    {
-                        id: generateMessageId("response-"),
-                        role: "assistant",
-                        content:
-                            result.answer ||
-                            "Désolé, je n'ai pas pu traiter votre question.",
-                        timestamp: new Date(),
-                        response: {
-                            success: result.success,
-                            query: result.query,
-                            answer: result.answer,
-                            confidence: result.confidence || 0.85,
-                        },
+                const responseMessage: Message = {
+                    id: generateMessageId("response-"),
+                    role: "assistant",
+                    content:
+                        result.answer ||
+                        "Désolé, je n'ai pas pu traiter votre question.",
+                    timestamp: new Date(),
+                    response: {
+                        success: result.success,
+                        query: result.query,
+                        answer: result.answer,
+                        confidence: result.confidence || 0.85,
                     },
-                ];
+                };
+
+                // Handle chart data
+                if (result.chart) {
+                    console.log(
+                        "📊 Données de graphique reçues:",
+                        result.chart,
+                    );
+                    const chartData = {
+                        type: result.chart.type,
+                        data: result.chart.data,
+                        title: result.chart.title,
+                        description: result.chart.description,
+                        prismaQuery: result.prismaQuery,
+                    };
+                    responseMessage.chartData = chartData;
+                    onChartGenerated?.(chartData);
+                } else {
+                    onChartGenerated?.(null);
+                }
+
+                // Handle legend activation
+                if (result.legendType && onLegendActivate) {
+                    console.log(
+                        `📊 Activation automatique de la légende: ${result.legendType}`,
+                    );
+                    onLegendActivate(result.legendType);
+                }
+
+                // Handle city detection
+                if (result.answer) {
+                    const detectedCity = detectCityInResponse(result.answer);
+                    if (detectedCity && onCityDetected) {
+                        console.log(
+                            `🏙️ Ville détectée dans la réponse: ${detectedCity}`,
+                        );
+                        onCityDetected(detectedCity, result.answer);
+                    }
+                }
+
+                return [...filtered, responseMessage];
             });
         } catch (error) {
             console.error("AI Error:", error);
@@ -318,14 +451,14 @@ export function ChatInterface() {
                             </div>
                         )}
 
-                        <Card
-                            className={`max-w-[80%] ${
+                        <div
+                            className={`max-w-[80%] rounded-lg ${
                                 message.role === "user"
                                     ? "bg-primary text-primary-foreground"
-                                    : "bg-card"
+                                    : "bg-muted/50"
                             }`}
                         >
-                            <div className="p-4">
+                            <div className="p-3">
                                 {message.loading ? (
                                     <div className="flex items-center gap-2">
                                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -351,10 +484,34 @@ export function ChatInterface() {
                                                 </span>
                                             </div>
                                         )}
+                                        {/* Graphique généré par l'IA */}
+                                        {message.chartData && (
+                                            <div className="mt-3">
+                                                <AIGeneratedChart
+                                                    chartType={
+                                                        message.chartData.type
+                                                    }
+                                                    data={
+                                                        message.chartData.data
+                                                    }
+                                                    title={
+                                                        message.chartData.title
+                                                    }
+                                                    description={
+                                                        message.chartData
+                                                            .description
+                                                    }
+                                                    prismaQuery={
+                                                        message.chartData
+                                                            .prismaQuery
+                                                    }
+                                                />
+                                            </div>
+                                        )}
                                     </>
                                 )}
                             </div>
-                        </Card>
+                        </div>
 
                         {message.role === "user" && (
                             <div className="bg-primary/10 text-primary flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
@@ -367,7 +524,7 @@ export function ChatInterface() {
             </div>
 
             {/* Suggestions (only shown when chat is empty or at start) */}
-            {messages.length <= 1 && (
+            {showSuggestions && messages.length <= 1 && (
                 <div className="border-t px-4 py-3">
                     <p className="text-muted-foreground mb-2 text-xs">
                         Suggestions :
@@ -397,20 +554,20 @@ export function ChatInterface() {
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Posez votre question... (Entrée pour envoyer, Maj+Entrée pour une nouvelle ligne)"
+                        placeholder="Ex: Quelle est la population de Nice ?"
                         disabled={isLoading}
-                        className="max-h-32 min-h-10 flex-1 resize-none"
+                        className="max-h-24 min-h-12 flex-1 resize-none"
                     />
                     <Button
                         type="submit"
                         disabled={isLoading || !input.trim()}
                         size="icon"
-                        className="h-10 w-10 shrink-0"
+                        className="h-12 w-12 shrink-0"
                     >
                         {isLoading ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <Loader2 className="h-5 w-5 animate-spin" />
                         ) : (
-                            <Send className="h-4 w-4" />
+                            <Send className="h-5 w-5" />
                         )}
                     </Button>
                 </form>
