@@ -46,7 +46,7 @@ export interface AIServiceResponse {
     error?: string;
     legendType?: "population" | "economy" | "tourism";
     chart?: {
-        type: "bar" | "line" | "pie" | "area" | "radar" | "radial";
+        type: "bar" | "line" | "pie" | "area" | "radar" | "radial" | "none";
         data: any[];
         title?: string;
         description?: string;
@@ -83,11 +83,11 @@ Base de données Prisma disponible :
 model City {
   codeINSEE       String       @id
   name            String
-  codeDepartement String
+  codeDepartement String       // ⚠️ Utilise "codeDepartement" PAS "departement"
   siren           String
   codeEpci        String
   codeRegion      String
-  population      Int
+  population      Int          // Population actuelle (dernière année)
   surface         Float?       // Surface en hectares
   zone            String?      // "metro" ou autre
   postalCodes     PostalCode[]
@@ -123,6 +123,21 @@ model PostalCode {
 
 
 EXEMPLES OBLIGATOIRES À SUIVRE :
+
+Question : "Quelle est la population de Nice ?"
+Réponse :
+[PRISMA_QUERY]
+prisma.city.findFirst({
+  "where": {"name": "Nice", "codeDepartement": "06"},
+  "select": {"name": true, "population": true}
+})
+[/PRISMA_QUERY]
+[CHART:none]
+[LEGEND:population]
+
+La population de [name] est de [population] habitants.
+
+---
 
 Question : "Évolution de la population de Grasse depuis 2000"
 Réponse :
@@ -169,10 +184,16 @@ Voici les 5 plus grandes villes des Alpes-Maritimes.
 IMPORTANT :
 - TOUJOURS utiliser du JSON strict (pas de JavaScript)
 - TOUJOURS mettre les balises [PRISMA_QUERY], [CHART:xxx], [LEGEND:xxx]
+- Pour une population actuelle/récente : utilise City.population
+- Pour une évolution temporelle : utilise PopulationHistory avec les champs pop2022, pop2020, etc.
 - Pour les évolutions temporelles : utilise [CHART:line] ou [CHART:area]
 - Pour les comparaisons entre villes : utilise [CHART:bar]
 - Pour les répartitions/proportions : utilise [CHART:pie]
 - Pour comparer plusieurs indicateurs : utilise [CHART:radar]
+- Pour une valeur unique sans graphique : utilise [CHART:none]
+- ⚠️ Avec [CHART:none], utilise des placeholders [population], [name], etc. qui seront remplacés automatiquement
+- ⚠️ Dans City, utilise "codeDepartement" (PAS "departement")
+- ⚠️ Dans PopulationHistory, utilise "departement" (PAS "codeDepartement")
 - N'utilise QUE les années listées ci-dessus (pas de pop2001, pop2005, etc.)
 
 Réponds en français de manière concise.`;
@@ -194,10 +215,10 @@ function extractLegendType(
  */
 function extractChartType(
     response: string,
-): "bar" | "line" | "pie" | "area" | "radar" | "radial" | undefined {
-    const match = response.match(/\[CHART:(bar|line|pie|area|radar|radial)\]/);
+): "bar" | "line" | "pie" | "area" | "radar" | "radial" | "none" | undefined {
+    const match = response.match(/\[CHART:(bar|line|pie|area|radar|radial|none)\]/);
     return match
-        ? (match[1] as "bar" | "line" | "pie" | "area" | "radar" | "radial")
+        ? (match[1] as "bar" | "line" | "pie" | "area" | "radar" | "radial" | "none")
         : undefined;
 }
 
@@ -332,7 +353,7 @@ export async function answerQuestionWithGemini(
         // Nettoyer la réponse
         let cleanAnswer = geminiResponse
             .replace(/\[LEGEND:(population|economy|tourism)\]/g, "")
-            .replace(/\[CHART:(bar|line|pie)\]/g, "")
+            .replace(/\[CHART:(bar|line|pie|area|radar|radial|none)\]/g, "")
             .replace(/\[PRISMA_QUERY\][\s\S]*?\[\/PRISMA_QUERY\]/g, "")
             .trim();
 
@@ -390,7 +411,7 @@ export async function answerQuestionWithGemini(
                     }
 
                     // Si un graphique est demandé et qu'on a des données
-                    if (chartType && chartDataArray.length > 0) {
+                    if (chartType && chartType !== "none" && chartDataArray.length > 0) {
                         console.log(
                             `📊 Création du chart avec ${chartDataArray.length} résultat(s)`,
                         );
@@ -405,6 +426,19 @@ export async function answerQuestionWithGemini(
                     if (queryResult.executedQuery) {
                         response.prismaQuery = queryResult.executedQuery;
                     }
+
+                    // Si chartType est "none", enrichir la réponse avec les données
+                    if (chartType === "none" && chartDataArray.length > 0) {
+                        const firstResult = chartDataArray[0];
+                        // Remplacer les placeholders dans la réponse
+                        if (firstResult.population) {
+                            cleanAnswer = cleanAnswer.replace(/\[population\]/gi, firstResult.population.toLocaleString("fr-FR"));
+                        }
+                        if (firstResult.name) {
+                            cleanAnswer = cleanAnswer.replace(/\[name\]/gi, firstResult.name);
+                        }
+                    }
+
                     /*    // Ne pas afficher les données brutes, juste confirmer qu'un graphique est disponible
                     if (chartDataArray.length > 0 && chartType) {
                         cleanAnswer += `\n\n📊 Graphique généré avec ${chartDataArray.length} point${chartDataArray.length > 1 ? 's' : ''} de données.`;

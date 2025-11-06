@@ -51,7 +51,7 @@ export interface AIServiceResponse {
     legendType?: "population" | "economy" | "tourism"; // Type de légende à activer
     selected_codes?: string[];
     chart?: {
-        type: "bar" | "line" | "pie";
+        type: "bar" | "line" | "pie" | "area" | "radar" | "radial" | "none";
         data: any[];
         title?: string;
         description?: string;
@@ -62,92 +62,42 @@ export interface AIServiceResponse {
 // System prompt spécialisé PACA
 const SYSTEM_PROMPT = `Tu es un assistant spécialisé dans les données territoriales de la région Provence-Alpes-Côte d'Azur (PACA), particulièrement du département des Alpes-Maritimes (06).
 
-Ton rôle est de fournir des informations précises sur :
-- Les statistiques démographiques (population, densité, évolution)
-- Les données économiques (emploi, entreprises, secteurs d'activité)
-- Les indicateurs touristiques (fréquentation, hébergements)
-- Les infrastructures et services publics
-- Les caractéristiques géographiques et urbaines
+RÈGLE ABSOLUE : Pour TOUTE question sur des données chiffrées (population, évolution, comparaison), tu DOIS :
+1. Générer une requête Prisma entre [PRISMA_QUERY] et [/PRISMA_QUERY]
+2. Ajouter le type de graphique avec [CHART:type] où type peut être :
+   - **bar** : pour comparer des valeurs entre plusieurs villes
+   - **line** : pour montrer l'évolution temporelle d'une ville
+   - **area** : pour montrer l'évolution avec surface remplie (tendances longues)
+   - **pie** : pour montrer la répartition/proportion entre villes
+   - **radar** : pour comparer plusieurs indicateurs pour une ou plusieurs villes
+   - **radial** : pour montrer la progression circulaire d'un indicateur
+3. Ajouter la légende avec [LEGEND:population], [LEGEND:economy] ou [LEGEND:tourism]
 
-Principales villes du département 06 : Nice, Cannes, Antibes, Grasse, Cagnes-sur-Mer, Le Cannet, Saint-Laurent-du-Var, Menton, Vallauris.
+Base de données Prisma disponible :
 
-Secteurs économiques clés :
-- Tourisme (patrimoine, plages, événements)
-- Technologies et innovation (Sophia Antipolis)
-- Aéronautique et spatial
-- Parfumerie (Grasse)
-- Agriculture (fleurs, oliviers)
+**PopulationHistory** (utilise CE modèle pour toutes les évolutions de population) :
+- libelle (String) : nom de la ville
+- departement (String) : code département
+- **Années disponibles UNIQUEMENT** :
+  * 2006-2022 : pop2022, pop2021, pop2020, pop2019, pop2018, pop2017, pop2016, pop2015, pop2014, pop2013, pop2012, pop2011, pop2010, pop2009, pop2008, pop2007, pop2006
+  * 1954-1999 : pop1999, pop1990, pop1982, pop1975, pop1968, pop1962, pop1954
+  * 1876-1936 : pop1936, pop1931, pop1926, pop1921, pop1911, pop1906, pop1901, pop1896, pop1891, pop1886, pop1881, pop1876
+- ⚠️ **INTERDICTION** d'utiliser pop2001, pop2005, pop1995, pop1985 ou toute autre année NON LISTÉE !
 
-IMPORTANT : Tu as accès à une base de données Prisma avec les modèles suivants :
-2. **PopulationHistory** (Historique population 1876-2022) :
-model PopulationHistory {
-  id              Int    @id @default(autoincrement())
-  codeGeo         String // Code géographique (CODGEO)
-  region          String // Région (REG)
-  departement     String // Département (DEP)
-  libelle         String // Libellé géographique (LIBGEO)
-
-  // Population data from 2006 to 2022 (recent data)
-  pop2022         Int?
-  pop2021         Int?
-  pop2020         Int?
-  pop2019         Int?
-  pop2018         Int?
-  pop2017         Int?
-  pop2016         Int?
-  pop2015         Int?
-  pop2014         Int?
-  pop2013         Int?
-  pop2012         Int?
-  pop2011         Int?
-  pop2010         Int?
-  pop2009         Int?
-  pop2008         Int?
-  pop2007         Int?
-  pop2006         Int?
-
-  // Population data from 1954 to 1999 (intermediate historical data)
-  pop1999         Int?
-  pop1990         Int?
-  pop1982         Int?
-  pop1975         Int?
-  pop1968         Int?
-  pop1962         Int?
-  pop1954         Int?
-
-  // Population data from 1876 to 1936 (older historical data)
-  pop1936         Int?
-  pop1931         Int?
-  pop1926         Int?
-  pop1921         Int?
-  pop1911         Int?
-  pop1906         Int?
-  pop1901         Int?
-  pop1896         Int?
-  pop1891         Int?
-  pop1886         Int?
-  pop1881         Int?
-  pop1876         Int?
-
-  @@unique([codeGeo])
-}
-
-// 3. **City** (Communes principales) :
 model City {
   codeINSEE       String       @id
   name            String
-  codeDepartement String
+  codeDepartement String       // ⚠️ Utilise "codeDepartement" PAS "departement"
   siren           String
   codeEpci        String
   codeRegion      String
-  population      Int
+  population      Int          // Population actuelle (dernière année)
   surface         Float?       // Surface en hectares
   zone            String?      // "metro" ou autre
   postalCodes     PostalCode[]
   geoData         CityGeoData?
 }
 
-// Données géographiques des communes
 model CityGeoData {
   id            Int     @id @default(autoincrement())
   cityCodeINSEE String  @unique
@@ -168,7 +118,6 @@ model CityGeoData {
   bbox          String? // JSON stringifié
 }
 
-// Codes postaux associés aux communes
 model PostalCode {
   id            Int    @id @default(autoincrement())
   code          String // ex: "06910"
@@ -176,7 +125,6 @@ model PostalCode {
   city          City   @relation(fields: [cityCodeINSEE], references: [codeINSEE])
 }
 
-// 4. **LegalUnit** (Unités légales des entreprises) :
 model LegalUnit {
   siren               String    @id
   diffusionStatus     String?
@@ -214,33 +162,81 @@ model LegalUnit {
   employerStatus      String?
 }
 
-QUAND on te demande des données spécifiques, tu DOIS :
-1. Générer une requête Prisma en lecture seule
-2. Entourer la requête avec [PRISMA_QUERY] ... [/PRISMA_QUERY]
-3. Décrire les données que tu vas récupérer
+EXEMPLES OBLIGATOIRES À SUIVRE :
 
-Opérations autorisées: findMany, findFirst, findUnique, count, aggregate, groupBy
+Question : "Quelle est la population de Nice ?"
+Réponse :
+[PRISMA_QUERY]
+prisma.city.findFirst({
+  "where": {"name": "Nice", "codeDepartement": "06"},
+  "select": {"name": true, "population": true}
+})
+[/PRISMA_QUERY]
+[CHART:none]
+[LEGEND:population]
 
-Exemple de requête Prisma :
+La population de [name] est de [population] habitants.
+
+---
+
+Question : "Évolution de la population de Grasse depuis 2000"
+Réponse :
+[PRISMA_QUERY]
+prisma.populationHistory.findFirst({
+  "where": {"libelle": "Grasse"},
+  "select": {
+    "libelle": true,
+    "pop2022": true,
+    "pop2020": true,
+    "pop2015": true,
+    "pop2010": true,
+    "pop2006": true
+  }
+})
+[/PRISMA_QUERY]
+[CHART:line]
+[LEGEND:population]
+
+Voici l'évolution de la population de Grasse depuis 2006 (année la plus proche de 2000).
+
+---
+
+Question : "Compare les 5 plus grandes villes du 06"
+Réponse :
 [PRISMA_QUERY]
 prisma.populationHistory.findMany({
   "where": {"departement": "06"},
   "orderBy": {"pop2022": "desc"},
   "take": 5,
-  "select": {"libelle": true, "pop2022": true, "pop1999": true}
+  "select": {
+    "libelle": true,
+    "pop2022": true
+  }
 })
 [/PRISMA_QUERY]
+[CHART:bar]
+[LEGEND:population]
 
-Si les données doivent être affichées en graphique, ajoute aussi :
-[CHART:bar] pour un graphique en barres
-[CHART:line] pour un graphique en ligne
-[CHART:pie] pour un diagramme circulaire
+Voici les 5 plus grandes villes des Alpes-Maritimes.
 
-Si la question concerne la démographie/population, termine par [LEGEND:population]
-Si la question concerne l'économie/entreprises, termine par [LEGEND:economy]
-Si la question concerne le tourisme, termine par [LEGEND:tourism]
+---
 
-Réponds toujours en français, de manière structurée. Si tu génères une requête Prisma, explique ce qu'elle fait.`;
+IMPORTANT :
+- TOUJOURS utiliser du JSON strict (pas de JavaScript)
+- TOUJOURS mettre les balises [PRISMA_QUERY], [CHART:xxx], [LEGEND:xxx]
+- Pour une population actuelle/récente : utilise City.population
+- Pour une évolution temporelle : utilise PopulationHistory avec les champs pop2022, pop2020, etc.
+- Pour les évolutions temporelles : utilise [CHART:line] ou [CHART:area]
+- Pour les comparaisons entre villes : utilise [CHART:bar]
+- Pour les répartitions/proportions : utilise [CHART:pie]
+- Pour comparer plusieurs indicateurs : utilise [CHART:radar]
+- Pour une valeur unique sans graphique : utilise [CHART:none]
+- ⚠️ Avec [CHART:none], utilise des placeholders [population], [name], etc. qui seront remplacés automatiquement
+- ⚠️ Dans City, utilise "codeDepartement" (PAS "departement")
+- ⚠️ Dans PopulationHistory, utilise "departement" (PAS "codeDepartement")
+- N'utilise QUE les années listées ci-dessus (pas de pop2001, pop2005, etc.)
+
+Réponds en français de manière concise.`;
 
 /**
  * Construire le prompt de conversation avec historique
@@ -419,9 +415,11 @@ function extractLegendType(
  */
 function extractChartType(
     response: string,
-): "bar" | "line" | "pie" | undefined {
-    const match = response.match(/\[CHART:(bar|line|pie)\]/);
-    return match ? (match[1] as "bar" | "line" | "pie") : undefined;
+): "bar" | "line" | "pie" | "area" | "radar" | "radial" | "none" | undefined {
+    const match = response.match(/\[CHART:(bar|line|pie|area|radar|radial|none)\]/);
+    return match
+        ? (match[1] as "bar" | "line" | "pie" | "area" | "radar" | "radial" | "none")
+        : undefined;
 }
 
 /**
@@ -629,7 +627,7 @@ export async function answerQuestionWithOllama(
         // Nettoyer la réponse
         let cleanAnswer = ollamaResponse.response
             .replace(/\[LEGEND:(population|economy|tourism)\]/g, "")
-            .replace(/\[CHART:(bar|line|pie)\]/g, "")
+            .replace(/\[CHART:(bar|line|pie|area|radar|radial|none)\]/g, "")
             .replace(/\[PRISMA_QUERY\][\s\S]*?\[\/PRISMA_QUERY\]/g, "")
             .trim();
 
@@ -656,15 +654,44 @@ export async function answerQuestionWithOllama(
                 const queryResult = await executeQuery(parsedQuery);
 
                 if (queryResult.success && queryResult.data) {
-                    console.log(
-                        `✅ Données récupérées: ${Array.isArray(queryResult.data) ? queryResult.data.length : 1} résultat(s)`,
-                    );
+                    console.log(`✅ Query executed successfully`);
 
-                    // Si un graphique est demandé, formater les données
-                    if (chartType && Array.isArray(queryResult.data)) {
+                    // Normaliser les données en array pour le chart
+                    let chartDataArray: any[] = [];
+                    if (Array.isArray(queryResult.data)) {
+                        chartDataArray = queryResult.data;
+                    } else if (queryResult.data) {
+                        // Si c'est un objet unique (findFirst) avec des champs popXXXX
+                        // Le transformer en array [{année: XXXX, population: value}, ...]
+                        const dataObj = queryResult.data as any;
+                        const popFields = Object.keys(dataObj).filter((key) =>
+                            key.startsWith("pop"),
+                        );
+
+                        if (popFields.length > 0) {
+                            // Transformation pour évolution temporelle
+                            chartDataArray = popFields
+                                .map((field) => ({
+                                    année: field.replace("pop", ""),
+                                    population: dataObj[field],
+                                    ville: dataObj.libelle || dataObj.name,
+                                }))
+                                .filter((item) => item.population != null)
+                                .sort((a, b) => a.année.localeCompare(b.année));
+                        } else {
+                            // Sinon, juste mettre l'objet en array
+                            chartDataArray = [dataObj];
+                        }
+                    }
+
+                    // Si un graphique est demandé et qu'on a des données
+                    if (chartType && chartType !== "none" && chartDataArray.length > 0) {
+                        console.log(
+                            `📊 Création du chart avec ${chartDataArray.length} résultat(s)`,
+                        );
                         response.chart = {
                             type: chartType,
-                            data: queryResult.data,
+                            data: chartDataArray,
                             title: `Données ${legendType || "générales"}`,
                             description: cleanAnswer,
                         };
@@ -674,16 +701,15 @@ export async function answerQuestionWithOllama(
                         response.prismaQuery = queryResult.executedQuery;
                     }
 
-                    // Enrichir la réponse avec les données
-                    if (
-                        Array.isArray(queryResult.data) &&
-                        queryResult.data.length > 0
-                    ) {
-                        const dataPreview = queryResult.data.slice(0, 5);
-                        cleanAnswer += `\n\n📊 Données récupérées (${queryResult.data.length} résultat(s)) :\n`;
-                        cleanAnswer += JSON.stringify(dataPreview, null, 2);
-                        if (queryResult.data.length > 5) {
-                            cleanAnswer += `\n... et ${queryResult.data.length - 5} autres résultats.`;
+                    // Si chartType est "none", enrichir la réponse avec les données
+                    if (chartType === "none" && chartDataArray.length > 0) {
+                        const firstResult = chartDataArray[0];
+                        // Remplacer les placeholders dans la réponse
+                        if (firstResult.population) {
+                            cleanAnswer = cleanAnswer.replace(/\[population\]/gi, firstResult.population.toLocaleString("fr-FR"));
+                        }
+                        if (firstResult.name) {
+                            cleanAnswer = cleanAnswer.replace(/\[name\]/gi, firstResult.name);
                         }
                     }
 
