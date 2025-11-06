@@ -5,6 +5,7 @@ import morgan from "morgan";
 import registerRoutes from "./routes/routes.js";
 import fs from "fs/promises";
 import cors from "cors";
+import settingsService from "./services/settings.service.js";
 
 const app = express();
 export const prisma = new PrismaClient();
@@ -14,6 +15,9 @@ await fs.mkdir("tmp", { recursive: true });
 await fs.rm("data", { recursive: true, force: true });
 await fs.mkdir("data", { recursive: true });
 console.log("Clean temporary directory on startup if needed.");
+
+// Ensure settings defaults exist
+await settingsService.ensureDefaults();
 
 try {
     const types = ["legal_unit", "cities"];

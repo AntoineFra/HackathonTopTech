@@ -5,6 +5,7 @@ import { Settings, Download, Check, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { aiHealth } from "@/services/ai.services";
 import { listDumps, getDump } from "@/services/dump.services";
+import { getSettings, updateSettings } from "@/services/settings.services";
 
 type DumpItem = {
     id: number;
@@ -34,6 +35,12 @@ export default function SettingsDialog() {
     >({});
     const [error, setError] = useState<string | null>(null);
 
+    // New: settings (aiTimeout)
+    const [aiTimeout, setAiTimeout] = useState<number | null>(null);
+    const [editingAiTimeout, setEditingAiTimeout] = useState<string>("");
+    const [savingSettings, setSavingSettings] = useState(false);
+    const [settingsMessage, setSettingsMessage] = useState<string | null>(null);
+
     // Animation duration must match CSS transition (ms)
     const TRANSITION_MS = 200;
 
@@ -57,6 +64,7 @@ export default function SettingsDialog() {
             // focus close button
             setTimeout(() => closeButtonRef.current?.focus(), 0);
             void fetchDumps();
+            void fetchSettings();
         }
     }, [mounted, open]);
 
@@ -99,6 +107,21 @@ export default function SettingsDialog() {
             setError(e?.message ?? String(e));
         } finally {
             setLoadingDumps(false);
+        }
+    }
+
+    // New: fetch settings from backend
+    async function fetchSettings() {
+        setSettingsMessage(null);
+        try {
+            const res = await getSettings();
+            if (res?.settings && typeof res.settings.aiTimeout === "number") {
+                setAiTimeout(res.settings.aiTimeout);
+                setEditingAiTimeout(String(res.settings.aiTimeout));
+            }
+        } catch (e: any) {
+            // non-blocking: display a message in the UI
+            setSettingsMessage("Impossible de récupérer les paramètres");
         }
     }
 
@@ -177,6 +200,34 @@ export default function SettingsDialog() {
             );
         } finally {
             setDownloading((s) => ({ ...s, [type]: false }));
+        }
+    }
+
+    // New: save settings
+    async function saveSettings() {
+        setSavingSettings(true);
+        setSettingsMessage(null);
+        const parsed = Number(editingAiTimeout);
+        if (!Number.isFinite(parsed) || parsed < 0) {
+            setSettingsMessage("La valeur doit être un nombre positif en ms");
+            setSavingSettings(false);
+            return;
+        }
+        try {
+            const res = await updateSettings({ aiTimeout: Math.round(parsed) });
+            if (res?.settings && typeof res.settings.aiTimeout === "number") {
+                setAiTimeout(res.settings.aiTimeout);
+                setEditingAiTimeout(String(res.settings.aiTimeout));
+                setSettingsMessage("Paramètres sauvegardés");
+                // hide the message after a short delay
+                setTimeout(() => setSettingsMessage(null), 2000);
+            } else {
+                setSettingsMessage("Réponse inattendue du serveur");
+            }
+        } catch (e: any) {
+            setSettingsMessage(e?.message ?? String(e));
+        } finally {
+            setSavingSettings(false);
         }
     }
 
@@ -324,6 +375,44 @@ export default function SettingsDialog() {
                         {aiMessage && (
                             <div className="mt-2 text-xs">{aiMessage}</div>
                         )}
+
+                        {/* New: AI timeout setting */}
+                        <div className="mt-4 border-t pt-3">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <div className="text-xs font-medium">
+                                        Timeout IA (ms)
+                                    </div>
+                                    <div className="text-muted-foreground text-xs">
+                                        Temps maximum d'attente pour les requêtes IA
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        className="w-28 rounded-md border px-2 py-1 text-sm"
+                                        type="number"
+                                        min={0}
+                                        value={editingAiTimeout}
+                                        onChange={(e) => setEditingAiTimeout(e.target.value)}
+                                    />
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={saveSettings}
+                                        disabled={savingSettings}
+                                    >
+                                        {savingSettings ? (
+                                            "..."
+                                        ) : (
+                                            "Enregistrer"
+                                        )}
+                                    </Button>
+                                </div>
+                            </div>
+                            {settingsMessage && (
+                                <div className="mt-2 text-xs">{settingsMessage}</div>
+                            )}
+                        </div>
                     </div>
 
                     <div>
@@ -391,13 +480,13 @@ export default function SettingsDialog() {
                                             onClick={() =>
                                                 handleDownload(d.type)
                                             }
-                                            disabled={!!downloading[d.type]}
+                                            disabled={downloading[d.type]}
                                         >
                                             {downloading[d.type] ? (
                                                 "Téléchargement..."
                                             ) : (
                                                 <>
-                                                    <Download className="h-4 w-4" />{" "}
+                                                    <Download className="h-4 w-4" /> {" "}
                                                     Télécharger
                                                 </>
                                             )}
