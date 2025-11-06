@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { createReadStream } from "fs";
 import * as unzipper from "unzipper";
+import extract from "extract-zip";
 
 export async function extractLargeZip(zipPath: string, extractPath: string) {
   return new Promise<void>((resolve, reject) => {
@@ -14,7 +15,7 @@ export async function extractLargeZip(zipPath: string, extractPath: string) {
 }
 
 export async function downloadAndExtractZip(url: string, name: string) {
-    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    //const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const zipFileName = `tmp/data-${name}.zip`;
     const zipPath = path.join(process.cwd(), zipFileName);
     const extractPath = path.join(process.cwd(), "data");
@@ -145,7 +146,7 @@ export async function downloadAndExtractZip(url: string, name: string) {
             throw permErr;
         }
 
-        await extractLargeZip(zipPath, extractPath);
+        await extract(zipPath, { dir: extractPath });
         console.log("✅ ZIP extracted to:", extractPath);
     } catch (err) {
         console.error("❌ Extraction failed:", err);
