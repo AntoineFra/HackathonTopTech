@@ -75,9 +75,7 @@ Secteurs économiques clés :
 - Technologies et innovation (Sophia Antipolis)
 - Aéronautique et spatial
 - Parfumerie (Grasse)
-- Agriculture (fleurs, oliviers)`;
-
-// Stop here for beta nico
+- Agriculture (fleurs, oliviers)
 
 IMPORTANT : Tu as accès à une base de données Prisma avec les modèles suivants :
 2. **PopulationHistory** (Historique population 1876-2022) :
