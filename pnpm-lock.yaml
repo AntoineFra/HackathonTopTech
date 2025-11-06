@@ -18,7 +18,7 @@ importers:
         specifier: ^2.6.0
         version: 2.6.0
 
-  apps/backend:
+  apps/backend:map-threejs
     dependencies:
       '@prisma/client':
         specifier: ^6.19.0

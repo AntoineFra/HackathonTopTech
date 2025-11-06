@@ -162,19 +162,50 @@ citiesData.forEach((city) => {
         if (polygonCoords.length > 0) {
             cityPolygons[city.name] = polygonCoords;
 
+            const population = city.population || 0;
+            
+            // Calculer le nombre d'entreprises proportionnellement à la population
+            // Ratio moyen: environ 1 entreprise pour 10 habitants dans les grandes villes
+            // Plus élevé dans les petites communes (1 pour 5)
+            const entreprisesRatio = population > 10000 ? 0.1 : 0.2;
+            const entreprisesBase = Math.floor(population * entreprisesRatio);
+            const entreprises = Math.max(10, entreprisesBase + Math.floor(Math.random() * entreprisesBase * 0.2));
+            
+            // Score touristique basé sur la taille et un facteur aléatoire
+            // Les grandes villes côtières comme Nice, Cannes ont un score élevé
+            const isCoastal = city.name.match(/Nice|Cannes|Antibes|Menton|Monaco|Juan-les-Pins/i);
+            const tourismeBase = isCoastal ? 70 : 30;
+            const tourisme = Math.min(100, tourismeBase + Math.floor(Math.random() * 30));
+            
+            // Taux d'emploi: moyenne nationale ~65%, variation selon la ville
+            const emploi = Math.floor(60 + Math.random() * 15); // Entre 60% et 75%
+            
+            // Revenu moyen: basé sur la taille de la ville et le secteur
+            // Grandes villes et côte = revenus plus élevés
+            const revenuBase = population > 20000 || isCoastal ? 25000 : 20000;
+            const revenu = Math.floor(revenuBase + Math.random() * 10000);
+            
+            // Secteur dominant basé sur le type de ville
+            let secteur = "Commerce";
+            if (isCoastal) {
+                secteur = "Tourisme";
+            } else if (population > 50000) {
+                secteur = Math.random() > 0.5 ? "Technologie" : "Commerce";
+            } else if (population < 5000) {
+                secteur = Math.random() > 0.5 ? "Agriculture" : "Commerce";
+            }
+
             // Stocker les données de la ville
             cityData[city.name] = {
                 code: city.codeINSEE,
-                population: city.population || 0,
+                population: population,
                 surface: city.surface || 0,
                 zone: city.zone || "N/A",
-                tourisme: Math.floor(Math.random() * 100), // Données simulées
-                emploi: Math.floor(Math.random() * 100),
-                revenu: Math.floor(Math.random() * 3000) + 1500,
-                secteur: ["Technologie", "Tourisme", "Agriculture", "Commerce"][
-                    Math.floor(Math.random() * 4)
-                ],
-                entreprises: Math.floor(Math.random() * 5000) + 100,
+                tourisme: tourisme,
+                emploi: emploi,
+                revenu: revenu,
+                secteur: secteur,
+                entreprises: entreprises,
                 centreLat: city.geoData.centreLat,
                 centreLon: city.geoData.centreLon,
             };
