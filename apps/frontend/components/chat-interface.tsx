@@ -4,11 +4,11 @@ import { AIResponse } from "@/types";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { aiAnswer, type ChatMessage } from "@/services/ai.services";
 import { useSearchParams } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Loader2, Sparkles, User, Bot } from "lucide-react";
+import { aiAnswer, type ChatMessage } from "@/services/ai.services";
 import { useAIProvider } from "@/contexts/AIProviderContext";
 
 interface Message {
@@ -40,6 +40,14 @@ export function ChatInterface() {
         useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const messageIdCounter = useRef(0);
+    const initialQueryProcessed = useRef(false);
+
+    // Generate unique message ID
+    const generateMessageId = (prefix = "") => {
+        messageIdCounter.current += 1;
+        return `${prefix}${Date.now()}-${messageIdCounter.current}`;
+    };
 
     const suggestions = [
         "Quelle est la population de Nice ?",
@@ -59,23 +67,40 @@ export function ChatInterface() {
 
     // Handle initial query from URL
     useEffect(() => {
-        if (initialQuery && !hasProcessedInitialQuery && !isLoading) {
+        if (
+            initialQuery &&
+            !hasProcessedInitialQuery &&
+            !initialQueryProcessed.current
+        ) {
+            // Prevent double execution in StrictMode
+            initialQueryProcessed.current = true;
             setHasProcessedInitialQuery(true);
+
             // Submit the initial query
             const submitInitialQuery = async () => {
                 const userMessage: Message = {
-                    id: Date.now().toString(),
+                    id: generateMessageId("user-"),
                     role: "user",
                     content: initialQuery,
                     timestamp: new Date(),
                 };
 
-                setMessages((prev) => [...prev, userMessage]);
+                setMessages((prev) => {
+                    // Check if a user message with this content already exists
+                    const alreadyExists = prev.some(
+                        (m) => m.role === "user" && m.content === initialQuery,
+                    );
+                    if (alreadyExists) {
+                        return prev;
+                    }
+                    return [...prev, userMessage];
+                });
+
                 setIsLoading(true);
 
                 // Add loading message
                 const loadingMessage: Message = {
-                    id: `loading-${Date.now()}`,
+                    id: generateMessageId("loading-"),
                     role: "assistant",
                     content: "",
                     timestamp: new Date(),
@@ -84,18 +109,8 @@ export function ChatInterface() {
                 setMessages((prev) => [...prev, loadingMessage]);
 
                 try {
-                    // Build conversation history (last 10 messages)
-                    const history: ChatMessage[] = messages
-                        .filter(
-                            (m) =>
-                                (!m.loading && m.role !== "assistant") ||
-                                m.response,
-                        )
-                        .slice(-10)
-                        .map((m) => ({
-                            role: m.role === "user" ? "user" : "assistant",
-                            content: m.content,
-                        }));
+                    // For initial query, we only have the welcome message in history
+                    const history: ChatMessage[] = [];
 
                     const result = await aiAnswer(initialQuery, history, provider);
 
@@ -104,7 +119,7 @@ export function ChatInterface() {
                         return [
                             ...filtered,
                             {
-                                id: `response-${Date.now()}`,
+                                id: generateMessageId("response-"),
                                 role: "assistant",
                                 content:
                                     result.answer ||
@@ -121,15 +136,27 @@ export function ChatInterface() {
                     });
                 } catch (error) {
                     console.error("AI Error:", error);
+                    
+                    // Extract error message
+                    let errorMessage = "Désolé, une erreur s'est produite. Veuillez réessayer.";
+                    if (error instanceof Error) {
+                        if (error.message.includes("Timeout") || error.message.includes("timeout")) {
+                            errorMessage = "⏱️ La requête a pris trop de temps. Le modèle IA est peut-être en train de démarrer ou surchargé. Veuillez patienter quelques instants et réessayer avec une question plus courte.";
+                        } else if (error.message.includes("500")) {
+                            errorMessage = "❌ Erreur serveur. Le service IA n'est peut-être pas disponible. Vérifiez que Ollama est bien démarré.";
+                        } else if (error.message.includes("fetch")) {
+                            errorMessage = "🔌 Impossible de contacter le serveur. Vérifiez votre connexion.";
+                        }
+                    }
+                    
                     setMessages((prev) => {
                         const filtered = prev.filter((m) => !m.loading);
                         return [
                             ...filtered,
                             {
-                                id: `error-${Date.now()}`,
+                                id: generateMessageId("error-"),
                                 role: "assistant",
-                                content:
-                                    "Désolé, une erreur s'est produite. Veuillez réessayer.",
+                                content: errorMessage,
                                 timestamp: new Date(),
                             },
                         ];
@@ -141,15 +168,14 @@ export function ChatInterface() {
 
             submitInitialQuery();
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [initialQuery, hasProcessedInitialQuery, isLoading]);
+    }, [initialQuery, hasProcessedInitialQuery]);
 
     const handleSubmit = async (e?: React.FormEvent) => {
         e?.preventDefault();
         if (!input.trim() || isLoading) return;
 
         const userMessage: Message = {
-            id: Date.now().toString(),
+            id: generateMessageId("user-"),
             role: "user",
             content: input.trim(),
             timestamp: new Date(),
@@ -161,7 +187,7 @@ export function ChatInterface() {
 
         // Add loading message
         const loadingMessage: Message = {
-            id: `loading-${Date.now()}`,
+            id: generateMessageId("loading-"),
             role: "assistant",
             content: "",
             timestamp: new Date(),
@@ -187,7 +213,7 @@ export function ChatInterface() {
                 return [
                     ...filtered,
                     {
-                        id: `response-${Date.now()}`,
+                        id: generateMessageId("response-"),
                         role: "assistant",
                         content:
                             result.answer ||
@@ -204,16 +230,28 @@ export function ChatInterface() {
             });
         } catch (error) {
             console.error("AI Error:", error);
+            
+            // Extract error message
+            let errorMessage = "Désolé, une erreur s'est produite. Veuillez réessayer.";
+            if (error instanceof Error) {
+                if (error.message.includes("Timeout") || error.message.includes("timeout")) {
+                    errorMessage = "⏱️ La requête a pris trop de temps. Le modèle IA est peut-être en train de démarrer ou surchargé. Veuillez patienter quelques instants et réessayer avec une question plus courte.";
+                } else if (error.message.includes("500")) {
+                    errorMessage = "❌ Erreur serveur. Le service IA n'est peut-être pas disponible. Vérifiez que Ollama est bien démarré.";
+                } else if (error.message.includes("fetch")) {
+                    errorMessage = "🔌 Impossible de contacter le serveur. Vérifiez votre connexion.";
+                }
+            }
+            
             // Remove loading message and add error
             setMessages((prev) => {
                 const filtered = prev.filter((m) => !m.loading);
                 return [
                     ...filtered,
                     {
-                        id: `error-${Date.now()}`,
+                        id: generateMessageId("error-"),
                         role: "assistant",
-                        content:
-                            "Désolé, une erreur s'est produite. Veuillez réessayer.",
+                        content: errorMessage,
                         timestamp: new Date(),
                     },
                 ];

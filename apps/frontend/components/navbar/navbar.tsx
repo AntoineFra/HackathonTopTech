@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import SettingsDialog from "@/components/settings-dialog";
 import Image from "next/image";
+import { MenuIcon } from "lucide-react";
 
 type NavLink = {
     label: string;
@@ -67,15 +68,7 @@ const Navbar: React.FC<NavbarProps> = ({
                         onClick={() => setOpen((s) => !s)}
                     >
                         <span className="sr-only">Menu</span>
-                        <span
-                            className={`bg-foreground block h-0.5 w-5 transition-all duration-200 ${open ? "translate-y-1.5 rotate-45" : "-translate-y-1.5"}`}
-                        />
-                        <span
-                            className={`bg-foreground my-1 block h-0.5 w-5 transition-opacity duration-200 ${open ? "opacity-0" : "opacity-100"}`}
-                        />
-                        <span
-                            className={`bg-foreground block h-0.5 w-5 transition-all duration-200 ${open ? "-translate-y-1.5 -rotate-45" : "translate-y-1.5"}`}
-                        />
+                        <MenuIcon className="h-6 w-6" />
                     </button>
                 </div>
 
