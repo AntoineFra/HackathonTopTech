@@ -225,6 +225,7 @@ function DepartmentScene({
                 const avgLon = sumLon / allCoordinates.length;
 
                 // Convertir en coordonnées cartésiennes
+                if (!centerLatLonRef.current) return;
                 const { centerLat, centerLon } = centerLatLonRef.current;
                 const R = 6371000;
                 const lat1 = (centerLat * Math.PI) / 180;

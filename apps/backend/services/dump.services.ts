@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { prisma } from "../server.js";
 import { spawn } from "node:child_process";
+import XLSX from "xlsx";
 
 export async function dumpLegalUnit() {
     if (!process.env.LEGAL_UNIT_URL) {
@@ -196,7 +197,6 @@ export async function dumpCities(cities: City[]) {
 export async function dumpPopulationData() {
   console.log("📊 Starting population data import for department 06...");
 
-  const XLSX = await import('xlsx');
   const filePath = path.join(process.cwd(), 'resources/base-pop-historiques-1876-2022.xlsx');
 
   if (!fs.existsSync(filePath)) {
@@ -285,7 +285,6 @@ export async function dumpPopulationData() {
     const batch = populationData.slice(i, i + batchSize);
     await prisma.populationHistory.createMany({
       data: batch,
-      skipDuplicates: true,
     });
     console.log(`✅ Inserted batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(populationData.length / batchSize)}`);
   }

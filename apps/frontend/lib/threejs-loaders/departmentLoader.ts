@@ -463,9 +463,10 @@ export function setHoveredCityColor(
     scene.traverse((object) => {
         if (object.userData.type === "city") {
             const cityName = object.userData.city;
-            let targetColor = object.userData.originalFillColor;
+            // Utiliser la couleur du gradient si elle existe, sinon la couleur originale
+            let targetColor = object.userData.gradientColor ?? object.userData.originalFillColor;
 
-            // Priorité: sélection > hover > couleur originale
+            // Priorité: sélection > hover > couleur du gradient (ou originale)
             if (cityName === selectedCity) {
                 targetColor = selectedColor;
             } else if (cityName === hoveredCity) {
