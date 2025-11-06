@@ -2173,9 +2173,12 @@ def populate_all_pop_hist(out_root: str = os.path.join("data", "csv")) -> List[s
 
 
 if __name__ == "__main__":
-    # csv_to_sqlite("06000")
-    # for code in range(6000, 6164):
-    #     city_code = str(code).zfill(5)
-    #     result = csv_to_sqlite(city_code,)
-    #     print(f"Created DB for city {city_code}: {result}")
+    # Créer la base de données pour 06000 (département entier)
+    print("Creating database for 06000...")
+    csv_to_sqlite("06000")
+    
+    # Peupler l'historique de population
+    print("Populating population history...")
     populate_all_pop_hist()
+    
+    print("✅ Done! Database created successfully.")

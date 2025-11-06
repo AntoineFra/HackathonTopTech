@@ -13,6 +13,8 @@ import {
     type ChatMessage as GeminiMessage,
 } from "./gemini.services.js";
 
+const LOCAL_TWEAK_IA = process.env.LOCAL_TWEAK_IA || "http://localhost:8001";
+
 export type ChatMessage = OllamaMessage;
 
 const DEFAULT_AI_PROVIDER = (process.env.DEFAULT_AI_PROVIDER || "ollama") as
@@ -259,7 +261,7 @@ export interface AIServiceResponse {
 // Fonction pour appeler l'IA locale externe
 async function answerQuestionWithLocalAI(question: string, history: ChatMessage[] = []) {
     try {
-        const response = await fetch("http://10.120.0.56:8000/api/ask", {
+        const response = await fetch(`${LOCAL_TWEAK_IA}/api/ask`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
