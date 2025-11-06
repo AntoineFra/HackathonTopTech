@@ -6,6 +6,8 @@ import registerRoutes from "./routes/routes.js";
 import fs from "fs/promises";
 import cors from "cors";
 import settingsService from "./services/settings.service.js";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./swagger/swagger.config.js";
 
 const app = express();
 export const prisma = new PrismaClient();
@@ -52,6 +54,18 @@ app.use(
     }),
 );
 
+// Swagger documentation routes
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "Hackathon TopTech API Documentation",
+}));
+
+// JSON version of the swagger spec
+app.get("/api-docs.json", (req, res) => {
+    res.setHeader("Content-Type", "application/json");
+    res.send(swaggerSpec);
+});
+
 // Register application routes (centralized)
 registerRoutes(app);
 
@@ -85,6 +99,8 @@ app.use(
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`📚 API Documentation available at http://localhost:${PORT}/api-docs`);
+    console.log(`📄 OpenAPI Spec (JSON) available at http://localhost:${PORT}/api-docs.json`);
 });
 
 process.on("SIGINT", async () => {
