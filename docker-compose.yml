@@ -15,11 +15,7 @@ services:
     ports:
       - "8080:3000"
     env_file:
-      - .env.local
-    environment:
-      - NODE_ENV=development
-      - NEXT_PUBLIC_BACKEND_URL=http://localhost:3000
-      - OLLAMA_BASE_URL=http://ollama:11434
+      - .env.root.example
     volumes:
       - ./apps/frontend:/app
       - /app/node_modules
@@ -43,11 +39,6 @@ services:
       - "3000:3000"
     env_file:
       - .env.root.example
-    environment:
-      - NODE_ENV=development
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - OLLAMA_MODEL=phi3:mini
-      - OLLAMA_TIMEOUT=30000
     volumes:
       - ./apps/backend:/app
       - /app/node_modules
@@ -93,20 +84,18 @@ services:
       - paca-network
     env_file:
       - .env.root.example
-    environment:
-      - OLLAMA_HOST=http://ollama:11434
     entrypoint: /bin/sh
     command:
       - -c
       - |
-        echo "🚀 Vérification du modèle ${OLLAMA_MODEL}"
+        echo "🚀 Vérification du modèle $$OLLAMA_MODEL"
         sleep 10
-        if ! OLLAMA_HOST=http://ollama:11434 ollama list | grep -q "${OLLAMA_MODEL}"; then
-          echo "📥 Téléchargement du modèle ${OLLAMA_MODEL} (cela peut prendre plusieurs minutes)..."
-          OLLAMA_HOST=http://ollama:11434 ollama pull "${OLLAMA_MODEL}"
-          echo "✅ Modèle ${OLLAMA_MODEL} téléchargé avec succès !"
+        if ! OLLAMA_HOST=http://ollama:11434 ollama list | grep -q "$$OLLAMA_MODEL"; then
+          echo "📥 Téléchargement du modèle $$OLLAMA_MODEL (cela peut prendre plusieurs minutes)..."
+          OLLAMA_HOST=http://ollama:11434 ollama pull "$$OLLAMA_MODEL"
+          echo "✅ Modèle $$OLLAMA_MODEL téléchargé avec succès !"
         else
-          echo "✅ Modèle ${OLLAMA_MODEL} déjà disponible !"
+          echo "✅ Modèle $$OLLAMA_MODEL déjà disponible !"
         fi
     restart: "no"
 
