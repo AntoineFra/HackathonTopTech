@@ -146,8 +146,10 @@ pnpm dev
 **Reset de la base de données :**
 ```bash
 cd apps/backend
-rm prisma/dev.db
+rm -rf prisma/dev.db generated
+pnpm prisma generated
 pnpm prisma db push
+npx prisma migrate dev
 ```
 
 **Gérer Ollama :**
