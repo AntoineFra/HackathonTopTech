@@ -96,7 +96,7 @@ export default function Footer() {
 
                         <div className="flex items-center gap-3">
                             <a
-                                href="https://github.com"
+                                href="https://github.com/AntoineFra/HackathonTopTech"
                                 aria-label="GitHub"
                                 target="_blank"
                                 rel="noreferrer"
@@ -105,16 +105,7 @@ export default function Footer() {
                                 <Github size={18} />
                             </a>
                             <a
-                                href="https://twitter.com"
-                                aria-label="Twitter"
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-muted-foreground hover:text-foreground rounded-md p-2"
-                            >
-                                <Twitter size={18} />
-                            </a>
-                            <a
-                                href="mailto:hello@example.com"
+                                href="mailto:contact@06-analytics.fr"
                                 aria-label="E-mail"
                                 className="text-muted-foreground hover:text-foreground rounded-md p-2"
                             >
