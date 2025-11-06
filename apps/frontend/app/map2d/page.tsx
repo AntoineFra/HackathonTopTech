@@ -22,6 +22,7 @@ export default function Map2DPage() {
   const [hoveredCity, setHoveredCity] = useState<HoveredCity | null>(null);
   const [highlightedCities, setHighlightedCities] = useState<string[]>([]);
   const polygonsRef = useRef<Map<string, google.maps.Polygon[]>>(new Map());
+  const highlightedCitiesRef = useRef<string[]>([]); // Ref pour éviter closure stale
   
   // IA Chat states
   const [query, setQuery] = useState("");
@@ -93,8 +94,9 @@ export default function Map2DPage() {
 
         // Effet survol
         polygon.addListener("mouseover", () => {
-          // Ne pas changer si la ville est déjà highlighted par l'IA
-          if (!highlightedCities.includes(city)) {
+          // Vérifier la couleur actuelle du polygone pour savoir si highlighted
+          const currentFillColor = polygon.get('fillColor');
+          if (currentFillColor !== "#00bcd4" && currentFillColor !== "#00ffff") {
             polygon.setOptions({ fillColor: "#00bcd4", fillOpacity: 0.5 });
           }
           const data = cityData[city];
@@ -104,9 +106,17 @@ export default function Map2DPage() {
         });
 
         polygon.addListener("mouseout", () => {
-          // Ne réinitialiser que si pas highlighted
-          if (!highlightedCities.includes(city)) {
-            polygon.setOptions({ fillColor: "#888", fillOpacity: 0.2 });
+          // Vérifier si c'est une ville highlighted (couleur cyan)
+          const currentFillColor = polygon.get('fillColor');
+          if (currentFillColor === "#00bcd4") {
+            // Si c'était juste un survol temporaire, remettre en gris
+            const isHighlighted = highlightedCitiesRef.current.includes(city);
+            if (!isHighlighted) {
+              polygon.setOptions({ fillColor: "#888", fillOpacity: 0.2 });
+            } else {
+              // Remettre la couleur highlight forte
+              polygon.setOptions({ fillColor: "#00bcd4", fillOpacity: 0.7 });
+            }
           }
           setHoveredCity(null);
         });
@@ -120,7 +130,7 @@ export default function Map2DPage() {
 
     polygonsRef.current = polygonsMap;
     console.log(`✅ ${totalPolygons} polygones créés au total`);
-  }, [map, highlightedCities]);
+  }, [map]); // ⚠️ Ne pas mettre highlightedCities ici sinon les polygones sont recréés !
 
   // Gérer les actions IA
   const applyMapAction = (action: Map2DAction) => {
@@ -142,6 +152,7 @@ export default function Map2DPage() {
     if (action.type === 'highlight' && action.cities) {
       console.log('✨ Highlight des villes:', action.cities);
       setHighlightedCities(action.cities);
+      highlightedCitiesRef.current = action.cities; // Sync la ref
       
       // Mettre en surbrillance UNIQUEMENT les nouvelles villes
       action.cities.forEach(cityName => {
@@ -163,6 +174,7 @@ export default function Map2DPage() {
     } else if (action.type === 'reset') {
       console.log('🔄 Reset complet');
       setHighlightedCities([]);
+      highlightedCitiesRef.current = []; // Sync la ref
       // Les polygones sont déjà réinitialisés au début
     } else if (action.type === 'focus' && action.focusCity && map) {
       console.log('🎯 Focus sur:', action.focusCity);
@@ -173,6 +185,7 @@ export default function Map2DPage() {
         
         // Highlight la ville
         setHighlightedCities([action.focusCity]);
+        highlightedCitiesRef.current = [action.focusCity]; // Sync la ref
         const polygons = polygonsRef.current.get(action.focusCity);
         if (polygons) {
           polygons.forEach(polygon => {
