@@ -4,6 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { cityPolygons, cityData } from "./data/cityPolygons";
 import type { CityDataType } from "./data/cityPolygons";
 import { loadGoogleMaps } from "@/lib/map-utils";
+import { queryMap2DAI, getMap2DSuggestions, type Map2DAction } from "./map2d-ai-service";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Send, Loader2, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 
 interface HoveredCity extends CityDataType {
   name: string;
@@ -15,6 +20,16 @@ export default function Map2DPage() {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [hoveredCity, setHoveredCity] = useState<HoveredCity | null>(null);
+  const [highlightedCities, setHighlightedCities] = useState<string[]>([]);
+  const polygonsRef = useRef<Map<string, google.maps.Polygon[]>>(new Map());
+  
+  // IA Chat states
+  const [query, setQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [response, setResponse] = useState<string>("");
+  const [showChat, setShowChat] = useState(true);
+
+  const suggestions = getMap2DSuggestions();
 
   // --- Initialisation Google Maps ---
   useEffect(() => {
@@ -46,15 +61,15 @@ export default function Map2DPage() {
     console.log(`📊 Villes disponibles:`, Object.keys(cityPolygons).slice(0, 10).join(', '), '...');
 
     let totalPolygons = 0;
+    const polygonsMap = new Map<string, google.maps.Polygon[]>();
 
     Object.entries(cityPolygons).forEach(([city, polygonsArray]) => {
-      // polygonsArray est maintenant un array de polygones (pour gérer MultiPolygon)
-      // Chaque polygone est un array de {lat, lng}
-      
       if (!Array.isArray(polygonsArray) || polygonsArray.length === 0) {
         console.warn(`⚠️ Ville ${city} sans polygones valides`);
         return;
       }
+
+      const cityPolygonsList: google.maps.Polygon[] = [];
 
       // Créer un polygone Google Maps pour CHAQUE polygone de la ville
       polygonsArray.forEach((polygonCoords, index) => {
@@ -64,7 +79,7 @@ export default function Map2DPage() {
         }
 
         const polygon = new maps.Polygon({
-          paths: polygonCoords, // Un seul polygone ici
+          paths: polygonCoords,
           strokeColor: "#888",
           strokeOpacity: 0.5,
           strokeWeight: 1,
@@ -74,10 +89,14 @@ export default function Map2DPage() {
         });
 
         totalPolygons++;
+        cityPolygonsList.push(polygon);
 
-        // Effet survol - tous les polygones d'une ville partagent le même survol
+        // Effet survol
         polygon.addListener("mouseover", () => {
-          polygon.setOptions({ fillColor: "#00bcd4", fillOpacity: 0.5 });
+          // Ne pas changer si la ville est déjà highlighted par l'IA
+          if (!highlightedCities.includes(city)) {
+            polygon.setOptions({ fillColor: "#00bcd4", fillOpacity: 0.5 });
+          }
           const data = cityData[city];
           if (data) {
             setHoveredCity({ name: city, ...data });
@@ -85,14 +104,125 @@ export default function Map2DPage() {
         });
 
         polygon.addListener("mouseout", () => {
-          polygon.setOptions({ fillColor: "#888", fillOpacity: 0.2 });
+          // Ne réinitialiser que si pas highlighted
+          if (!highlightedCities.includes(city)) {
+            polygon.setOptions({ fillColor: "#888", fillOpacity: 0.2 });
+          }
           setHoveredCity(null);
         });
       });
+
+      // Stocker les polygones de cette ville
+      if (cityPolygonsList.length > 0) {
+        polygonsMap.set(city, cityPolygonsList);
+      }
     });
 
+    polygonsRef.current = polygonsMap;
     console.log(`✅ ${totalPolygons} polygones créés au total`);
-  }, [map]);
+  }, [map, highlightedCities]);
+
+  // Gérer les actions IA
+  const applyMapAction = (action: Map2DAction) => {
+    if (action.type === 'highlight' && action.cities) {
+      setHighlightedCities(action.cities);
+      
+      // Mettre en surbrillance les villes
+      action.cities.forEach(cityName => {
+        const polygons = polygonsRef.current.get(cityName);
+        if (polygons) {
+          polygons.forEach(polygon => {
+            polygon.setOptions({
+              fillColor: "#00bcd4",
+              fillOpacity: 0.7,
+              strokeColor: "#00ffff",
+              strokeWeight: 2,
+            });
+          });
+        }
+      });
+
+      // Réinitialiser les autres villes
+      polygonsRef.current.forEach((polygons, cityName) => {
+        if (!action.cities!.includes(cityName)) {
+          polygons.forEach(polygon => {
+            polygon.setOptions({
+              fillColor: "#888",
+              fillOpacity: 0.2,
+              strokeColor: "#888",
+              strokeWeight: 1,
+            });
+          });
+        }
+      });
+    } else if (action.type === 'reset') {
+      setHighlightedCities([]);
+      
+      // Réinitialiser tous les polygones
+      polygonsRef.current.forEach((polygons) => {
+        polygons.forEach(polygon => {
+          polygon.setOptions({
+            fillColor: "#888",
+            fillOpacity: 0.2,
+            strokeColor: "#888",
+            strokeWeight: 1,
+          });
+        });
+      });
+    } else if (action.type === 'focus' && action.focusCity && map) {
+      const data = cityData[action.focusCity];
+      if (data && data.centreLat && data.centreLon) {
+        map.panTo({ lat: data.centreLat, lng: data.centreLon });
+        map.setZoom(12);
+        
+        // Highlight la ville
+        setHighlightedCities([action.focusCity]);
+        const polygons = polygonsRef.current.get(action.focusCity);
+        if (polygons) {
+          polygons.forEach(polygon => {
+            polygon.setOptions({
+              fillColor: "#00bcd4",
+              fillOpacity: 0.7,
+              strokeColor: "#00ffff",
+              strokeWeight: 2,
+            });
+          });
+        }
+      }
+    }
+  };
+
+  // Gérer la soumission du chat IA
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!query.trim() || loading) return;
+
+    setLoading(true);
+    setResponse("");
+
+    try {
+      const result = await queryMap2DAI(query);
+
+      // Appliquer les actions à la map
+      for (const action of result.mapActions) {
+        applyMapAction(action);
+      }
+
+      // Afficher la réponse
+      setResponse(result.textResponse);
+    } catch (error) {
+      console.error('Erreur IA:', error);
+      setResponse(
+        "Une erreur s'est produite lors du traitement de votre question. Veuillez réessayer.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setQuery(suggestion);
+  };
 
   return (
     <div style={{ height: "100vh", width: "100%", position: "relative" }}>
@@ -150,6 +280,153 @@ export default function Map2DPage() {
           </p>
         </div>
       )}
+
+      {/* Interface Chat IA en bas */}
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: "rgba(30, 30, 30, 0.95)",
+          backdropFilter: "blur(10px)",
+          borderTop: "1px solid #444",
+          padding: "1rem",
+          zIndex: 20,
+          maxHeight: showChat ? "400px" : "60px",
+          transition: "max-height 0.3s ease",
+          overflow: "hidden",
+        }}
+      >
+        {/* Bouton toggle */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: showChat ? "0.75rem" : 0,
+            cursor: "pointer",
+          }}
+          onClick={() => setShowChat(!showChat)}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <Sparkles style={{ color: "#00bcd4", width: "20px", height: "20px" }} />
+            <h3 style={{ margin: 0, fontSize: "1rem", color: "#f0f0f0" }}>
+              Assistant IA - Carte Interactive
+            </h3>
+          </div>
+          {showChat ? (
+            <ChevronDown style={{ color: "#888", width: "20px", height: "20px" }} />
+          ) : (
+            <ChevronUp style={{ color: "#888", width: "20px", height: "20px" }} />
+          )}
+        </div>
+
+        {showChat && (
+          <div style={{ maxWidth: "1000px", margin: "0 auto" }}>
+            {/* Réponse IA */}
+            {response && (
+              <div
+                style={{
+                  background: "rgba(0, 188, 212, 0.1)",
+                  border: "1px solid rgba(0, 188, 212, 0.3)",
+                  borderRadius: "8px",
+                  padding: "0.75rem",
+                  marginBottom: "0.75rem",
+                  maxHeight: "150px",
+                  overflowY: "auto",
+                }}
+              >
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <Sparkles style={{ color: "#00bcd4", width: "18px", height: "18px", flexShrink: 0, marginTop: "2px" }} />
+                  <p style={{ margin: 0, fontSize: "0.85rem", color: "#f0f0f0", whiteSpace: "pre-line" }}>
+                    {response}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Formulaire de requête */}
+            <form onSubmit={handleSubmit} style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem" }}>
+              <Input
+                type="text"
+                placeholder='Posez une question... (ex: "Montre-moi les 3 villes les plus peuplées")'
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                disabled={loading}
+                style={{
+                  flex: 1,
+                  background: "#2a2a2a",
+                  border: "1px solid #444",
+                  color: "#f0f0f0",
+                  borderRadius: "8px",
+                  padding: "0.5rem",
+                }}
+              />
+              <Button
+                type="submit"
+                disabled={loading || !query.trim()}
+                style={{
+                  background: loading || !query.trim() ? "#444" : "#00bcd4",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "0.5rem 1rem",
+                  cursor: loading || !query.trim() ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.5rem",
+                }}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 style={{ width: "16px", height: "16px", animation: "spin 1s linear infinite" }} />
+                    Analyse...
+                  </>
+                ) : (
+                  <>
+                    <Send style={{ width: "16px", height: "16px" }} />
+                    Envoyer
+                  </>
+                )}
+              </Button>
+            </form>
+
+            {/* Suggestions */}
+            {!loading && (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                {suggestions.slice(0, 4).map((suggestion, index) => (
+                  <Badge
+                    key={index}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    style={{
+                      background: "rgba(136, 136, 136, 0.2)",
+                      border: "1px solid #555",
+                      color: "#ccc",
+                      cursor: "pointer",
+                      padding: "0.25rem 0.75rem",
+                      borderRadius: "12px",
+                      fontSize: "0.75rem",
+                      transition: "all 0.2s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "rgba(0, 188, 212, 0.2)";
+                      e.currentTarget.style.borderColor = "#00bcd4";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "rgba(136, 136, 136, 0.2)";
+                      e.currentTarget.style.borderColor = "#555";
+                    }}
+                  >
+                    {suggestion}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
+
