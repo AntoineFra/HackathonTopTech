@@ -9,15 +9,13 @@ import cors from "cors";
 const app = express();
 export const prisma = new PrismaClient();
 
-await fs.rm("tmp", { recursive: true, force: true });
+// Créer les dossiers temporaires
 await fs.mkdir("tmp", { recursive: true });
-await fs.rm("data", { recursive: true, force: true });
 await fs.mkdir("data", { recursive: true });
-console.log("Clean temporary directory on startup if needed.");
 
+// Initialiser les entrées de dump si nécessaire
 try {
-    const types = ["legal_unit", "cities"];
-
+    const types = ["legal_unit", "cities", "population"];
     for (const t of types) {
         await prisma.dump.upsert({
             where: { type: t as any },
@@ -25,9 +23,8 @@ try {
             create: { type: t as any, status: "PAS_A_JOUR" },
         });
     }
-    console.log("Ensured dump entries in DB");
 } catch (e) {
-    console.warn("Could not ensure dump entries:", e);
+    console.warn("Could not initialize dump entries:", e);
 }
 
 app.use(express.json());
