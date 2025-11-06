@@ -25,7 +25,7 @@ export async function aiHealth() {
  * @returns AI response with answer, confidence, model info, optional legendType, and chart data
  */
 /**
- * Call local AI (placeholder for future implementation)
+ * Call local AI via backend
  * @param prompt - User question
  * @param history - Optional conversation history
  * @returns AI response
@@ -50,19 +50,15 @@ export async function aiAnswerLocal(
     };
     prismaQuery?: string;
 }> {
-    // PLACEHOLDER - À implémenter
-    // TODO: Définir la route backend pour l'IA locale
-    // TODO: Définir le preprompt pour l'IA locale
-
-    const PREPROMPT_LOCAL = ``; // À remplir
-
-    // Pour le moment, retourner une erreur
-    return {
-        success: false,
-        query: prompt,
-        answer: "L'IA locale n'est pas encore configurée. Cette fonctionnalité sera disponible prochainement.",
-        error: "Not implemented yet",
-    };
+    // Utiliser la même route backend mais avec provider="local"
+    return apiFetch("/ai/answer", {
+        method: "POST",
+        body: JSON.stringify({
+            question: prompt,
+            history: history || [],
+            provider: "local",
+        }),
+    });
 }
 
 export async function aiAnswer(

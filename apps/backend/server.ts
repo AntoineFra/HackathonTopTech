@@ -41,12 +41,16 @@ app.use(
             "http://localhost:8080",
             "http://localhost:3000",
             "http://frontend:3000",
+            "http://10.120.0.56:8000",
             // Docker network addresses (peuvent changer selon l'allocation IP)
             /^http:\/\/192\.168\.\d+\.\d+:8080$/,
             /^http:\/\/172\.\d+\.\d+\.\d+:8080$/,
+            /^http:\/\/10\.\d+\.\d+\.\d+:8080$/,
+            /^http:\/\/10\.\d+\.\d+\.\d+:8000$/,
         ],
         methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         credentials: true,
+        allowedHeaders: ["Content-Type", "Authorization"],
     }),
 );
 

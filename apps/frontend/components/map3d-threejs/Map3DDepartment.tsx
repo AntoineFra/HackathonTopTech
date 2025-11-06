@@ -22,6 +22,8 @@ import {
     applyPopulationGradient,
     resetCityColors,
 } from "@/lib/threejs-loaders/colorGradient";
+import { fetchBuildingsByCommune, getBuildingsStats } from "@/services/ign-buildings.services";
+import { createBuildingsMeshes, applyHeightColorGradient } from "@/lib/threejs-loaders/ignBuildingsLoader";
 import { Map3DChatBox } from "./Map3DChatBox";
 import Map3DLegends, { LegendType } from "./Map3DLegends";
 import { PopulationChart } from "./PopulationChart";
@@ -37,6 +39,8 @@ function DepartmentScene({
     controlsRef,
     populationData,
     activeLegends,
+    loadBuildingsForCity,
+    buildingsGroupRef,
 }: {
     onLoadingChange: (loading: boolean) => void;
     onCityCountChange: (count: number) => void;
@@ -47,6 +51,8 @@ function DepartmentScene({
     controlsRef: React.MutableRefObject<any>;
     populationData: any[];
     activeLegends: Set<string>;
+    loadBuildingsForCity: (inseeCode: string) => Promise<void>;
+    buildingsGroupRef: React.MutableRefObject<THREE.Group | null>;
 }) {
     const { scene, camera, gl } = useThree();
     const loadedRef = useRef(false);
@@ -423,6 +429,27 @@ function DepartmentScene({
         setHoveredCityColor(scene, hoveredCity, selectedCityName);
     }, [selectedCityName, hoveredCity, scene]);
 
+    // Afficher les bâtiments IGN quand ils sont chargés
+    useEffect(() => {
+        if (buildingsGroupRef.current) {
+            // Vérifier si déjà ajouté à la scène
+            const alreadyInScene = scene.children.includes(buildingsGroupRef.current);
+
+            if (!alreadyInScene) {
+                console.log("🏗️ Ajout des bâtiments à la scène...");
+                scene.add(buildingsGroupRef.current);
+                console.log(`✅ ${buildingsGroupRef.current.children.length} bâtiments ajoutés à la scène`);
+            }
+        }
+
+        // Cleanup : retirer les bâtiments quand le composant est démonté
+        return () => {
+            if (buildingsGroupRef.current && scene.children.includes(buildingsGroupRef.current)) {
+                scene.remove(buildingsGroupRef.current);
+            }
+        };
+    }, [buildingsGroupRef.current, scene]);
+
     return null;
 }
 
@@ -437,8 +464,10 @@ export default function Map3DDepartment() {
         new Set(),
     );
     const [populationData, setPopulationData] = useState<any[]>([]);
-    const [selectedCityPopulation, setSelectedCityPopulation] =
-        useState<any>(null);
+    const [selectedCityPopulation, setSelectedCityPopulation] = useState<any>(null);
+    const [loadingBuildings, setLoadingBuildings] = useState(false);
+    const [buildingsLoaded, setBuildingsLoaded] = useState(false);
+    const buildingsGroupRef = useRef<THREE.Group | null>(null);
     const citiesListRef = useRef<string[]>([]);
     const controlsRef = useRef<any>(null);
 
@@ -512,10 +541,47 @@ export default function Map3DDepartment() {
         }
     };
 
-    const handleLegendChange = async (
-        legendType: LegendType,
-        enabled: boolean,
-    ) => {
+    // Fonction pour charger les bâtiments d'une commune
+    const loadBuildingsForCity = async (inseeCode: string) => {
+        if (!inseeCode) return;
+
+        setLoadingBuildings(true);
+        console.log(`🏗️ Chargement des bâtiments pour la commune ${inseeCode}...`);
+
+        try {
+            // Récupérer les données de l'IGN
+            const buildingsData = await fetchBuildingsByCommune(inseeCode);
+
+            // Afficher les stats
+            if (buildingsData.features.length > 0) {
+                const stats = getBuildingsStats(buildingsData.features);
+                console.log("📊 Statistiques des bâtiments:", stats);
+            }
+
+            // Créer les meshes 3D
+            const buildingsGroup = createBuildingsMeshes(buildingsData, {
+                defaultHeight: 8,
+                heightScale: 1,
+                centerLat: 43.7, // Centre du 06
+                centerLng: 7.25,
+            });
+
+            // Appliquer le dégradé de couleur selon la hauteur
+            applyHeightColorGradient(buildingsGroup);
+
+            // Stocker la référence et marquer comme chargé
+            buildingsGroupRef.current = buildingsGroup;
+            setBuildingsLoaded(true);
+
+            console.log(`✅ ${buildingsData.features.length} bâtiments prêts pour l'affichage`);
+        } catch (error) {
+            console.error("❌ Erreur lors du chargement des bâtiments:", error);
+        } finally {
+            setLoadingBuildings(false);
+        }
+    };
+
+    const handleLegendChange = async (legendType: LegendType, enabled: boolean) => {
         const newLegends = new Set(activeLegends);
         if (enabled) {
             newLegends.add(legendType);
@@ -601,18 +667,20 @@ export default function Map3DDepartment() {
                         target={[mapCenter.x, 0, mapCenter.z]}
                     />
 
-                    <DepartmentScene
-                        onLoadingChange={setIsLoading}
-                        onCityCountChange={setCityCount}
-                        onCenterCalculated={setMapCenter}
-                        onSelectedCity={handleCitySelected}
-                        selectedCityName={selectedCity}
-                        citiesListRef={citiesListRef}
-                        controlsRef={controlsRef}
-                        populationData={populationData}
-                        activeLegends={activeLegends}
-                    />
-                </Canvas>
+                <DepartmentScene
+                    onLoadingChange={setIsLoading}
+                    onCityCountChange={setCityCount}
+                    onCenterCalculated={setMapCenter}
+                    onSelectedCity={handleCitySelected}
+                    selectedCityName={selectedCity}
+                    citiesListRef={citiesListRef}
+                    controlsRef={controlsRef}
+                    populationData={populationData}
+                    activeLegends={activeLegends}
+                    loadBuildingsForCity={loadBuildingsForCity}
+                    buildingsGroupRef={buildingsGroupRef}
+                />
+            </Canvas>
 
                 {/* Loading */}
                 {isLoading && (
@@ -640,18 +708,43 @@ export default function Map3DDepartment() {
                         {cityCount} communes
                     </p>
 
-                    <div className="bg-primary/10 dark:bg-primary/20 mt-3 rounded p-2 text-xs">
-                        <p className="text-foreground mb-1 font-semibold">
-                            Navigation :
-                        </p>
-                        <p className="text-muted-foreground">
-                            • ← → : Ville précédente / suivante
-                        </p>
-                        <p className="text-muted-foreground">
-                            • ↑ ↓ : Parcourir les communes
-                        </p>
-                    </div>
+                <div className="bg-primary/10 dark:bg-primary/20 mt-3 rounded p-2 text-xs">
+                    <p className="text-foreground mb-1 font-semibold">
+                        Navigation :
+                    </p>
+                    <p className="text-muted-foreground">
+                        • ← → : Ville précédente / suivante
+                    </p>
+                    <p className="text-muted-foreground">
+                        • ↑ ↓ : Parcourir les communes
+                    </p>
                 </div>
+
+                {/* Bouton charger bâtiments IGN */}
+                <div className="mt-4 border-t border-border pt-3">
+                    <button
+                        onClick={() => loadBuildingsForCity("06088")} // Nice pour test
+                        disabled={loadingBuildings}
+                        className="w-full rounded-md bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                        {loadingBuildings ? (
+                            <span className="flex items-center justify-center gap-2">
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                                Chargement...
+                            </span>
+                        ) : buildingsLoaded ? (
+                            "🏗️ Bâtiments chargés !"
+                        ) : (
+                            "🏗️ Charger bâtiments IGN (Nice)"
+                        )}
+                    </button>
+                    {buildingsLoaded && buildingsGroupRef.current && (
+                        <p className="text-muted-foreground mt-2 text-xs text-center">
+                            {buildingsGroupRef.current.children.length} bâtiments affichés
+                        </p>
+                    )}
+                </div>
+            </div>
 
                 {/* Ville sélectionnée - Card à droite */}
                 {selectedCity && (
