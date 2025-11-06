@@ -254,7 +254,10 @@ export async function dumpCities(cities: City[]): Promise<DumpResult> {
 export async function dumpPopulationData(): Promise<DumpResult> {
     console.log("📊 Starting population data import for department 06...");
 
-  const filePath = path.join(process.cwd(), 'resources/base-pop-historiques-1876-2022.xlsx');
+    const filePath = path.join(
+        process.cwd(),
+        "resources/base-pop-historiques-1876-2022.xlsx",
+    );
 
     if (!fs.existsSync(filePath)) {
         throw new Error(`Excel file not found at ${filePath}`);
@@ -350,15 +353,17 @@ export async function dumpPopulationData(): Promise<DumpResult> {
 
     console.log("💾 Inserting population data into database...");
 
-  // Insert in batches to avoid potential issues with large datasets
-  const batchSize = 100;
-  for (let i = 0; i < populationData.length; i += batchSize) {
-    const batch = populationData.slice(i, i + batchSize);
-    await prisma.populationHistory.createMany({
-      data: batch,
-    });
-    console.log(`✅ Inserted batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(populationData.length / batchSize)}`);
-  }
+    // Insert in batches to avoid potential issues with large datasets
+    const batchSize = 100;
+    for (let i = 0; i < populationData.length; i += batchSize) {
+        const batch = populationData.slice(i, i + batchSize);
+        await prisma.populationHistory.createMany({
+            data: batch,
+        });
+        console.log(
+            `✅ Inserted batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(populationData.length / batchSize)}`,
+        );
+    }
 
     const populationHistory = await prisma.populationHistory.findMany();
     return {

@@ -404,15 +404,21 @@ export async function generateWithOllama(
 /**
  * Extraire le type de légende depuis la réponse de l'IA
  */
-function extractLegendType(response: string): "population" | "economy" | "tourism" | undefined {
+function extractLegendType(
+    response: string,
+): "population" | "economy" | "tourism" | undefined {
     const match = response.match(/\[LEGEND:(population|economy|tourism)\]/);
-    return match ? (match[1] as "population" | "economy" | "tourism") : undefined;
+    return match
+        ? (match[1] as "population" | "economy" | "tourism")
+        : undefined;
 }
 
 /**
  * Extraire le type de graphique depuis la réponse de l'IA
  */
-function extractChartType(response: string): "bar" | "line" | "pie" | undefined {
+function extractChartType(
+    response: string,
+): "bar" | "line" | "pie" | undefined {
     const match = response.match(/\[CHART:(bar|line|pie)\]/);
     return match ? (match[1] as "bar" | "line" | "pie") : undefined;
 }
@@ -421,7 +427,9 @@ function extractChartType(response: string): "bar" | "line" | "pie" | undefined 
  * Extraire une requête Prisma depuis la réponse de l'IA
  */
 function extractPrismaQuery(response: string): string | undefined {
-    const match = response.match(/\[PRISMA_QUERY\]([\s\S]*?)\[\/PRISMA_QUERY\]/);
+    const match = response.match(
+        /\[PRISMA_QUERY\]([\s\S]*?)\[\/PRISMA_QUERY\]/,
+    );
     return match?.[1]?.trim();
 }
 
@@ -619,9 +627,9 @@ export async function answerQuestionWithOllama(
 
         // Nettoyer la réponse
         let cleanAnswer = ollamaResponse.response
-            .replace(/\[LEGEND:(population|economy|tourism)\]/g, '')
-            .replace(/\[CHART:(bar|line|pie)\]/g, '')
-            .replace(/\[PRISMA_QUERY\][\s\S]*?\[\/PRISMA_QUERY\]/g, '')
+            .replace(/\[LEGEND:(population|economy|tourism)\]/g, "")
+            .replace(/\[CHART:(bar|line|pie)\]/g, "")
+            .replace(/\[PRISMA_QUERY\][\s\S]*?\[\/PRISMA_QUERY\]/g, "")
             .trim();
 
         const response: AIServiceResponse = {
@@ -647,14 +655,16 @@ export async function answerQuestionWithOllama(
                 const queryResult = await executeQuery(parsedQuery);
 
                 if (queryResult.success && queryResult.data) {
-                    console.log(`✅ Données récupérées: ${Array.isArray(queryResult.data) ? queryResult.data.length : 1} résultat(s)`);
+                    console.log(
+                        `✅ Données récupérées: ${Array.isArray(queryResult.data) ? queryResult.data.length : 1} résultat(s)`,
+                    );
 
                     // Si un graphique est demandé, formater les données
                     if (chartType && Array.isArray(queryResult.data)) {
                         response.chart = {
                             type: chartType,
                             data: queryResult.data,
-                            title: `Données ${legendType || 'générales'}`,
+                            title: `Données ${legendType || "générales"}`,
                             description: cleanAnswer,
                         };
                     }
@@ -664,7 +674,10 @@ export async function answerQuestionWithOllama(
                     }
 
                     // Enrichir la réponse avec les données
-                    if (Array.isArray(queryResult.data) && queryResult.data.length > 0) {
+                    if (
+                        Array.isArray(queryResult.data) &&
+                        queryResult.data.length > 0
+                    ) {
                         const dataPreview = queryResult.data.slice(0, 5);
                         cleanAnswer += `\n\n📊 Données récupérées (${queryResult.data.length} résultat(s)) :\n`;
                         cleanAnswer += JSON.stringify(dataPreview, null, 2);

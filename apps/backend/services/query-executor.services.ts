@@ -94,9 +94,7 @@ function validateQuery(query: QueryRequest): {
 /**
  * Exécuter une requête Prisma de manière sécurisée
  */
-export async function executeQuery(
-    query: QueryRequest,
-): Promise<QueryResult> {
+export async function executeQuery(query: QueryRequest): Promise<QueryResult> {
     try {
         // Valider la requête
         const validation = validateQuery(query);
@@ -176,8 +174,7 @@ export async function executeQueries(
 export function parseAIGeneratedQuery(text: string): QueryRequest | null {
     try {
         // Chercher un pattern de requête Prisma: prisma.model.operation(...)
-        const prismaRegex =
-            /prisma\.(\w+)\.(\w+)\(([\s\S]*?)\)(?:\s*;|\s*$)/;
+        const prismaRegex = /prisma\.(\w+)\.(\w+)\(([\s\S]*?)\)(?:\s*;|\s*$)/;
         const match = text.match(prismaRegex);
 
         if (!match) {
@@ -207,7 +204,10 @@ export function parseAIGeneratedQuery(text: string): QueryRequest | null {
                     args = JSON.parse(fixedJson);
                     console.log("✅ JSON réparé et parsé avec succès");
                 } catch (fixError) {
-                    console.warn("Arguments non parsables même après réparation:", argsStr);
+                    console.warn(
+                        "Arguments non parsables même après réparation:",
+                        argsStr,
+                    );
                     console.error("Erreur de parsing:", fixError);
                     return null;
                 }

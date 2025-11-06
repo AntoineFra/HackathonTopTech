@@ -127,7 +127,7 @@ export default function Footer() {
                 <div className="mt-8 border-t pt-6">
                     <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
                         <p className="text-muted-foreground text-sm">
-                            &copy; {year} PACA Analytics. Tous droits réservés.
+                            &copy; {year} 06 Analytics. Tous droits réservés.
                         </p>
                         <div className="flex gap-4 text-sm">
                             <Link

@@ -5,7 +5,14 @@
 
 set -e
 
-echo "🤖 Démarrage de l'IA locale pour PACA Analytics"
+#!/bin/bash
+# Script de démarrage de l'IA locale avec Ollama
+# Utilisé pour le développement local
+
+set -e
+
+echo "=================================="
+echo "🤖 Démarrage de l'IA locale pour 06 Analytics"
 echo ""
 
 # Couleurs pour les messages

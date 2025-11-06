@@ -1,5 +1,5 @@
-# PACA Analytics - Hackathon CCI Nice Côte d'Azur 2025
-# 🏠 PACA Analytics Platform
+# 06 Analytics - Hackathon CCI Nice Côte d'Azur 2025
+# 🏠 06 Analytics Platform
 
 Portail interactif alimenté par l'IA pour interroger les données socio-démographiques du territoire 06.
 [![Documentation](https://github.com/AntoineFra/HackathonTopTech/actions/workflows/deploy-docs.yml/badge.svg)](https://github.com/AntoineFra/HackathonTopTech/actions/workflows/deploy-docs.yml)

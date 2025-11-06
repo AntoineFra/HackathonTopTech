@@ -1,7 +1,7 @@
 {
     "name": "paca-analytics-monorepo",
     "version": "1.0.0",
-    "description": "Monorepo PACA Analytics - Frontend (Next.js) + Backend (Express) + Ollama AI",
+    "description": "Monorepo 06 Analytics - Frontend (Next.js) + Backend (Express) + Ollama AI",
     "private": true,
     "packageManager": "pnpm@10.20.0",
     "scripts": {

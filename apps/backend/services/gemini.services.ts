@@ -8,7 +8,8 @@ import {
 } from "./query-executor.services.js";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent";
+const GEMINI_API_URL =
+    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent";
 
 export interface ChatMessage {
     role: "user" | "model";
@@ -178,34 +179,46 @@ Réponds en français de manière concise.`;
 /**
  * Extraire le type de légende depuis la réponse de l'IA
  */
-function extractLegendType(response: string): "population" | "economy" | "tourism" | undefined {
+function extractLegendType(
+    response: string,
+): "population" | "economy" | "tourism" | undefined {
     const match = response.match(/\[LEGEND:(population|economy|tourism)\]/);
-    return match ? (match[1] as "population" | "economy" | "tourism") : undefined;
+    return match
+        ? (match[1] as "population" | "economy" | "tourism")
+        : undefined;
 }
 
 /**
  * Extraire le type de graphique depuis la réponse de l'IA
  */
-function extractChartType(response: string): "bar" | "line" | "pie" | "area" | "radar" | "radial" | undefined {
+function extractChartType(
+    response: string,
+): "bar" | "line" | "pie" | "area" | "radar" | "radial" | undefined {
     const match = response.match(/\[CHART:(bar|line|pie|area|radar|radial)\]/);
-    return match ? (match[1] as "bar" | "line" | "pie" | "area" | "radar" | "radial") : undefined;
+    return match
+        ? (match[1] as "bar" | "line" | "pie" | "area" | "radar" | "radial")
+        : undefined;
 }
 
 /**
  * Extraire une requête Prisma depuis la réponse de l'IA
  */
 function extractPrismaQuery(response: string): string | undefined {
-    const match = response.match(/\[PRISMA_QUERY\]([\s\S]*?)\[\/PRISMA_QUERY\]/);
+    const match = response.match(
+        /\[PRISMA_QUERY\]([\s\S]*?)\[\/PRISMA_QUERY\]/,
+    );
     return match?.[1]?.trim();
 }
 
 /**
  * Convertir l'historique au format Gemini
  */
-function convertHistoryToGemini(history: Array<{ role: "user" | "assistant"; content: string }>): ChatMessage[] {
-    return history.map(msg => ({
+function convertHistoryToGemini(
+    history: Array<{ role: "user" | "assistant"; content: string }>,
+): ChatMessage[] {
+    return history.map((msg) => ({
         role: msg.role === "assistant" ? "model" : "user",
-        parts: [{ text: msg.content }]
+        parts: [{ text: msg.content }],
     }));
 }
 
@@ -214,7 +227,7 @@ function convertHistoryToGemini(history: Array<{ role: "user" | "assistant"; con
  */
 async function generateWithGemini(
     question: string,
-    history: Array<{ role: "user" | "assistant"; content: string }> = []
+    history: Array<{ role: "user" | "assistant"; content: string }> = [],
 ): Promise<string> {
     if (!GEMINI_API_KEY) {
         throw new Error("GEMINI_API_KEY n'est pas configurée");
@@ -224,19 +237,23 @@ async function generateWithGemini(
         // System prompt en tant que premier message user
         {
             role: "user",
-            parts: [{ text: SYSTEM_PROMPT }]
+            parts: [{ text: SYSTEM_PROMPT }],
         },
         {
             role: "model",
-            parts: [{ text: "Je comprends. Je suis prêt à répondre aux questions sur les données PACA en générant des requêtes Prisma au format JSON strict." }]
+            parts: [
+                {
+                    text: "Je comprends. Je suis prêt à répondre aux questions sur les données PACA en générant des requêtes Prisma au format JSON strict.",
+                },
+            ],
         },
         // Historique converti
         ...convertHistoryToGemini(history),
         // Question actuelle
         {
             role: "user",
-            parts: [{ text: question }]
-        }
+            parts: [{ text: question }],
+        },
     ];
 
     const request: GeminiRequest = {
@@ -246,33 +263,44 @@ async function generateWithGemini(
             topK: 40,
             topP: 0.95,
             maxOutputTokens: 2048,
-        }
+        },
     };
 
     console.log(`[Gemini Service] Calling Gemini API...`);
 
     try {
-        const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
+        const response = await fetch(
+            `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(request),
             },
-            body: JSON.stringify(request),
-        });
+        );
 
         if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
+            throw new Error(
+                `Gemini API error: ${response.status} - ${errorText}`,
+            );
         }
 
         const data: GeminiResponse = await response.json();
 
-        if (!data.candidates || data.candidates.length === 0 || !data.candidates[0]?.content?.parts?.[0]?.text) {
+        if (
+            !data.candidates ||
+            data.candidates.length === 0 ||
+            !data.candidates[0]?.content?.parts?.[0]?.text
+        ) {
             throw new Error("Aucune réponse de Gemini");
         }
 
         const answer = data.candidates[0].content.parts[0].text;
-        console.log(`[Gemini Service] Response received (${answer.length} chars)`);
+        console.log(
+            `[Gemini Service] Response received (${answer.length} chars)`,
+        );
         console.log("========== GEMINI RAW RESPONSE ==========");
         console.log(answer);
         console.log("=========================================");
@@ -302,9 +330,9 @@ export async function answerQuestionWithGemini(
 
         // Nettoyer la réponse
         let cleanAnswer = geminiResponse
-            .replace(/\[LEGEND:(population|economy|tourism)\]/g, '')
-            .replace(/\[CHART:(bar|line|pie)\]/g, '')
-            .replace(/\[PRISMA_QUERY\][\s\S]*?\[\/PRISMA_QUERY\]/g, '')
+            .replace(/\[LEGEND:(population|economy|tourism)\]/g, "")
+            .replace(/\[CHART:(bar|line|pie)\]/g, "")
+            .replace(/\[PRISMA_QUERY\][\s\S]*?\[\/PRISMA_QUERY\]/g, "")
             .trim();
 
         const response: AIServiceResponse = {
@@ -340,17 +368,19 @@ export async function answerQuestionWithGemini(
                         // Si c'est un objet unique (findFirst) avec des champs popXXXX
                         // Le transformer en array [{année: XXXX, population: value}, ...]
                         const dataObj = queryResult.data as any;
-                        const popFields = Object.keys(dataObj).filter(key => key.startsWith('pop'));
+                        const popFields = Object.keys(dataObj).filter((key) =>
+                            key.startsWith("pop"),
+                        );
 
                         if (popFields.length > 0) {
                             // Transformation pour évolution temporelle
                             chartDataArray = popFields
-                                .map(field => ({
-                                    année: field.replace('pop', ''),
+                                .map((field) => ({
+                                    année: field.replace("pop", ""),
                                     population: dataObj[field],
-                                    ville: dataObj.libelle || dataObj.name
+                                    ville: dataObj.libelle || dataObj.name,
                                 }))
-                                .filter(item => item.population != null)
+                                .filter((item) => item.population != null)
                                 .sort((a, b) => a.année.localeCompare(b.année));
                         } else {
                             // Sinon, juste mettre l'objet en array
@@ -360,11 +390,13 @@ export async function answerQuestionWithGemini(
 
                     // Si un graphique est demandé et qu'on a des données
                     if (chartType && chartDataArray.length > 0) {
-                        console.log(`📊 Création du chart avec ${chartDataArray.length} résultat(s)`);
+                        console.log(
+                            `📊 Création du chart avec ${chartDataArray.length} résultat(s)`,
+                        );
                         response.chart = {
                             type: chartType,
                             data: chartDataArray,
-                            title: `Données ${legendType || 'générales'}`,
+                            title: `Données ${legendType || "générales"}`,
                             description: cleanAnswer,
                         };
                     }
@@ -372,7 +404,7 @@ export async function answerQuestionWithGemini(
                     if (queryResult.executedQuery) {
                         response.prismaQuery = queryResult.executedQuery;
                     }
-                 /*    // Ne pas afficher les données brutes, juste confirmer qu'un graphique est disponible
+                    /*    // Ne pas afficher les données brutes, juste confirmer qu'un graphique est disponible
                     if (chartDataArray.length > 0 && chartType) {
                         cleanAnswer += `\n\n📊 Graphique généré avec ${chartDataArray.length} point${chartDataArray.length > 1 ? 's' : ''} de données.`;
                     } */

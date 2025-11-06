@@ -2,7 +2,7 @@
 
 ## 🎉 What's New
 
-Your PACA Analytics project now has a complete GitBook documentation system with:
+Your 06 Analytics project now has a complete GitBook documentation system with:
 
 ### 📁 New Files & Folders
 
@@ -386,5 +386,5 @@ Happy documenting! 📚✨
 
 **Generated**: November 2025
 **GitBook Version**: 3.x
-**Project**: PACA Analytics Platform
+**Project**: 06 Analytics Platform
 ````

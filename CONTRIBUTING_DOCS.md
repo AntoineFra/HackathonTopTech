@@ -1,6 +1,6 @@
 # 🤝 Contributing to Documentation
 
-Thank you for your interest in improving the PACA Analytics documentation!
+Thank you for your interest in improving the 06 Analytics documentation!
 
 ## 📋 Table of Contents
 
@@ -397,7 +397,7 @@ Save as PNG/SVG in `.gitbook/assets/diagrams/`
 
 ## 🙏 Thank You!
 
-Every contribution makes PACA Analytics better for everyone. We appreciate your time and effort!
+Every contribution makes 06 Analytics better for everyone. We appreciate your time and effort!
 
 ---
 

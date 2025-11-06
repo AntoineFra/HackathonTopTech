@@ -53,7 +53,9 @@ export async function getPopulationDataForCity(req: Request, res: Response) {
     try {
         const codeINSEE = req.params.codeINSEE;
         if (!codeINSEE) {
-            return res.status(400).json({ error: "City code INSEE is required" });
+            return res
+                .status(400)
+                .json({ error: "City code INSEE is required" });
         }
 
         const city = await prisma.city.findFirst({

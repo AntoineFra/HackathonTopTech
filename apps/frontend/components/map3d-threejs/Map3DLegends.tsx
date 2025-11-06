@@ -81,7 +81,9 @@ export default function Map3DLegends({
                             <Checkbox
                                 id={config.type}
                                 checked={activeLegends.has(config.type)}
-                                onCheckedChange={() => handleToggle(config.type)}
+                                onCheckedChange={() =>
+                                    handleToggle(config.type)
+                                }
                                 disabled={config.type !== "population"}
                                 className="mt-0.5"
                             />
@@ -96,7 +98,7 @@ export default function Map3DLegends({
                                     {config.type !== "population" && (
                                         <Badge
                                             variant="outline"
-                                            className="text-[10px] px-1 py-0"
+                                            className="px-1 py-0 text-[10px]"
                                         >
                                             Bientôt
                                         </Badge>

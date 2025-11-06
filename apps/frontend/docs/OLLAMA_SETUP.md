@@ -1,4 +1,4 @@
-# Guide d'Installation IA Locale pour PACA Analytics
+# Guide d'Installation IA Locale pour 06 Analytics
 
 ## Option recommandée : Ollama
 

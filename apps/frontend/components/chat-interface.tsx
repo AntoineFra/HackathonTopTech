@@ -112,7 +112,11 @@ export function ChatInterface() {
                     // For initial query, we only have the welcome message in history
                     const history: ChatMessage[] = [];
 
-                    const result = await aiAnswer(initialQuery, history, provider);
+                    const result = await aiAnswer(
+                        initialQuery,
+                        history,
+                        provider,
+                    );
 
                     setMessages((prev) => {
                         const filtered = prev.filter((m) => !m.loading);
@@ -136,19 +140,26 @@ export function ChatInterface() {
                     });
                 } catch (error) {
                     console.error("AI Error:", error);
-                    
+
                     // Extract error message
-                    let errorMessage = "Désolé, une erreur s'est produite. Veuillez réessayer.";
+                    let errorMessage =
+                        "Désolé, une erreur s'est produite. Veuillez réessayer.";
                     if (error instanceof Error) {
-                        if (error.message.includes("Timeout") || error.message.includes("timeout")) {
-                            errorMessage = "⏱️ La requête a pris trop de temps. Le modèle IA est peut-être en train de démarrer ou surchargé. Veuillez patienter quelques instants et réessayer avec une question plus courte.";
+                        if (
+                            error.message.includes("Timeout") ||
+                            error.message.includes("timeout")
+                        ) {
+                            errorMessage =
+                                "⏱️ La requête a pris trop de temps. Le modèle IA est peut-être en train de démarrer ou surchargé. Veuillez patienter quelques instants et réessayer avec une question plus courte.";
                         } else if (error.message.includes("500")) {
-                            errorMessage = "❌ Erreur serveur. Le service IA n'est peut-être pas disponible. Vérifiez que Ollama est bien démarré.";
+                            errorMessage =
+                                "❌ Erreur serveur. Le service IA n'est peut-être pas disponible. Vérifiez que Ollama est bien démarré.";
                         } else if (error.message.includes("fetch")) {
-                            errorMessage = "🔌 Impossible de contacter le serveur. Vérifiez votre connexion.";
+                            errorMessage =
+                                "🔌 Impossible de contacter le serveur. Vérifiez votre connexion.";
                         }
                     }
-                    
+
                     setMessages((prev) => {
                         const filtered = prev.filter((m) => !m.loading);
                         return [
@@ -205,7 +216,11 @@ export function ChatInterface() {
                     content: m.content,
                 }));
 
-            const result = await aiAnswer(userMessage.content, history, provider);
+            const result = await aiAnswer(
+                userMessage.content,
+                history,
+                provider,
+            );
 
             // Remove loading message and add real response
             setMessages((prev) => {
@@ -230,19 +245,26 @@ export function ChatInterface() {
             });
         } catch (error) {
             console.error("AI Error:", error);
-            
+
             // Extract error message
-            let errorMessage = "Désolé, une erreur s'est produite. Veuillez réessayer.";
+            let errorMessage =
+                "Désolé, une erreur s'est produite. Veuillez réessayer.";
             if (error instanceof Error) {
-                if (error.message.includes("Timeout") || error.message.includes("timeout")) {
-                    errorMessage = "⏱️ La requête a pris trop de temps. Le modèle IA est peut-être en train de démarrer ou surchargé. Veuillez patienter quelques instants et réessayer avec une question plus courte.";
+                if (
+                    error.message.includes("Timeout") ||
+                    error.message.includes("timeout")
+                ) {
+                    errorMessage =
+                        "⏱️ La requête a pris trop de temps. Le modèle IA est peut-être en train de démarrer ou surchargé. Veuillez patienter quelques instants et réessayer avec une question plus courte.";
                 } else if (error.message.includes("500")) {
-                    errorMessage = "❌ Erreur serveur. Le service IA n'est peut-être pas disponible. Vérifiez que Ollama est bien démarré.";
+                    errorMessage =
+                        "❌ Erreur serveur. Le service IA n'est peut-être pas disponible. Vérifiez que Ollama est bien démarré.";
                 } else if (error.message.includes("fetch")) {
-                    errorMessage = "🔌 Impossible de contacter le serveur. Vérifiez votre connexion.";
+                    errorMessage =
+                        "🔌 Impossible de contacter le serveur. Vérifiez votre connexion.";
                 }
             }
-            
+
             // Remove loading message and add error
             setMessages((prev) => {
                 const filtered = prev.filter((m) => !m.loading);

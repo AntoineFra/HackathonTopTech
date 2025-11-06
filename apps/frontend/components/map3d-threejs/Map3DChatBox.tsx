@@ -12,14 +12,18 @@ import { useAIProvider } from "@/contexts/AIProviderContext";
 interface Map3DChatBoxProps {
     citiesList: string[];
     onCityDetected: (cityName: string, aiResponse: string) => void;
-    onLegendActivate?: (legendType: "population" | "economy" | "tourism") => void;
-    onChartGenerated?: (chartData: {
-        type: "bar" | "line" | "pie";
-        data: any[];
-        title?: string;
-        description?: string;
-        prismaQuery?: string;
-    } | null) => void;
+    onLegendActivate?: (
+        legendType: "population" | "economy" | "tourism",
+    ) => void;
+    onChartGenerated?: (
+        chartData: {
+            type: "bar" | "line" | "pie";
+            data: any[];
+            title?: string;
+            description?: string;
+            prismaQuery?: string;
+        } | null,
+    ) => void;
 }
 
 export function Map3DChatBox({
@@ -84,7 +88,10 @@ export function Map3DChatBox({
 
                 // Stocker les données du graphique si présentes
                 if (result.chart) {
-                    console.log("📊 Données de graphique reçues:", result.chart);
+                    console.log(
+                        "📊 Données de graphique reçues:",
+                        result.chart,
+                    );
                     const newChartData = {
                         type: result.chart.type,
                         data: result.chart.data,
@@ -101,7 +108,9 @@ export function Map3DChatBox({
 
                 // Activer automatiquement la légende si retournée par l'IA
                 if (result.legendType && onLegendActivate) {
-                    console.log(`📊 Activation automatique de la légende: ${result.legendType}`);
+                    console.log(
+                        `📊 Activation automatique de la légende: ${result.legendType}`,
+                    );
                     onLegendActivate(result.legendType);
                 }
 
@@ -140,7 +149,7 @@ export function Map3DChatBox({
 
     return (
         <Card className="bg-card border-border w-full border shadow-lg">
-            <div className="border-border flex items-center gap-3 border-b p-4 shrink-0">
+            <div className="border-border flex shrink-0 items-center gap-3 border-b p-4">
                 <div className="bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-full">
                     <Bot className="h-5 w-5" />
                 </div>
@@ -154,7 +163,7 @@ export function Map3DChatBox({
                 </div>
             </div>
 
-            <div className="space-y-3 p-4 overflow-y-auto flex-1">
+            <div className="flex-1 space-y-3 overflow-y-auto p-4">
                 {/* Input de question */}
                 <form onSubmit={handleSubmit} className="flex gap-2">
                     <Textarea
@@ -192,7 +201,7 @@ export function Map3DChatBox({
                 {lastResponse && (
                     <div className="space-y-3">
                         <div className="bg-muted/50 rounded-lg p-4">
-                            <p className="text-muted-foreground text-xs font-semibold mb-2">
+                            <p className="text-muted-foreground mb-2 text-xs font-semibold">
                                 Réponse de l'IA :
                             </p>
                             <p className="text-foreground text-sm whitespace-pre-wrap">

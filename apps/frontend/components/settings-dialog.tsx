@@ -1,7 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Settings, Download, Check, Loader2, Sparkles, Cpu, Zap } from "lucide-react";
+import {
+    Settings,
+    Download,
+    Check,
+    Loader2,
+    Sparkles,
+    Cpu,
+    Zap,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { aiHealth } from "@/services/ai.services";
 import { listDumps, getDump } from "@/services/dump.services";
@@ -216,7 +224,9 @@ export default function SettingsDialog() {
         setSettingsMessage(null);
         const parsedSeconds = Number(editingAiTimeout);
         if (!Number.isFinite(parsedSeconds) || parsedSeconds < 0) {
-            setSettingsMessage("La valeur doit être un nombre positif en secondes");
+            setSettingsMessage(
+                "La valeur doit être un nombre positif en secondes",
+            );
             setSavingSettings(false);
             return;
         }
@@ -431,7 +441,8 @@ export default function SettingsDialog() {
                                     Fournisseur IA
                                 </div>
                                 <div className="text-muted-foreground text-xs">
-                                    Sélectionnez le modèle IA à utiliser pour tous les chats
+                                    Sélectionnez le modèle IA à utiliser pour
+                                    tous les chats
                                 </div>
                             </div>
                             <div className="space-y-2">
@@ -445,13 +456,15 @@ export default function SettingsDialog() {
                                 >
                                     <Sparkles className="h-4 w-4 text-blue-500" />
                                     <div className="flex-1 text-left">
-                                        <div className="text-sm font-medium">Gemini</div>
+                                        <div className="text-sm font-medium">
+                                            Gemini
+                                        </div>
                                         <div className="text-muted-foreground text-xs">
                                             Google Gemini 2.0 Flash (Cloud)
                                         </div>
                                     </div>
                                     {provider === "gemini" && (
-                                        <Check className="h-4 w-4 text-primary" />
+                                        <Check className="text-primary h-4 w-4" />
                                     )}
                                 </button>
 
@@ -465,13 +478,15 @@ export default function SettingsDialog() {
                                 >
                                     <Cpu className="h-4 w-4 text-purple-500" />
                                     <div className="flex-1 text-left">
-                                        <div className="text-sm font-medium">Ollama</div>
+                                        <div className="text-sm font-medium">
+                                            Ollama
+                                        </div>
                                         <div className="text-muted-foreground text-xs">
                                             Mistral 7B (Docker local)
                                         </div>
                                     </div>
                                     {provider === "ollama" && (
-                                        <Check className="h-4 w-4 text-primary" />
+                                        <Check className="text-primary h-4 w-4" />
                                     )}
                                 </button>
 
@@ -485,9 +500,11 @@ export default function SettingsDialog() {
                                 >
                                     <Zap className="h-4 w-4 text-yellow-500" />
                                     <div className="flex-1 text-left">
-                                        <div className="text-sm font-medium flex items-center gap-2">
+                                        <div className="flex items-center gap-2 text-sm font-medium">
                                             Local AI
-                                            <span className="text-xs font-normal text-yellow-600 dark:text-yellow-500">⭐ Recommandé</span>
+                                            <span className="text-xs font-normal text-yellow-600 dark:text-yellow-500">
+                                                ⭐ Recommandé
+                                            </span>
                                         </div>
                                         <div className="text-muted-foreground text-xs">
                                             IA locale optimisée

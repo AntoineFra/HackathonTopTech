@@ -464,7 +464,9 @@ export function setHoveredCityColor(
         if (object.userData.type === "city") {
             const cityName = object.userData.city;
             // Utiliser la couleur du gradient si elle existe, sinon la couleur originale
-            let targetColor = object.userData.gradientColor ?? object.userData.originalFillColor;
+            let targetColor =
+                object.userData.gradientColor ??
+                object.userData.originalFillColor;
 
             // Priorité: sélection > hover > couleur du gradient (ou originale)
             if (cityName === selectedCity) {

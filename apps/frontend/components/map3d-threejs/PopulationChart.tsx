@@ -46,7 +46,11 @@ export function PopulationChart({ populationData }: PopulationChartProps) {
                     cursor={false}
                     content={<ChartTooltipContent hideLabel />}
                 />
-                <Bar dataKey="population" fill="var(--color-population)" radius={8} />
+                <Bar
+                    dataKey="population"
+                    fill="var(--color-population)"
+                    radius={8}
+                />
             </BarChart>
         </ChartContainer>
     );

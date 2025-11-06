@@ -1,6 +1,6 @@
 # 📚 Documentation GitBook
 
-Ce dossier contient la configuration et les ressources pour la documentation GitBook de PACA Analytics.
+Ce dossier contient la configuration et les ressources pour la documentation GitBook de 06 Analytics.
 
 ## 🚀 Démarrage rapide
 

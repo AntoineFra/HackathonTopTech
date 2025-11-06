@@ -1,5 +1,5 @@
 /**
- * Prompt Engineering pour l'assistant IA PACA Analytics
+ * Prompt Engineering pour l'assistant IA 06 Analytics
  */
 
 export const SYSTEM_PROMPT = `Tu es un assistant IA spécialisé dans l'analyse des données socio-démographiques et économiques du territoire 06 (Alpes-Maritimes) dans la région Provence-Alpes-Côte d'Azur (PACA).

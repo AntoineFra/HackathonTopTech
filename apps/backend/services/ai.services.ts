@@ -15,7 +15,9 @@ import {
 
 export type ChatMessage = OllamaMessage;
 
-const DEFAULT_AI_PROVIDER = (process.env.DEFAULT_AI_PROVIDER || "ollama") as "ollama" | "gemini";
+const DEFAULT_AI_PROVIDER = (process.env.DEFAULT_AI_PROVIDER || "ollama") as
+    | "ollama"
+    | "gemini";
 
 export interface ParsedQuestion {
     text: string;
@@ -268,13 +270,17 @@ export async function answerQuestion(
 
     // Convertir l'historique pour Gemini si nécessaire (filtrer les messages system)
     const geminiHistory = history
-        .filter(msg => msg.role !== "system")
-        .map(msg => ({ role: msg.role as "user" | "assistant", content: msg.content }));
+        .filter((msg) => msg.role !== "system")
+        .map((msg) => ({
+            role: msg.role as "user" | "assistant",
+            content: msg.content,
+        }));
 
     // Utiliser le provider sélectionné
-    const response = provider === "gemini"
-        ? await answerQuestionWithGemini(question, geminiHistory)
-        : await answerQuestionWithOllama(question, history);
+    const response =
+        provider === "gemini"
+            ? await answerQuestionWithGemini(question, geminiHistory)
+            : await answerQuestionWithOllama(question, history);
 
     if (!response.success) {
         throw new Error(

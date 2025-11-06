@@ -2,7 +2,13 @@
 "use client";
 
 import { useMemo } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
 import {
     ChartContainer,
     ChartTooltip,
@@ -28,7 +34,7 @@ import {
     Cell,
     PolarGrid,
     PolarAngleAxis,
-    PolarRadiusAxis
+    PolarRadiusAxis,
 } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { Code } from "lucide-react";
@@ -45,9 +51,9 @@ interface AIGeneratedChartProps {
 const CHART_COLORS = [
     "oklch(0.623 0.214 259.815)", // bleu (chart-2)
     "oklch(0.707 0.182 142.495)", // vert
-    "oklch(0.831 0.167 85.594)",  // jaune
-    "oklch(0.705 0.199 28.363)",  // orange
-    "oklch(0.576 0.232 27.325)",  // rouge
+    "oklch(0.831 0.167 85.594)", // jaune
+    "oklch(0.705 0.199 28.363)", // orange
+    "oklch(0.576 0.232 27.325)", // rouge
     "oklch(0.633 0.267 302.321)", // violet
 ];
 
@@ -86,7 +92,8 @@ export function AIGeneratedChart({
         const keys = Object.keys(firstItem);
 
         // La première clé string devient l'axe X
-        const xKey = keys.find((key) => typeof firstItem[key] === "string") || keys[0];
+        const xKey =
+            keys.find((key) => typeof firstItem[key] === "string") || keys[0];
 
         // Les clés numériques deviennent les axes Y
         const yKeys = keys.filter((key) => typeof firstItem[key] === "number");
@@ -115,7 +122,10 @@ export function AIGeneratedChart({
                 return (
                     <ChartContainer config={chartConfig}>
                         <BarChart data={data}>
-                            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                            <CartesianGrid
+                                strokeDasharray="3 3"
+                                className="stroke-muted"
+                            />
                             <XAxis
                                 dataKey={xKey}
                                 className="text-muted-foreground text-xs"
@@ -126,7 +136,11 @@ export function AIGeneratedChart({
                                 <Bar
                                     key={key}
                                     dataKey={key}
-                                    fill={CHART_COLORS[index % CHART_COLORS.length]}
+                                    fill={
+                                        CHART_COLORS[
+                                            index % CHART_COLORS.length
+                                        ]
+                                    }
                                     radius={[4, 4, 0, 0]}
                                 />
                             ))}
@@ -138,7 +152,10 @@ export function AIGeneratedChart({
                 return (
                     <ChartContainer config={chartConfig}>
                         <LineChart data={data}>
-                            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                            <CartesianGrid
+                                strokeDasharray="3 3"
+                                className="stroke-muted"
+                            />
                             <XAxis
                                 dataKey={xKey}
                                 className="text-muted-foreground text-xs"
@@ -150,7 +167,11 @@ export function AIGeneratedChart({
                                     key={key}
                                     type="monotone"
                                     dataKey={key}
-                                    stroke={CHART_COLORS[index % CHART_COLORS.length]}
+                                    stroke={
+                                        CHART_COLORS[
+                                            index % CHART_COLORS.length
+                                        ]
+                                    }
                                     strokeWidth={2}
                                     dot={{ r: 3 }}
                                 />
@@ -163,7 +184,10 @@ export function AIGeneratedChart({
                 return (
                     <ChartContainer config={chartConfig}>
                         <AreaChart data={data}>
-                            <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                            <CartesianGrid
+                                strokeDasharray="3 3"
+                                className="stroke-muted"
+                            />
                             <XAxis
                                 dataKey={xKey}
                                 className="text-muted-foreground text-xs"
@@ -175,8 +199,16 @@ export function AIGeneratedChart({
                                     key={key}
                                     type="monotone"
                                     dataKey={key}
-                                    stroke={CHART_COLORS[index % CHART_COLORS.length]}
-                                    fill={CHART_COLORS[index % CHART_COLORS.length]}
+                                    stroke={
+                                        CHART_COLORS[
+                                            index % CHART_COLORS.length
+                                        ]
+                                    }
+                                    fill={
+                                        CHART_COLORS[
+                                            index % CHART_COLORS.length
+                                        ]
+                                    }
                                     fillOpacity={0.6}
                                     strokeWidth={2}
                                 />
@@ -201,7 +233,11 @@ export function AIGeneratedChart({
                                 {data.map((entry, index) => (
                                     <Cell
                                         key={`cell-${index}`}
-                                        fill={CHART_COLORS[index % CHART_COLORS.length]}
+                                        fill={
+                                            CHART_COLORS[
+                                                index % CHART_COLORS.length
+                                            ]
+                                        }
                                     />
                                 ))}
                             </Pie>
@@ -227,8 +263,16 @@ export function AIGeneratedChart({
                                     key={key}
                                     name={key}
                                     dataKey={key}
-                                    stroke={CHART_COLORS[index % CHART_COLORS.length]}
-                                    fill={CHART_COLORS[index % CHART_COLORS.length]}
+                                    stroke={
+                                        CHART_COLORS[
+                                            index % CHART_COLORS.length
+                                        ]
+                                    }
+                                    fill={
+                                        CHART_COLORS[
+                                            index % CHART_COLORS.length
+                                        ]
+                                    }
                                     fillOpacity={0.5}
                                     strokeWidth={2}
                                 />
@@ -252,13 +296,20 @@ export function AIGeneratedChart({
                             <ChartTooltip content={<ChartTooltipContent />} />
                             <RadialBar
                                 dataKey={yKeys[0]}
-                                label={{ position: 'insideStart', fill: '#fff' }}
+                                label={{
+                                    position: "insideStart",
+                                    fill: "#fff",
+                                }}
                                 background
                             >
                                 {data.map((entry, index) => (
                                     <Cell
                                         key={`cell-${index}`}
-                                        fill={CHART_COLORS[index % CHART_COLORS.length]}
+                                        fill={
+                                            CHART_COLORS[
+                                                index % CHART_COLORS.length
+                                            ]
+                                        }
                                     />
                                 ))}
                             </RadialBar>
@@ -268,7 +319,11 @@ export function AIGeneratedChart({
                 );
 
             default:
-                return <p className="text-muted-foreground">Type de graphique non supporté</p>;
+                return (
+                    <p className="text-muted-foreground">
+                        Type de graphique non supporté
+                    </p>
+                );
         }
     };
 
@@ -292,9 +347,7 @@ export function AIGeneratedChart({
                 </div>
             </CardHeader>
             <CardContent className="pb-4">
-                <div className="h-[280px]">
-                    {renderChart()}
-                </div>
+                <div className="h-[280px]">{renderChart()}</div>
 
                 {/* Debug: Afficher la requête Prisma si disponible */}
                 {prismaQuery && (

@@ -208,7 +208,7 @@ Contains plugins and configuration:
 
 ```json
 {
-    "title": "PACA Analytics Platform",
+    "title": "06 Analytics Platform",
     "description": "Documentation complète",
     "plugins": ["github", "edit-link", "search", "prism"],
     "pluginsConfig": {
@@ -311,7 +311,7 @@ GitBook can host multiple versions!
 
 ```json
 {
-    "title": "PACA Analytics Platform",
+    "title": "06 Analytics Platform",
     "description": "Documentation complète de la plateforme d'analyse territoriale",
     "author": "CCI Nice Côte d'Azur",
     "language": "fr",

@@ -433,9 +433,12 @@ export default function Map3DDepartment() {
     const [selectedCity, setSelectedCity] = useState<string | null>(null);
     const [currentCityIndex, setCurrentCityIndex] = useState(0);
     const [aiResponse, setAiResponse] = useState<string>("");
-    const [activeLegends, setActiveLegends] = useState<Set<LegendType>>(new Set());
+    const [activeLegends, setActiveLegends] = useState<Set<LegendType>>(
+        new Set(),
+    );
     const [populationData, setPopulationData] = useState<any[]>([]);
-    const [selectedCityPopulation, setSelectedCityPopulation] = useState<any>(null);
+    const [selectedCityPopulation, setSelectedCityPopulation] =
+        useState<any>(null);
     const citiesListRef = useRef<string[]>([]);
     const controlsRef = useRef<any>(null);
 
@@ -462,13 +465,17 @@ export default function Map3DDepartment() {
                     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL!;
                     // Trouver le codeINSEE de la ville depuis les données globales
                     const cityData = populationData.find(
-                        (city) => city.libelle?.toLowerCase() === cityName.toLowerCase()
+                        (city) =>
+                            city.libelle?.toLowerCase() ===
+                            cityName.toLowerCase(),
                     );
 
                     if (cityData) {
-                        console.log(`📊 Chargement population pour ${cityName} (${cityData.codeGeo})`);
+                        console.log(
+                            `📊 Chargement population pour ${cityName} (${cityData.codeGeo})`,
+                        );
                         const response = await fetch(
-                            `${backendUrl}/api/trois-d/population/${cityData.codeGeo}`
+                            `${backendUrl}/api/trois-d/population/${cityData.codeGeo}`,
                         );
                         if (response.ok) {
                             const data = await response.json();
@@ -476,7 +483,10 @@ export default function Map3DDepartment() {
                         }
                     }
                 } catch (error) {
-                    console.error("❌ Erreur chargement population ville:", error);
+                    console.error(
+                        "❌ Erreur chargement population ville:",
+                        error,
+                    );
                 }
             }
         } else {
@@ -502,7 +512,10 @@ export default function Map3DDepartment() {
         }
     };
 
-    const handleLegendChange = async (legendType: LegendType, enabled: boolean) => {
+    const handleLegendChange = async (
+        legendType: LegendType,
+        enabled: boolean,
+    ) => {
         const newLegends = new Set(activeLegends);
         if (enabled) {
             newLegends.add(legendType);
@@ -512,14 +525,20 @@ export default function Map3DDepartment() {
                 try {
                     console.log("📊 Chargement des données de population...");
                     const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL!;
-                    const response = await fetch(`${backendUrl}/api/trois-d/population`);
+                    const response = await fetch(
+                        `${backendUrl}/api/trois-d/population`,
+                    );
                     if (!response.ok) {
-                        console.error("❌ Erreur lors du chargement des données de population");
+                        console.error(
+                            "❌ Erreur lors du chargement des données de population",
+                        );
                         return;
                     }
                     const data = await response.json();
                     setPopulationData(data);
-                    console.log(`✅ ${data.length} enregistrements de population chargés`);
+                    console.log(
+                        `✅ ${data.length} enregistrements de population chargés`,
+                    );
                 } catch (error) {
                     console.error("❌ Erreur:", error);
                 }
@@ -545,9 +564,7 @@ export default function Map3DDepartment() {
                 setCurrentCityIndex(newIndex);
                 const newCity = citiesListRef.current[newIndex];
                 handleCitySelected(newCity);
-                console.log(
-                    `➡️ Ville suivante: ${newCity}`,
-                );
+                console.log(`➡️ Ville suivante: ${newCity}`);
             } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
                 e.preventDefault();
                 const newIndex =
@@ -557,9 +574,7 @@ export default function Map3DDepartment() {
                 setCurrentCityIndex(newIndex);
                 const newCity = citiesListRef.current[newIndex];
                 handleCitySelected(newCity);
-                console.log(
-                    `⬅️ Ville précédente: ${newCity}`,
-                );
+                console.log(`⬅️ Ville précédente: ${newCity}`);
             }
         };
 
@@ -571,162 +586,174 @@ export default function Map3DDepartment() {
         <div className="flex flex-col">
             {/* Carte 3D */}
             <div className="relative h-[70vh] w-full">
-            <Canvas>
-                <PerspectiveCamera
-                    makeDefault
-                    position={[0, 5000, 5000]}
-                    fov={60}
-                    near={0.1}
-                    far={100000}
-                />
+                <Canvas>
+                    <PerspectiveCamera
+                        makeDefault
+                        position={[0, 5000, 5000]}
+                        fov={60}
+                        near={0.1}
+                        far={100000}
+                    />
 
-                <OrbitControls
-                    ref={controlsRef}
-                    enableDamping
-                    target={[mapCenter.x, 0, mapCenter.z]}
-                />
+                    <OrbitControls
+                        ref={controlsRef}
+                        enableDamping
+                        target={[mapCenter.x, 0, mapCenter.z]}
+                    />
 
-                <DepartmentScene
-                    onLoadingChange={setIsLoading}
-                    onCityCountChange={setCityCount}
-                    onCenterCalculated={setMapCenter}
-                    onSelectedCity={handleCitySelected}
-                    selectedCityName={selectedCity}
-                    citiesListRef={citiesListRef}
-                    controlsRef={controlsRef}
-                    populationData={populationData}
-                    activeLegends={activeLegends}
-                />
-            </Canvas>
+                    <DepartmentScene
+                        onLoadingChange={setIsLoading}
+                        onCityCountChange={setCityCount}
+                        onCenterCalculated={setMapCenter}
+                        onSelectedCity={handleCitySelected}
+                        selectedCityName={selectedCity}
+                        citiesListRef={citiesListRef}
+                        controlsRef={controlsRef}
+                        populationData={populationData}
+                        activeLegends={activeLegends}
+                    />
+                </Canvas>
 
-            {/* Loading */}
-            {isLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-black/50 dark:bg-black/60">
-                    <div className="bg-card border-border rounded-lg border p-8 text-center shadow-lg">
-                        <div className="border-primary mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-b-4"></div>
-                        <h2 className="text-foreground text-xl font-bold">
-                            Chargement...
-                        </h2>
-                        {cityCount > 0 && (
-                            <p className="text-primary mt-2 text-sm">
-                                {cityCount} communes
-                            </p>
-                        )}
+                {/* Loading */}
+                {isLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 dark:bg-black/60">
+                        <div className="bg-card border-border rounded-lg border p-8 text-center shadow-lg">
+                            <div className="border-primary mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-b-4"></div>
+                            <h2 className="text-foreground text-xl font-bold">
+                                Chargement...
+                            </h2>
+                            {cityCount > 0 && (
+                                <p className="text-primary mt-2 text-sm">
+                                    {cityCount} communes
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Info */}
+                <div className="bg-card border-border absolute top-4 left-4 min-w-[280px] rounded-lg border p-4 shadow-lg">
+                    <h2 className="text-foreground text-lg font-bold">
+                        Département 06
+                    </h2>
+                    <p className="text-muted-foreground text-sm">
+                        {cityCount} communes
+                    </p>
+
+                    <div className="bg-primary/10 dark:bg-primary/20 mt-3 rounded p-2 text-xs">
+                        <p className="text-foreground mb-1 font-semibold">
+                            Navigation :
+                        </p>
+                        <p className="text-muted-foreground">
+                            • ← → : Ville précédente / suivante
+                        </p>
+                        <p className="text-muted-foreground">
+                            • ↑ ↓ : Parcourir les communes
+                        </p>
                     </div>
                 </div>
-            )}
 
-            {/* Info */}
-            <div className="bg-card border-border absolute top-4 left-4 min-w-[280px] rounded-lg border p-4 shadow-lg">
-                <h2 className="text-foreground text-lg font-bold">
-                    Département 06
-                </h2>
-                <p className="text-muted-foreground text-sm">
-                    {cityCount} communes
-                </p>
-
-                <div className="bg-primary/10 dark:bg-primary/20 mt-3 rounded p-2 text-xs">
-                    <p className="text-foreground mb-1 font-semibold">
-                        Navigation :
-                    </p>
-                    <p className="text-muted-foreground">
-                        • ← → : Ville précédente / suivante
-                    </p>
-                    <p className="text-muted-foreground">
-                        • ↑ ↓ : Parcourir les communes
-                    </p>
-                </div>
-            </div>
-
-            {/* Ville sélectionnée - Card à droite */}
-            {selectedCity && (
-                <div className="bg-card border-border absolute top-4 right-4 max-w-[400px] min-w-[320px] rounded-lg border p-6 shadow-lg">
-                    <div className="space-y-3">
-                        <div>
-                            <p className="text-muted-foreground text-sm">
-                                Commune sélectionnée
-                            </p>
-                            <h3 className="text-foreground mt-1 text-2xl font-bold">
-                                {selectedCity}
-                            </h3>
-                        </div>
-
-                        {/* Données de population si légende active */}
-                        {activeLegends.has("population") && selectedCityPopulation && (
-                            <div className="border-border border-t pt-3">
-                                <p className="text-muted-foreground mb-3 text-xs font-semibold">
-                                    Évolution de la population
+                {/* Ville sélectionnée - Card à droite */}
+                {selectedCity && (
+                    <div className="bg-card border-border absolute top-4 right-4 max-w-[400px] min-w-[320px] rounded-lg border p-6 shadow-lg">
+                        <div className="space-y-3">
+                            <div>
+                                <p className="text-muted-foreground text-sm">
+                                    Commune sélectionnée
                                 </p>
-                                <PopulationChart populationData={selectedCityPopulation} />                                {/* Stats rapides */}
-                                <div className="mt-3 grid grid-cols-2 gap-2">
-                                    <div className="bg-muted/50 rounded p-2">
-                                        <p className="text-muted-foreground text-[10px]">
-                                            Population 2022
+                                <h3 className="text-foreground mt-1 text-2xl font-bold">
+                                    {selectedCity}
+                                </h3>
+                            </div>
+
+                            {/* Données de population si légende active */}
+                            {activeLegends.has("population") &&
+                                selectedCityPopulation && (
+                                    <div className="border-border border-t pt-3">
+                                        <p className="text-muted-foreground mb-3 text-xs font-semibold">
+                                            Évolution de la population
                                         </p>
-                                        <p className="text-foreground text-base font-bold">
-                                            {selectedCityPopulation.pop2022?.toLocaleString()}
-                                        </p>
+                                        <PopulationChart
+                                            populationData={
+                                                selectedCityPopulation
+                                            }
+                                        />{" "}
+                                        {/* Stats rapides */}
+                                        <div className="mt-3 grid grid-cols-2 gap-2">
+                                            <div className="bg-muted/50 rounded p-2">
+                                                <p className="text-muted-foreground text-[10px]">
+                                                    Population 2022
+                                                </p>
+                                                <p className="text-foreground text-base font-bold">
+                                                    {selectedCityPopulation.pop2022?.toLocaleString()}
+                                                </p>
+                                            </div>
+                                            <div className="bg-muted/50 rounded p-2">
+                                                <p className="text-muted-foreground text-[10px]">
+                                                    Évolution 1999-2022
+                                                </p>
+                                                <p
+                                                    className={`text-base font-bold ${
+                                                        (selectedCityPopulation.pop2022 ||
+                                                            0) >
+                                                        (selectedCityPopulation.pop1999 ||
+                                                            0)
+                                                            ? "text-green-500"
+                                                            : "text-red-500"
+                                                    }`}
+                                                >
+                                                    {selectedCityPopulation.pop2022 &&
+                                                    selectedCityPopulation.pop1999
+                                                        ? `${(((selectedCityPopulation.pop2022 - selectedCityPopulation.pop1999) / selectedCityPopulation.pop1999) * 100).toFixed(1)}%`
+                                                        : "N/A"}
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="bg-muted/50 rounded p-2">
-                                        <p className="text-muted-foreground text-[10px]">
-                                            Évolution 1999-2022
-                                        </p>
-                                        <p className={`text-base font-bold ${
-                                            (selectedCityPopulation.pop2022 || 0) > (selectedCityPopulation.pop1999 || 0)
-                                                ? "text-green-500"
-                                                : "text-red-500"
-                                        }`}>
-                                            {selectedCityPopulation.pop2022 && selectedCityPopulation.pop1999
-                                                ? `${(((selectedCityPopulation.pop2022 - selectedCityPopulation.pop1999) / selectedCityPopulation.pop1999) * 100).toFixed(1)}%`
-                                                : "N/A"}
-                                        </p>
-                                    </div>
+                                )}
+
+                            {/* Réponse de l'IA si disponible */}
+                            {aiResponse && (
+                                <div className="border-border border-t pt-3">
+                                    <p className="text-muted-foreground mb-2 text-xs">
+                                        Réponse de l'IA :
+                                    </p>
+                                    <p className="text-foreground bg-muted/50 rounded-lg p-3 text-sm whitespace-pre-wrap">
+                                        {aiResponse}
+                                    </p>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        {/* Réponse de l'IA si disponible */}
-                        {aiResponse && (
-                            <div className="border-border border-t pt-3">
-                                <p className="text-muted-foreground mb-2 text-xs">
-                                    Réponse de l'IA :
-                                </p>
-                                <p className="text-foreground bg-muted/50 rounded-lg p-3 text-sm whitespace-pre-wrap">
-                                    {aiResponse}
-                                </p>
+                            <div className="border-border flex items-center justify-between border-t pt-2">
+                                <span className="text-muted-foreground text-sm">
+                                    Position
+                                </span>
+                                <span className="text-foreground text-sm font-medium">
+                                    {currentCityIndex + 1} /{" "}
+                                    {citiesListRef.current.length}
+                                </span>
                             </div>
-                        )}
-
-                        <div className="border-border flex items-center justify-between border-t pt-2">
-                            <span className="text-muted-foreground text-sm">
-                                Position
-                            </span>
-                            <span className="text-foreground text-sm font-medium">
-                                {currentCityIndex + 1} /{" "}
-                                {citiesListRef.current.length}
-                            </span>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
 
-            {/* Légendes - en bas à gauche */}
-            <div className="absolute bottom-4 left-4">
-                <Map3DLegends
-                    onLegendChange={handleLegendChange}
-                    activeLegends={activeLegends}
+                {/* Légendes - en bas à gauche */}
+                <div className="absolute bottom-4 left-4">
+                    <Map3DLegends
+                        onLegendChange={handleLegendChange}
+                        activeLegends={activeLegends}
+                    />
+                </div>
+            </div>
+
+            {/* Chat IA - Section en dessous de la carte */}
+            <div className="mx-auto w-full max-w-4xl px-4 py-6">
+                <Map3DChatBox
+                    citiesList={citiesListRef.current}
+                    onCityDetected={handleAICityDetected}
+                    onLegendActivate={handleLegendActivate}
                 />
             </div>
         </div>
-
-        {/* Chat IA - Section en dessous de la carte */}
-        <div className="w-full max-w-4xl mx-auto py-6 px-4">
-            <Map3DChatBox
-                citiesList={citiesListRef.current}
-                onCityDetected={handleAICityDetected}
-                onLegendActivate={handleLegendActivate}
-            />
-        </div>
-    </div>
     );
 }

@@ -9,9 +9,15 @@ interface AIProviderContextType {
     setProvider: (provider: AIProvider) => void;
 }
 
-const AIProviderContext = createContext<AIProviderContextType | undefined>(undefined);
+const AIProviderContext = createContext<AIProviderContextType | undefined>(
+    undefined,
+);
 
-export function AIProviderProvider({ children }: { children: React.ReactNode }) {
+export function AIProviderProvider({
+    children,
+}: {
+    children: React.ReactNode;
+}) {
     const [provider, setProvider] = useState<AIProvider>("gemini");
 
     // Charger la préférence depuis localStorage au montage

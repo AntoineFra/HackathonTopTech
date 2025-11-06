@@ -46,8 +46,7 @@ export function getColorFromGradient(
         Math.floor(normalized * (colors.length - 1)),
         colors.length - 2,
     );
-    const segmentProgress =
-        normalized * (colors.length - 1) - segmentIndex;
+    const segmentProgress = normalized * (colors.length - 1) - segmentIndex;
 
     // Interpoler entre deux couleurs consécutives
     const colorA = colors[segmentIndex];
@@ -101,7 +100,9 @@ export function applyPopulationGradient(
             const population = populationMap.get(codeINSEE);
 
             if (citiesFound <= 3) {
-                console.log(`🏙️ Ville ${citiesFound}: codeINSEE=${codeINSEE}, population=${population}`);
+                console.log(
+                    `🏙️ Ville ${citiesFound}: codeINSEE=${codeINSEE}, population=${population}`,
+                );
             }
 
             if (population !== undefined) {
@@ -113,9 +114,9 @@ export function applyPopulationGradient(
                         child.userData.type === "fill" &&
                         child instanceof THREE.Mesh
                     ) {
-                        (child.material as THREE.MeshBasicMaterial).color.setHex(
-                            color,
-                        );
+                        (
+                            child.material as THREE.MeshBasicMaterial
+                        ).color.setHex(color);
                     }
                 });
 
@@ -126,7 +127,9 @@ export function applyPopulationGradient(
         }
     });
 
-    console.log(`✅ Gradient appliqué à ${appliedCount} villes (sur ${citiesFound} villes trouvées dans la scène)`);
+    console.log(
+        `✅ Gradient appliqué à ${appliedCount} villes (sur ${citiesFound} villes trouvées dans la scène)`,
+    );
 }
 
 /**
