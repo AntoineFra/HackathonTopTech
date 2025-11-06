@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { dumpLegalUnit, dumpCities, getAllCities, type DumpResult } from "../services/dump.services.js";
+import { dumpLegalUnit, dumpCities, getAllCities, dumpPopulationData, type DumpResult } from "../services/dump.services.js";
 import { prisma } from "../server.js";
 import { DumpStatus } from "../generated/prisma/enums.js";
 
@@ -26,7 +26,7 @@ type DumpFunction = () => Promise<DumpResult>;
 const DUMP_HANDLERS: Record<DumpType, DumpFunction> = {
     [DumpType.LEGAL_UNITS]: () => dumpLegalUnit(),
     [DumpType.CITIES]: async () => dumpCities(await getAllCities("06")),
-    [DumpType.POPULATION]: async () => dump_srvc.dumpPopulationData(),
+    [DumpType.POPULATION]: async () => dumpPopulationData(),
 };
 
 export async function getDumpList(req: Request, res: Response) {

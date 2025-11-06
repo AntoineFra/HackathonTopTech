@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { prisma } from "../server.js";
 import { spawn } from "node:child_process";
+import XLSX from "xlsx";
 
 export interface DumpResult {
     count: number;
@@ -149,92 +150,93 @@ export async function dumpCities(cities: City[]): Promise<DumpResult> {
         cities: existingCount
       }
     };
+  }
 
-    // Étape 1: Insérer les villes et codes postaux
-    const cityData = cities.map((city: City) => ({
-        codeINSEE: city.code,
-        name: city.nom,
-        codeDepartement: city.codeDepartement,
-        siren: city.siren,
-        codeEpci: city.codeEpci,
-        codeRegion: city.codeRegion,
-        population: city.population,
-    }));
+  // Étape 1: Insérer les villes et codes postaux
+  const cityData = cities.map((city: City) => ({
+    codeINSEE: city.code,
+    name: city.nom,
+    codeDepartement: city.codeDepartement,
+    siren: city.siren,
+    codeEpci: city.codeEpci,
+    codeRegion: city.codeRegion,
+    population: city.population,
+  }));
 
-    const postalCodeData = cities.flatMap((city: City) =>
-        city.codesPostaux.map((codePostal: string) => ({
-            code: codePostal,
+  const postalCodeData = cities.flatMap((city: City) =>
+    city.codesPostaux.map((codePostal: string) => ({
+      code: codePostal,
+      cityCodeINSEE: city.code,
+    })),
+  );
+
+  await prisma.$transaction([
+    prisma.city.createMany({ data: cityData }),
+    prisma.postalCode.createMany({ data: postalCodeData }),
+  ]);
+
+  console.log(
+    `${cities.length} cities and ${postalCodeData.length} postal codes inserted.`,
+  );
+
+  // Étape 2: Fetch et insertion des données GeoJSON pour chaque ville
+  console.log("\n🌍 Fetching geo data for each city...");
+  let geoDataCount = 0;
+
+  for (const city of cities) {
+    const geoCity = await fetchCityGeoData(city.nom);
+
+    if (
+      geoCity &&
+      (geoCity.centre ||
+        geoCity.mairie ||
+        geoCity.contour ||
+        geoCity.bbox)
+    ) {
+      try {
+        // Mise à jour des champs surface et zone de la ville
+        await prisma.city.update({
+          where: { codeINSEE: city.code },
+          data: {
+            surface: geoCity.surface ?? null,
+            zone: geoCity.zone ?? null,
+          },
+        });
+
+        // Création des données géographiques
+        await prisma.cityGeoData.create({
+          data: {
             cityCodeINSEE: city.code,
-        })),
-    );
+            centreLat: geoCity.centre?.coordinates[1] ?? null,
+            centreLon: geoCity.centre?.coordinates[0] ?? null,
+            mairieLat: geoCity.mairie?.coordinates[1] ?? null,
+            mairieLon: geoCity.mairie?.coordinates[0] ?? null,
+            contour: geoCity.contour
+              ? JSON.stringify(geoCity.contour)
+              : null,
+            bbox: geoCity.bbox
+              ? JSON.stringify(geoCity.bbox)
+              : null,
+          },
+        });
 
-    await prisma.$transaction([
-        prisma.city.createMany({ data: cityData }),
-        prisma.postalCode.createMany({ data: postalCodeData }),
-    ]);
-
-    console.log(
-        `${cities.length} cities and ${postalCodeData.length} postal codes inserted.`,
-    );
-
-    // Étape 2: Fetch et insertion des données GeoJSON pour chaque ville
-    console.log("\n🌍 Fetching geo data for each city...");
-    let geoDataCount = 0;
-
-    for (const city of cities) {
-        const geoCity = await fetchCityGeoData(city.nom);
-
-        if (
-            geoCity &&
-            (geoCity.centre ||
-                geoCity.mairie ||
-                geoCity.contour ||
-                geoCity.bbox)
-        ) {
-            try {
-                // Mise à jour des champs surface et zone de la ville
-                await prisma.city.update({
-                    where: { codeINSEE: city.code },
-                    data: {
-                        surface: geoCity.surface ?? null,
-                        zone: geoCity.zone ?? null,
-                    },
-                });
-
-                // Création des données géographiques
-                await prisma.cityGeoData.create({
-                    data: {
-                        cityCodeINSEE: city.code,
-                        centreLat: geoCity.centre?.coordinates[1] ?? null,
-                        centreLon: geoCity.centre?.coordinates[0] ?? null,
-                        mairieLat: geoCity.mairie?.coordinates[1] ?? null,
-                        mairieLon: geoCity.mairie?.coordinates[0] ?? null,
-                        contour: geoCity.contour
-                            ? JSON.stringify(geoCity.contour)
-                            : null,
-                        bbox: geoCity.bbox
-                            ? JSON.stringify(geoCity.bbox)
-                            : null,
-                    },
-                });
-
-                geoDataCount++;
-                if (geoDataCount % 10 === 0) {
-                    console.log(
-                        `  ✓ ${geoDataCount}/${cities.length} cities processed...`,
-                    );
-                }
-            } catch (error) {
-                console.error(
-                    `Error inserting geo data for ${city.nom}:`,
-                    error,
-                );
-            }
+        geoDataCount++;
+        if (geoDataCount % 10 === 0) {
+          console.log(
+            `  ✓ ${geoDataCount}/${cities.length} cities processed...`,
+          );
         }
-
-        // Pause pour éviter de surcharger l'API
-        await new Promise((resolve) => setTimeout(resolve, 50));
+      } catch (error) {
+        console.error(
+          `Error inserting geo data for ${city.nom}:`,
+          error,
+        );
+      }
     }
+
+    // Pause pour éviter de surcharger l'API
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
 
   console.log(`\n✅ Geo data inserted for ${geoDataCount} cities.`);
 
@@ -252,7 +254,6 @@ export async function dumpCities(cities: City[]): Promise<DumpResult> {
 export async function dumpPopulationData(): Promise<DumpResult>  {
   console.log("📊 Starting population data import for department 06...");
 
-  const XLSX = await import('xlsx');
   const filePath = path.join(process.cwd(), 'resources/base-pop-historiques-1876-2022.xlsx');
 
   if (!fs.existsSync(filePath)) {
@@ -263,13 +264,25 @@ export async function dumpPopulationData(): Promise<DumpResult>  {
   const existingCount = await prisma.populationHistory.count();
   if (existingCount > 0) {
     console.log("Population data already exists in database. Skipping import.");
-    return;
+    return {
+      count: existingCount,
+      items: await prisma.populationHistory.findMany(),
+      summary: {
+        populationHistory: existingCount,
+      }
+    };
   }
 
   console.log("📖 Reading Excel file...");
   const workbook = XLSX.readFile(filePath);
   const sheetName = workbook.SheetNames[0];
+  if (!sheetName) {
+    throw new Error("No sheets found in the Excel file");
+  }
   const worksheet = workbook.Sheets[sheetName];
+  if (!worksheet) {
+    throw new Error(`Sheet "${sheetName}" not found in the Excel file`);
+  }
 
   // Convert to JSON, starting from row 6 (skip headers)
   const data: any[] = XLSX.utils.sheet_to_json(worksheet, {
@@ -341,14 +354,11 @@ export async function dumpPopulationData(): Promise<DumpResult>  {
     const batch = populationData.slice(i, i + batchSize);
     await prisma.populationHistory.createMany({
       data: batch,
-      skipDuplicates: true,
     });
     console.log(`✅ Inserted batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(populationData.length / batchSize)}`);
   }
 
-  console.log(`\n✅ Geo data inserted for ${geoDataCount} cities.`);
-
-const populationHistory = await prisma.populationHistory.findMany();
+  const populationHistory = await prisma.populationHistory.findMany();
   return {
     count: populationHistory.length,
     items: populationHistory,
