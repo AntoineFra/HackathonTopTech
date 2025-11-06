@@ -130,7 +130,7 @@ export async function queryMap2DAI(question: string): Promise<Map2DQueryResponse
       `Top ${count} des destinations touristiques :\n\n${citiesList}\n\n` +
       `Ces communes sont maintenant mises en évidence.`;
   }
-  // Requêtes sur une ville spécifique
+  // Focus sur une ville spécifique
   else if (lowerQuestion.includes('nice')) {
     mapActions.push({
       type: 'focus',
@@ -188,20 +188,6 @@ export async function queryMap2DAI(question: string): Promise<Map2DQueryResponse
         `💰 Revenu moyen : ${antibesData.revenu.toLocaleString()}€`;
     }
   }
-  // Reset
-  else if (
-    lowerQuestion.includes('reset') ||
-    lowerQuestion.includes('réinitialiser') ||
-    lowerQuestion.includes('tout voir')
-  ) {
-    mapActions.push({
-      type: 'reset',
-      animate: true,
-    });
-
-    textResponse =
-      'La carte a été réinitialisée. Vous pouvez explorer librement les 155 communes des Alpes-Maritimes !';
-  }
   // Aide
   else if (
     lowerQuestion.includes('aide') ||
@@ -215,11 +201,7 @@ export async function queryMap2DAI(question: string): Promise<Map2DQueryResponse
       '• Quelles sont les 5 villes avec le plus d\'entreprises ?\n' +
       '• Top 5 destinations touristiques\n\n' +
       '🏙️ Villes spécifiques :\n' +
-      '• Focus sur Nice/Cannes/Antibes\n' +
-      '• Montre-moi [nom de ville]\n\n' +
-      '🔄 Navigation :\n' +
-      '• Reset / Réinitialiser\n' +
-      '• Tout voir';
+      '• Focus sur Nice/Cannes/Antibes';
   }
   // Réponse par défaut
   else {
@@ -248,7 +230,5 @@ export function getMap2DSuggestions(): string[] {
     'Quelles sont les 5 villes avec le plus d\'entreprises ?',
     'Top 5 destinations touristiques',
     'Focus sur Nice',
-    'Focus sur Cannes',
-    'Réinitialiser la vue',
   ];
 }

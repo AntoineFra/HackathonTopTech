@@ -124,8 +124,11 @@ export default function Map2DPage() {
 
   // Gérer les actions IA
   const applyMapAction = (action: Map2DAction) => {
+    console.log('🎯 Action IA:', action);
+    
     // TOUJOURS réinitialiser les anciennes villes highlighted d'abord
-    polygonsRef.current.forEach((polygons) => {
+    console.log('🔄 Réinitialisation de toutes les villes...');
+    polygonsRef.current.forEach((polygons, cityName) => {
       polygons.forEach(polygon => {
         polygon.setOptions({
           fillColor: "#888",
@@ -137,12 +140,14 @@ export default function Map2DPage() {
     });
 
     if (action.type === 'highlight' && action.cities) {
+      console.log('✨ Highlight des villes:', action.cities);
       setHighlightedCities(action.cities);
       
       // Mettre en surbrillance UNIQUEMENT les nouvelles villes
       action.cities.forEach(cityName => {
         const polygons = polygonsRef.current.get(cityName);
         if (polygons) {
+          console.log(`  → ${cityName}: ${polygons.length} polygone(s)`);
           polygons.forEach(polygon => {
             polygon.setOptions({
               fillColor: "#00bcd4",
@@ -151,12 +156,16 @@ export default function Map2DPage() {
               strokeWeight: 2,
             });
           });
+        } else {
+          console.warn(`  ⚠️ ${cityName}: pas de polygones trouvés`);
         }
       });
     } else if (action.type === 'reset') {
+      console.log('🔄 Reset complet');
       setHighlightedCities([]);
       // Les polygones sont déjà réinitialisés au début
     } else if (action.type === 'focus' && action.focusCity && map) {
+      console.log('🎯 Focus sur:', action.focusCity);
       const data = cityData[action.focusCity];
       if (data && data.centreLat && data.centreLon) {
         map.panTo({ lat: data.centreLat, lng: data.centreLon });
