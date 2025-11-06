@@ -117,6 +117,7 @@ enum DumpType {
   legal_unit
   cities
   population
+  establishments
 }
 
 enum DumpStatus {
@@ -183,4 +184,26 @@ model PopulationHistory {
   pop1876         Int?
 
   @@unique([codeGeo])
+}
+
+model Establishment {
+  siret              String   @id
+  x                  Float
+  y                  Float
+  qualite_xy         Int
+  epsg               Int
+  plg_qp24           String
+  plg_iris           String
+  plg_zus            String
+  plg_qp15           String
+  plg_qva            String
+  plg_code_commune   String
+  distance_precision Float?   // Nullable car vide dans l'exemple
+  qualite_qp24       Int
+  qualite_iris       Int
+  qualite_zus        Int
+  qualite_qp15       Int
+  qualite_qva        Int
+  y_latitude         Float
+  x_longitude        Float
 }

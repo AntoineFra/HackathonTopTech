@@ -31,7 +31,7 @@ export async function dumpLegalUnit(): Promise<DumpResult> {
         };
     }
 
-    await downloadAndExtractZip(process.env.LEGAL_UNIT_URL);
+    await downloadAndExtractZip(process.env.LEGAL_UNIT_URL, "legal_units");
 
     if (!fs.existsSync("data/StockUniteLegale_utf8.csv")) {
         throw new Error("CSV file not found after extraction.");
@@ -373,4 +373,72 @@ export async function dumpPopulationData(): Promise<DumpResult> {
             populationHistory: populationHistory.length,
         },
     };
+}
+
+export async function dumpEstablishments(): Promise<DumpResult> {
+  if (!process.env.ESTABLISHMENT_URL) {
+    throw new Error(
+      "ESTABLISHMENT_URL is not defined in environment variables.",
+    );
+  }
+  const existingCount = await prisma.establishment.count();
+  if (existingCount > 0) {
+    console.log(
+      "Establishments already exist in the database. Skipping dump.",
+    );
+    return {
+      count: existingCount,
+      items: await prisma.establishment.findMany(),
+      summary: {
+        message: "Legal units already exist in database",
+      },
+    };
+  }
+
+  await downloadAndExtractZip(process.env.ESTABLISHMENT_URL, "establishments");
+
+  const csvPath = path.join(process.cwd(), "data/GeolocalisationEtablissement_Sirene_pour_etudes_statistiques_utf8.csv");
+
+  if (!fs.existsSync(csvPath)) {
+    throw new Error("CSV file not found after extraction.");
+  }
+
+  console.log("📂 Importing CSV directly into SQLite...");
+
+  const sqliteFile = path.join(process.cwd(), "prisma/dev.db");
+
+  await new Promise<void>((resolve, reject) => {
+    const child = spawn("sqlite3", [sqliteFile], {
+      stdio: ["pipe", "ignore", "ignore"],
+    });
+
+    // Configure SQLite to use semicolon as separator and skip header
+    child.stdin.write(`.mode csv\n`);
+    child.stdin.write(`.separator ";"\n`);
+    child.stdin.write(
+      `.import --skip 1 '${csvPath}' Establishment\n`,
+    );
+    child.stdin.end();
+
+    child.on("close", (code) => {
+      if (code === 0) {
+        console.log("✅ CSV imported successfully!");
+        //fs.unlinkSync(csvPath);
+        console.log("🧹 Temporary CSV removed.");
+      } else {
+        console.log(`❌ SQLite process exited with code ${code}`);
+        //reject(new Error(`SQLite process exited with code ${code}`));
+      }
+      resolve();
+    });
+  });
+
+  const count = await prisma.establishment.count();
+  return {
+    count,
+    items: await prisma.establishment.findMany(),
+    summary: {
+      message: "Establishments imported successfully",
+    },
+  };
 }
