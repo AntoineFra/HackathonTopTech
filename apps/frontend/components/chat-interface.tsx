@@ -9,6 +9,7 @@ import { useState, useRef, useEffect } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Loader2, Sparkles, User, Bot } from "lucide-react";
 import { aiAnswer, type ChatMessage } from "@/services/ai.services";
+import { useAIProvider } from "@/contexts/AIProviderContext";
 
 interface Message {
     id: string;
@@ -20,6 +21,7 @@ interface Message {
 }
 
 export function ChatInterface() {
+    const { provider } = useAIProvider();
     const searchParams = useSearchParams();
     const initialQuery = searchParams.get("q");
 
@@ -110,7 +112,7 @@ export function ChatInterface() {
                     // For initial query, we only have the welcome message in history
                     const history: ChatMessage[] = [];
 
-                    const result = await aiAnswer(initialQuery, history);
+                    const result = await aiAnswer(initialQuery, history, provider);
 
                     setMessages((prev) => {
                         const filtered = prev.filter((m) => !m.loading);
@@ -203,7 +205,7 @@ export function ChatInterface() {
                     content: m.content,
                 }));
 
-            const result = await aiAnswer(userMessage.content, history);
+            const result = await aiAnswer(userMessage.content, history, provider);
 
             // Remove loading message and add real response
             setMessages((prev) => {
