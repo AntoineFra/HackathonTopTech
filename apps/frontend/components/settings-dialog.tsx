@@ -38,8 +38,8 @@ export default function SettingsDialog() {
     const [error, setError] = useState<string | null>(null);
 
     // New: settings (aiTimeout)
-    const [aiTimeout, setAiTimeout] = useState<number | null>(null);
-    const [editingAiTimeout, setEditingAiTimeout] = useState<string>("");
+    const [aiTimeout, setAiTimeout] = useState<number | null>(null); // stored in ms
+    const [editingAiTimeout, setEditingAiTimeout] = useState<string>(""); // displayed in seconds
     const [savingSettings, setSavingSettings] = useState(false);
     const [settingsMessage, setSettingsMessage] = useState<string | null>(null);
 
@@ -118,8 +118,8 @@ export default function SettingsDialog() {
         try {
             const res = await getSettings();
             if (res?.settings && typeof res.settings.aiTimeout === "number") {
-                setAiTimeout(res.settings.aiTimeout);
-                setEditingAiTimeout(String(res.settings.aiTimeout));
+                setAiTimeout(res.settings.aiTimeout); // store in ms
+                setEditingAiTimeout(String(res.settings.aiTimeout / 1000)); // display in seconds
             }
         } catch (e: any) {
             // non-blocking: display a message in the UI
@@ -214,17 +214,19 @@ export default function SettingsDialog() {
     async function saveSettings() {
         setSavingSettings(true);
         setSettingsMessage(null);
-        const parsed = Number(editingAiTimeout);
-        if (!Number.isFinite(parsed) || parsed < 0) {
-            setSettingsMessage("La valeur doit être un nombre positif en ms");
+        const parsedSeconds = Number(editingAiTimeout);
+        if (!Number.isFinite(parsedSeconds) || parsedSeconds < 0) {
+            setSettingsMessage("La valeur doit être un nombre positif en secondes");
             setSavingSettings(false);
             return;
         }
         try {
-            const res = await updateSettings({ aiTimeout: Math.round(parsed) });
+            // Convert seconds to milliseconds for backend
+            const timeoutMs = Math.round(parsedSeconds * 1000);
+            const res = await updateSettings({ aiTimeout: timeoutMs });
             if (res?.settings && typeof res.settings.aiTimeout === "number") {
-                setAiTimeout(res.settings.aiTimeout);
-                setEditingAiTimeout(String(res.settings.aiTimeout));
+                setAiTimeout(res.settings.aiTimeout); // store in ms
+                setEditingAiTimeout(String(res.settings.aiTimeout / 1000)); // display in seconds
                 setSettingsMessage("Paramètres sauvegardés");
                 // hide the message after a short delay
                 setTimeout(() => setSettingsMessage(null), 2000);
@@ -388,7 +390,7 @@ export default function SettingsDialog() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <div className="text-xs font-medium">
-                                        Timeout IA (ms)
+                                        Timeout IA (secondes)
                                     </div>
                                     <div className="text-muted-foreground text-xs">
                                         Temps maximum d'attente pour les
@@ -397,7 +399,7 @@ export default function SettingsDialog() {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <input
-                                        className="w-28 rounded-md border px-2 py-1 text-sm"
+                                        className="w-20 rounded-md border px-2 py-1 text-sm"
                                         type="number"
                                         min={0}
                                         value={editingAiTimeout}

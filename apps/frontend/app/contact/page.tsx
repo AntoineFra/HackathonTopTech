@@ -49,8 +49,8 @@ export default function ContactPage() {
                     Contactez-nous
                 </h1>
                 <p className="text-muted-foreground mx-auto max-w-2xl text-lg">
-                    Vous avez des questions sur PACA Analytics ? Notre équipe
-                    est là pour vous aider.
+                    Vous avez des questions sur O6 Analytics ? Notre équipe est
+                    là pour vous aider.
                 </p>
                 <p className="text-muted-foreground text-sm">
                     Nous nous efforçons de répondre à toutes les demandes dans
@@ -72,10 +72,10 @@ export default function ContactPage() {
                                         Email
                                     </h3>
                                     <a
-                                        href="mailto:contact@paca-analytics.fr"
+                                        href="mailto:contact@06-analytics.fr"
                                         className="text-muted-foreground hover:text-primary text-sm transition-colors"
                                     >
-                                        contact@paca-analytics.fr
+                                        contact@06-analytics.fr
                                     </a>
                                 </div>
                             </div>

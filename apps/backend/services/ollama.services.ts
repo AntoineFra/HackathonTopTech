@@ -8,6 +8,9 @@ import {
 } from "./query-executor.services.js";
 
 import settingsService from "./settings.service.js";
+import { prisma } from "../server.js";
+import fs from "fs";
+import path from "path";
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || "http://localhost:11434";
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || "mistral";
@@ -72,7 +75,9 @@ Secteurs économiques clés :
 - Technologies et innovation (Sophia Antipolis)
 - Aéronautique et spatial
 - Parfumerie (Grasse)
-- Agriculture (fleurs, oliviers)
+- Agriculture (fleurs, oliviers)`;
+
+// Stop here for beta nico
 
 IMPORTANT : Tu as accès à une base de données Prisma avec les modèles suivants :
 2. **PopulationHistory** (Historique population 1876-2022) :
@@ -283,6 +288,35 @@ export function formatPromptForOllama(messages: ChatMessage[]): string {
 }
 
 /**
+ * Convertir les BigInt en nombres pour JSON.stringify
+ */
+function convertBigIntToNumber(obj: any): any {
+    if (obj === null || obj === undefined) {
+        return obj;
+    }
+
+    if (typeof obj === "bigint") {
+        return Number(obj);
+    }
+
+    if (Array.isArray(obj)) {
+        return obj.map((item) => convertBigIntToNumber(item));
+    }
+
+    if (typeof obj === "object") {
+        const newObj: any = {};
+        for (const key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                newObj[key] = convertBigIntToNumber(obj[key]);
+            }
+        }
+        return newObj;
+    }
+
+    return obj;
+}
+
+/**
  * Appeler Ollama pour générer une réponse
  */
 export async function generateWithOllama(
@@ -391,6 +425,180 @@ function extractChartType(response: string): "bar" | "line" | "pie" | undefined 
 function extractPrismaQuery(response: string): string | undefined {
     const match = response.match(/\[PRISMA_QUERY\]([\s\S]*?)\[\/PRISMA_QUERY\]/);
     return match?.[1]?.trim();
+}
+
+/**
+ * Répondre à une question avec Ollama
+ */
+export async function answerQuestionWithOllamaBetaNico(
+    question: string,
+    history: ChatMessage[] = [],
+): Promise<AIServiceResponse> {
+    try {
+        // Lire le contenu du schema.prisma
+        const schemaPath = path.join(process.cwd(), "prisma", "schema.prisma");
+        let schemaContent = "";
+        try {
+            schemaContent = fs.readFileSync(schemaPath, "utf-8");
+        } catch (error) {
+            console.warn(
+                "[Ollama Service] Could not read schema.prisma:",
+                error,
+            );
+            schemaContent = "Schema non disponible";
+        }
+
+        const messages = buildConversationPrompt(question, history);
+        const prompt = `Donne moi SEULEMENT la requête SQL (et RIEN d'autres) pour obtenir la réponse de la dernière demande que user t'a fait. Base toi sur le schema.prisma ci-dessous.
+
+SCHEMA PRISMA:
+${schemaContent}
+
+Example de réponse: "SELECT ...". Je ne veux pas de "SQL: \`\`\`sql" ou de texte additionnel, UNIQUEMENT la requête SQL brute!
+
+Historique des prompts:
+${formatPromptForOllama(messages)}`;
+        console.log(
+            `[Ollama Service] Prompt send with schema (${schemaContent.length} chars)`,
+        );
+
+        let ollamaResponse = await generateWithOllama(prompt);
+
+        const MAX_RETRIES = 5; // Nombre maximum de tentatives
+        let result: any = null;
+        let lastError: Error | null = null;
+        let attempt = 0;
+        let currentSql = "";
+
+        // Boucle de retry tant qu'il y a des erreurs (max 5 tentatives)
+        while (attempt < MAX_RETRIES) {
+            attempt++;
+
+            try {
+                currentSql = ollamaResponse.response.trim(); // la requête SQL générée
+
+                // Nettoyage de la réponse au cas où l'IA ajoute des backticks ou du texte
+                currentSql = currentSql
+                    .replace(/^```sql\s*/i, "")
+                    .replace(/^```\s*/i, "")
+                    .replace(/\s*```$/i, "")
+                    .replace(/^SQL:\s*/i, "")
+                    .trim();
+
+                console.log(
+                    `[Ollama Service] Attempt ${attempt}/${MAX_RETRIES} - SQL:`,
+                    currentSql,
+                );
+
+                // Exécution de la requête SQL - c'est ici que l'erreur peut être lancée
+                result = await prisma.$queryRawUnsafe(currentSql);
+
+                console.log(
+                    `[Ollama Service] ✅ Success on attempt ${attempt}!`,
+                );
+                console.log(`[Ollama Service] Result:`, result);
+
+                // Si on arrive ici, la requête a réussi, on sort de la boucle
+                break;
+            } catch (error) {
+                lastError = error as Error;
+                console.error(
+                    `[Ollama Service] ❌ Attempt ${attempt}/${MAX_RETRIES} failed:`,
+                    lastError.message,
+                );
+
+                // Si c'est la dernière tentative, on lance l'erreur
+                if (attempt >= MAX_RETRIES) {
+                    console.error(
+                        `[Ollama Service] 🚫 Échec après ${MAX_RETRIES} tentatives.`,
+                    );
+                    throw new Error(
+                        `Échec après ${MAX_RETRIES} tentatives. Dernière erreur SQL: ${lastError.message}\nDernière requête: ${currentSql}`,
+                    );
+                }
+
+                // Sinon, on demande à l'IA de corriger la requête avec plus de contexte
+                const errorPrompt = `ERREUR lors de l'exécution SQL (tentative ${attempt}/${MAX_RETRIES}):
+
+Requête SQL qui a échoué:
+${currentSql}
+
+Message d'erreur:
+${lastError.message}
+
+SCHEMA PRISMA (pour référence):
+${schemaContent}
+
+INSTRUCTIONS:
+- Il n'y a pas de colonnes population dans le schéma, la colone de population la plus récente est pop2022
+- Analyse l'erreur et corrige la requête SQL
+- Vérifie que les noms de tables et colonnes correspondent EXACTEMENT au schéma Prisma
+- Rappel: réponds UNIQUEMENT avec la requête SQL corrigée, sans \`\`\`sql, sans texte explicatif
+- Format attendu: SELECT ... FROM ... WHERE ...
+
+Question originale de l'utilisateur: ${question}`;
+
+                console.log(
+                    `[Ollama Service] 🔄 Demande de correction à l'IA (tentative ${attempt + 1})...`,
+                );
+
+                // Génération d'une nouvelle requête SQL corrigée
+                ollamaResponse = await generateWithOllama(errorPrompt);
+            }
+        }
+
+        // Si on arrive ici sans result, c'est qu'il y a eu un problème
+        if (!result) {
+            throw new Error(
+                "Aucun résultat obtenu après toutes les tentatives",
+            );
+        }
+
+        // Convertir les BigInt en nombres avant de stringify (SQLite retourne des BigInt)
+        const resultConverted = convertBigIntToNumber(result);
+        console.log(`[Ollama Service] 🔄 Converted result:`, resultConverted);
+
+        // Maintenant qu'on a un résultat valide, on génère la réponse finale en français
+        const finalPrompt = `Voici le résultat de la requête SQL exécutée sur la base de données:
+
+RÉSULTAT SQL:
+${JSON.stringify(resultConverted, null, 2)}
+
+QUESTION ORIGINALE DE L'UTILISATEUR:
+"${question}"
+
+INSTRUCTIONS:
+- Fournis une réponse complète et détaillée en français à la question de l'utilisateur
+- Base-toi uniquement sur les données du résultat SQL ci-dessus
+- Utilise des données chiffrées quand c'est possible
+- Structure ta réponse de manière claire (utilise des listes, des paragraphes, etc.)
+- Si une information n'est pas disponible dans les résultats, indique-le clairement
+- Sois précis et factuel`;
+
+        console.log(
+            `[Ollama Service] 📝 Génération de la réponse finale en français...`,
+        );
+        ollamaResponse = await generateWithOllama(finalPrompt);
+
+        return {
+            success: true,
+            query: question,
+            answer: ollamaResponse.response.trim(),
+            confidence: 0.85,
+            model: OLLAMA_MODEL,
+            source: "ollama-local",
+        };
+    } catch (error: unknown) {
+        const err = error as Error;
+        console.error("[Ollama Service] Error:", err);
+
+        return {
+            success: false,
+            query: question,
+            answer: "",
+            error: err.message || "Une erreur s'est produite",
+        };
+    }
 }
 
 /**

@@ -20,12 +20,10 @@ export async function updateSettings(req: Request, res: Response) {
         if (body.aiTimeout !== undefined) {
             const val = Number(body.aiTimeout);
             if (!Number.isFinite(val) || val < 0 || val > 10_000_000) {
-                return res
-                    .status(400)
-                    .json({
-                        success: false,
-                        error: "aiTimeout must be a positive number (ms) and reasonable",
-                    });
+                return res.status(400).json({
+                    success: false,
+                    error: "aiTimeout must be a positive number (ms) and reasonable",
+                });
             }
             body.aiTimeout = Math.round(val);
         }
