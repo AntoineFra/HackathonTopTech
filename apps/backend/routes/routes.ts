@@ -12,5 +12,4 @@ export default function registerRoutes(app: Express) {
     app.use("/api/users", usersRoutes);
     app.use("/api/ai", aiRoutes);
     app.use("/api/trois-d", troisDRoutes);
-
 }

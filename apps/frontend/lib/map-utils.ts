@@ -181,41 +181,44 @@ export function loadGoogleMaps(apiKey: string): Promise<typeof google.maps> {
     }
 
     // Check if already loaded
-    if (typeof window !== 'undefined' && window.google && window.google.maps) {
+    if (typeof window !== "undefined" && window.google && window.google.maps) {
         return Promise.resolve(window.google.maps);
     }
 
     // Check if script is already in the DOM
-    const existingScript = typeof document !== 'undefined'
-        ? document.querySelector('script[src*="maps.googleapis.com"]')
-        : null;
+    const existingScript =
+        typeof document !== "undefined"
+            ? document.querySelector('script[src*="maps.googleapis.com"]')
+            : null;
 
     if (existingScript) {
         // Script exists, wait for it to load
-        googleMapsPromise = new Promise<typeof google.maps>((resolve, reject) => {
-            const checkLoaded = () => {
-                if (window.google && window.google.maps) {
-                    resolve(window.google.maps);
-                } else {
-                    setTimeout(checkLoaded, 100);
-                }
-            };
+        googleMapsPromise = new Promise<typeof google.maps>(
+            (resolve, reject) => {
+                const checkLoaded = () => {
+                    if (window.google && window.google.maps) {
+                        resolve(window.google.maps);
+                    } else {
+                        setTimeout(checkLoaded, 100);
+                    }
+                };
 
-            existingScript.addEventListener('load', checkLoaded);
-            existingScript.addEventListener('error', () => {
-                reject(new Error('Failed to load Google Maps'));
-            });
+                existingScript.addEventListener("load", checkLoaded);
+                existingScript.addEventListener("error", () => {
+                    reject(new Error("Failed to load Google Maps"));
+                });
 
-            // Also check immediately in case it's already loaded
-            checkLoaded();
-        });
+                // Also check immediately in case it's already loaded
+                checkLoaded();
+            },
+        );
         return googleMapsPromise;
     }
 
     // Create and load the script
     googleMapsPromise = new Promise<typeof google.maps>((resolve, reject) => {
-        if (typeof document === 'undefined') {
-            reject(new Error('Document is not available'));
+        if (typeof document === "undefined") {
+            reject(new Error("Document is not available"));
             return;
         }
 
@@ -228,13 +231,13 @@ export function loadGoogleMaps(apiKey: string): Promise<typeof google.maps> {
             if (window.google && window.google.maps) {
                 resolve(window.google.maps);
             } else {
-                reject(new Error('Google Maps failed to load'));
+                reject(new Error("Google Maps failed to load"));
             }
         };
 
         script.onerror = () => {
             googleMapsPromise = null; // Reset on error to allow retry
-            reject(new Error('Failed to load Google Maps script'));
+            reject(new Error("Failed to load Google Maps script"));
         };
 
         document.head.appendChild(script);
@@ -242,4 +245,3 @@ export function loadGoogleMaps(apiKey: string): Promise<typeof google.maps> {
 
     return googleMapsPromise;
 }
-

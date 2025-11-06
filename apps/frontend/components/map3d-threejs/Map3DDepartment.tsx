@@ -3,487 +3,583 @@
  * Affiche uniquement les contours des communes du département 06
  */
 
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import { Canvas, useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
-import * as THREE from 'three';
+import { useEffect, useRef, useState } from "react";
+import { Canvas, useThree, useFrame } from "@react-three/fiber";
+import { OrbitControls, PerspectiveCamera } from "@react-three/drei";
+import * as THREE from "three";
 import {
-  loadAllCities,
-  calculateDepartmentBounds,
-  createDepartmentContours,
-  createCityLabel,
-  updateCityLabelOrientation,
-  setCityColor,
-  setHoveredCityColor,
-} from '@/lib/threejs-loaders/departmentLoader';
-import { Map3DChatBox } from './Map3DChatBox';
+    loadAllCities,
+    calculateDepartmentBounds,
+    createDepartmentContours,
+    createCityLabel,
+    updateCityLabelOrientation,
+    setCityColor,
+    setHoveredCityColor,
+} from "@/lib/threejs-loaders/departmentLoader";
+import { Map3DChatBox } from "./Map3DChatBox";
 
-function DepartmentScene({ onLoadingChange, onCityCountChange, onCenterCalculated, onSelectedCity, selectedCityName, citiesListRef, controlsRef }: {
-  onLoadingChange: (loading: boolean) => void;
-  onCityCountChange: (count: number) => void;
-  onCenterCalculated: (center: { x: number; y: number; z: number }) => void;
-  onSelectedCity: (cityName: string | null) => void;
-  selectedCityName: string | null;
-  citiesListRef: React.MutableRefObject<string[]>;
-  controlsRef: React.MutableRefObject<any>;
+function DepartmentScene({
+    onLoadingChange,
+    onCityCountChange,
+    onCenterCalculated,
+    onSelectedCity,
+    selectedCityName,
+    citiesListRef,
+    controlsRef,
+}: {
+    onLoadingChange: (loading: boolean) => void;
+    onCityCountChange: (count: number) => void;
+    onCenterCalculated: (center: { x: number; y: number; z: number }) => void;
+    onSelectedCity: (cityName: string | null) => void;
+    selectedCityName: string | null;
+    citiesListRef: React.MutableRefObject<string[]>;
+    controlsRef: React.MutableRefObject<any>;
 }) {
-  const { scene, camera, gl } = useThree();
-  const loadedRef = useRef(false);
-  const selectedLine = useRef<THREE.Line | null>(null);
-  const centerLatLonRef = useRef<{ centerLat: number; centerLon: number } | null>(null);
-  const cityLabelRef = useRef<THREE.Group | null>(null);
-  const [hoveredCity, setHoveredCity] = useState<string | null>(null);
-  const raycaster = useRef(new THREE.Raycaster());
-  const mouse = useRef(new THREE.Vector2());
-  const mouseDownTime = useRef<number>(0);
-  const clickThreshold = 300; // Seuil en ms pour considérer un clic valide
+    const { scene, camera, gl } = useThree();
+    const loadedRef = useRef(false);
+    const selectedLine = useRef<THREE.Line | null>(null);
+    const centerLatLonRef = useRef<{
+        centerLat: number;
+        centerLon: number;
+    } | null>(null);
+    const cityLabelRef = useRef<THREE.Group | null>(null);
+    const [hoveredCity, setHoveredCity] = useState<string | null>(null);
+    const raycaster = useRef(new THREE.Raycaster());
+    const mouse = useRef(new THREE.Vector2());
+    const mouseDownTime = useRef<number>(0);
+    const clickThreshold = 300; // Seuil en ms pour considérer un clic valide
 
-  useEffect(() => {
-    if (loadedRef.current) return;
-    loadedRef.current = true;
+    useEffect(() => {
+        if (loadedRef.current) return;
+        loadedRef.current = true;
 
-    // Fond dégradé de ciel (bleu clair vers bleu ciel)
-    scene.background = new THREE.Color(0x87CEEB); // Bleu ciel
+        // Fond dégradé de ciel (bleu clair vers bleu ciel)
+        scene.background = new THREE.Color(0x87ceeb); // Bleu ciel
 
-    // Lumières basiques
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-    scene.add(ambientLight);
+        // Lumières basiques
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(1000, 1000, 1000);
-    scene.add(directionalLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(1000, 1000, 1000);
+        scene.add(directionalLight);
 
-    // Charger les villes
-    const loadDepartment = async () => {
-      try {
-        onLoadingChange(true);
-        const cities = await loadAllCities();
-        console.log(`✅ ${cities.length} communes chargées`);
-        onCityCountChange(cities.length);
+        // Charger les villes
+        const loadDepartment = async () => {
+            try {
+                onLoadingChange(true);
+                const cities = await loadAllCities();
+                console.log(`✅ ${cities.length} communes chargées`);
+                onCityCountChange(cities.length);
 
-        if (cities.length === 0) {
-          onLoadingChange(false);
-          return;
-        }
+                if (cities.length === 0) {
+                    onLoadingChange(false);
+                    return;
+                }
 
-        // Calculer les bounds
-        const bounds = calculateDepartmentBounds(cities);
+                // Calculer les bounds
+                const bounds = calculateDepartmentBounds(cities);
 
-        if (bounds) {
-          console.log('📍 Bounds:', bounds);
-          console.log('📏 Dimensions:', {
-            width: bounds.maxX - bounds.minX,
-            depth: bounds.maxZ - bounds.minZ
-          });
+                if (bounds) {
+                    console.log("📍 Bounds:", bounds);
+                    console.log("📏 Dimensions:", {
+                        width: bounds.maxX - bounds.minX,
+                        depth: bounds.maxZ - bounds.minZ,
+                    });
 
-          // Créer les contours
-          const contours = createDepartmentContours(
-            cities,
-            bounds.centerLat,
-            bounds.centerLon,
-            { showLabels: false }
-          );
-          scene.add(contours);
-          console.log(`🗺️ ${contours.children.length} contours ajoutés à la scène`);
+                    // Créer les contours
+                    const contours = createDepartmentContours(
+                        cities,
+                        bounds.centerLat,
+                        bounds.centerLon,
+                        { showLabels: false },
+                    );
+                    scene.add(contours);
+                    console.log(
+                        `🗺️ ${contours.children.length} contours ajoutés à la scène`,
+                    );
 
-          // Récupérer la liste des villes pour la navigation
-          const cityNames: string[] = [];
-          contours.children.forEach(child => {
-            if (child.userData.city) {
-              cityNames.push(child.userData.city);
+                    // Récupérer la liste des villes pour la navigation
+                    const cityNames: string[] = [];
+                    contours.children.forEach((child) => {
+                        if (child.userData.city) {
+                            cityNames.push(child.userData.city);
+                        }
+                    });
+                    citiesListRef.current = cityNames.sort();
+                    console.log(
+                        `📋 ${cityNames.length} villes disponibles pour navigation`,
+                    );
+
+                    // Sauvegarder le centre pour les conversions lat/lon
+                    centerLatLonRef.current = {
+                        centerLat: bounds.centerLat,
+                        centerLon: bounds.centerLon,
+                    };
+
+                    // Positionner la caméra pour voir TOUS les contours
+                    const width = bounds.maxX - bounds.minX;
+                    const depth = bounds.maxZ - bounds.minZ;
+                    const centerX = (bounds.minX + bounds.maxX) / 2;
+                    const centerZ = (bounds.minZ + bounds.maxZ) / 2;
+                    const maxDimension = Math.max(width, depth);
+                    const distance = maxDimension * 1.2; // Vue d'ensemble
+
+                    // Placer la caméra au-dessus et légèrement en arrière
+                    camera.position.set(
+                        centerX,
+                        distance,
+                        centerZ + distance * 0.5,
+                    );
+                    camera.lookAt(centerX, 0, centerZ);
+
+                    // Notifier le parent du centre calculé
+                    onCenterCalculated({ x: centerX, y: distance, z: centerZ });
+
+                    console.log("📷 Caméra positionnée:", {
+                        position: {
+                            x: centerX,
+                            y: distance,
+                            z: centerZ + distance * 0.5,
+                        },
+                        target: { x: centerX, y: 0, z: centerZ },
+                        distance: maxDimension,
+                    });
+                }
+
+                onLoadingChange(false);
+            } catch (error) {
+                console.error("❌ Erreur:", error);
+                onLoadingChange(false);
             }
-          });
-          citiesListRef.current = cityNames.sort();
-          console.log(`📋 ${cityNames.length} villes disponibles pour navigation`);
+        };
 
-          // Sauvegarder le centre pour les conversions lat/lon
-          centerLatLonRef.current = { centerLat: bounds.centerLat, centerLon: bounds.centerLon };
+        loadDepartment();
+    }, [
+        scene,
+        camera,
+        gl,
+        onLoadingChange,
+        onCityCountChange,
+        onCenterCalculated,
+        onSelectedCity,
+        citiesListRef,
+    ]);
 
-          // Positionner la caméra pour voir TOUS les contours
-          const width = bounds.maxX - bounds.minX;
-          const depth = bounds.maxZ - bounds.minZ;
-          const centerX = (bounds.minX + bounds.maxX) / 2;
-          const centerZ = (bounds.minZ + bounds.maxZ) / 2;
-          const maxDimension = Math.max(width, depth);
-          const distance = maxDimension * 1.2; // Vue d'ensemble
+    // Gestion du survol et du clic sur les villes
+    useEffect(() => {
+        const handleMouseMove = (event: MouseEvent) => {
+            // Calculer la position de la souris en coordonnées normalisées (-1 à +1)
+            const canvas = gl.domElement;
+            const rect = canvas.getBoundingClientRect();
+            mouse.current.x =
+                ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.current.y =
+                -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
-          // Placer la caméra au-dessus et légèrement en arrière
-          camera.position.set(centerX, distance, centerZ + distance * 0.5);
-          camera.lookAt(centerX, 0, centerZ);
+            // Raycasting
+            raycaster.current.setFromCamera(mouse.current, camera);
+            const intersects = raycaster.current.intersectObjects(
+                scene.children,
+                true,
+            );
 
-          // Notifier le parent du centre calculé
-          onCenterCalculated({ x: centerX, y: distance, z: centerZ });
+            let foundCity: string | null = null;
+            for (const intersect of intersects) {
+                // Chercher le groupe parent de type 'city'
+                let object = intersect.object;
+                while (object.parent) {
+                    if (object.userData.type === "city") {
+                        foundCity = object.userData.city;
+                        break;
+                    }
+                    object = object.parent;
+                }
+                if (foundCity) break;
+            }
 
-          console.log('📷 Caméra positionnée:', {
-            position: { x: centerX, y: distance, z: centerZ + distance * 0.5 },
-            target: { x: centerX, y: 0, z: centerZ },
-            distance: maxDimension
-          });
-        }
+            setHoveredCity(foundCity);
+            // Changer le curseur
+            canvas.style.cursor = foundCity ? "pointer" : "default";
+        };
 
-        onLoadingChange(false);
-      } catch (error) {
-        console.error('❌ Erreur:', error);
-        onLoadingChange(false);
-      }
-    };
+        const handleMouseDown = () => {
+            mouseDownTime.current = Date.now();
+        };
 
-    loadDepartment();
-  }, [scene, camera, gl, onLoadingChange, onCityCountChange, onCenterCalculated, onSelectedCity, citiesListRef]);
+        const handleClick = (event: MouseEvent) => {
+            // Vérifier que le clic n'a pas duré trop longtemps
+            const clickDuration = Date.now() - mouseDownTime.current;
+            if (clickDuration > clickThreshold) {
+                console.log("⏱️ Clic annulé (trop long)");
+                return;
+            }
 
-  // Gestion du survol et du clic sur les villes
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      // Calculer la position de la souris en coordonnées normalisées (-1 à +1)
-      const canvas = gl.domElement;
-      const rect = canvas.getBoundingClientRect();
-      mouse.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            if (hoveredCity) {
+                onSelectedCity(hoveredCity);
+                // Trouver l'index de la ville dans la liste
+                const index = citiesListRef.current.indexOf(hoveredCity);
+                if (index !== -1) {
+                    // Mettre à jour l'index courant dans le parent
+                    console.log(
+                        `🖱️ Ville cliquée: ${hoveredCity} (index: ${index})`,
+                    );
+                }
+            }
+        };
 
-      // Raycasting
-      raycaster.current.setFromCamera(mouse.current, camera);
-      const intersects = raycaster.current.intersectObjects(scene.children, true);
+        const canvas = gl.domElement;
+        canvas.addEventListener("mousemove", handleMouseMove);
+        canvas.addEventListener("mousedown", handleMouseDown);
+        canvas.addEventListener("click", handleClick);
 
-      let foundCity: string | null = null;
-      for (const intersect of intersects) {
-        // Chercher le groupe parent de type 'city'
-        let object = intersect.object;
-        while (object.parent) {
-          if (object.userData.type === 'city') {
-            foundCity = object.userData.city;
-            break;
-          }
-          object = object.parent;
-        }
-        if (foundCity) break;
-      }
+        return () => {
+            canvas.removeEventListener("mousemove", handleMouseMove);
+            canvas.removeEventListener("mousedown", handleMouseDown);
+            canvas.removeEventListener("click", handleClick);
+        };
+    }, [scene, camera, gl, hoveredCity, onSelectedCity, citiesListRef]);
 
-      setHoveredCity(foundCity);
-      // Changer le curseur
-      canvas.style.cursor = foundCity ? 'pointer' : 'default';
-    };
+    // Centrer la caméra sur la ville sélectionnée
+    useEffect(() => {
+        if (!selectedCityName || !centerLatLonRef.current) return;
 
-    const handleMouseDown = () => {
-      mouseDownTime.current = Date.now();
-    };
+        const fetchCityAndCenter = async () => {
+            try {
+                console.log(
+                    `🎯 Chargement des données de ${selectedCityName}...`,
+                );
+                const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL!;
+                const response = await fetch(
+                    `${backendUrl}/api/trois-d/cities/${selectedCityName}`,
+                );
+                if (!response.ok) {
+                    const errorData = await response.text();
+                    console.error(`❌ Erreur ${response.status}:`, errorData);
+                    return;
+                }
 
-    const handleClick = (event: MouseEvent) => {
-      // Vérifier que le clic n'a pas duré trop longtemps
-      const clickDuration = Date.now() - mouseDownTime.current;
-      if (clickDuration > clickThreshold) {
-        console.log('⏱️ Clic annulé (trop long)');
-        return;
-      }
+                const cityData = await response.json();
+                console.log(
+                    `✅ Données de ${selectedCityName} chargées:`,
+                    cityData,
+                );
 
-      if (hoveredCity) {
-        onSelectedCity(hoveredCity);
-        // Trouver l'index de la ville dans la liste
-        const index = citiesListRef.current.indexOf(hoveredCity);
-        if (index !== -1) {
-          // Mettre à jour l'index courant dans le parent
-          console.log(`🖱️ Ville cliquée: ${hoveredCity} (index: ${index})`);
-        }
-      }
-    };
+                if (!cityData.geoData?.contour) {
+                    console.warn(`Pas de contour pour ${selectedCityName}`);
+                    return;
+                }
 
-    const canvas = gl.domElement;
-    canvas.addEventListener('mousemove', handleMouseMove);
-    canvas.addEventListener('mousedown', handleMouseDown);
-    canvas.addEventListener('click', handleClick);
+                // Parser le contour
+                const contourData = JSON.parse(cityData.geoData.contour);
+                const geomType = contourData.type;
 
-    return () => {
-      canvas.removeEventListener('mousemove', handleMouseMove);
-      canvas.removeEventListener('mousedown', handleMouseDown);
-      canvas.removeEventListener('click', handleClick);
-    };
-  }, [scene, camera, gl, hoveredCity, onSelectedCity, citiesListRef]);
+                // Récupérer toutes les coordonnées
+                let allCoordinates: [number, number][] = [];
+                if (geomType === "Polygon") {
+                    allCoordinates = contourData.coordinates[0] || [];
+                } else if (geomType === "MultiPolygon") {
+                    contourData.coordinates.forEach((poly: any) => {
+                        if (poly[0]) allCoordinates.push(...poly[0]);
+                    });
+                }
 
-  // Centrer la caméra sur la ville sélectionnée
-  useEffect(() => {
-    if (!selectedCityName || !centerLatLonRef.current) return;
+                if (allCoordinates.length === 0) return;
 
-    const fetchCityAndCenter = async () => {
-      try {
-        console.log(`🎯 Chargement des données de ${selectedCityName}...`);
-        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL!;
-        const response = await fetch(`${backendUrl}/api/trois-d/cities/${selectedCityName}`);
-        if (!response.ok) {
-          const errorData = await response.text();
-          console.error(`❌ Erreur ${response.status}:`, errorData);
-          return;
-        }
+                // Calculer le centre du contour
+                let sumLat = 0,
+                    sumLon = 0;
+                let minLat = Infinity,
+                    maxLat = -Infinity;
+                let minLon = Infinity,
+                    maxLon = -Infinity;
 
-        const cityData = await response.json();
-        console.log(`✅ Données de ${selectedCityName} chargées:`, cityData);
+                allCoordinates.forEach(([lon, lat]) => {
+                    sumLat += lat;
+                    sumLon += lon;
+                    minLat = Math.min(minLat, lat);
+                    maxLat = Math.max(maxLat, lat);
+                    minLon = Math.min(minLon, lon);
+                    maxLon = Math.max(maxLon, lon);
+                });
+                const avgLat = sumLat / allCoordinates.length;
+                const avgLon = sumLon / allCoordinates.length;
 
-        if (!cityData.geoData?.contour) {
-          console.warn(`Pas de contour pour ${selectedCityName}`);
-          return;
-        }
+                // Convertir en coordonnées cartésiennes
+                const { centerLat, centerLon } = centerLatLonRef.current;
+                const R = 6371000;
+                const lat1 = (centerLat * Math.PI) / 180;
+                const lat2 = (avgLat * Math.PI) / 180;
+                const deltaLon = ((avgLon - centerLon) * Math.PI) / 180;
 
-        // Parser le contour
-        const contourData = JSON.parse(cityData.geoData.contour);
-        const geomType = contourData.type;
+                let x = (deltaLon * R * Math.cos(lat1)) / 100;
+                let z = (-(lat2 - lat1) * R) / 100;
 
-        // Récupérer toutes les coordonnées
-        let allCoordinates: [number, number][] = [];
-        if (geomType === 'Polygon') {
-          allCoordinates = contourData.coordinates[0] || [];
-        } else if (geomType === 'MultiPolygon') {
-          contourData.coordinates.forEach((poly: any) => {
-            if (poly[0]) allCoordinates.push(...poly[0]);
-          });
-        }
+                // Calculer les bounds de la ville en coordonnées cartésiennes
+                const lat1Min = (centerLat * Math.PI) / 180;
+                const lat2Min = (minLat * Math.PI) / 180;
+                const lat2Max = (maxLat * Math.PI) / 180;
+                const deltaLonMin = ((minLon - centerLon) * Math.PI) / 180;
+                const deltaLonMax = ((maxLon - centerLon) * Math.PI) / 180;
 
-        if (allCoordinates.length === 0) return;
+                const xMin = (deltaLonMin * R * Math.cos(lat1Min)) / 100;
+                const xMax = (deltaLonMax * R * Math.cos(lat1Min)) / 100;
+                const zMin = (-(lat2Max - lat1Min) * R) / 100;
+                const zMax = (-(lat2Min - lat1Min) * R) / 100;
 
-        // Calculer le centre du contour
-        let sumLat = 0, sumLon = 0;
-        let minLat = Infinity, maxLat = -Infinity;
-        let minLon = Infinity, maxLon = -Infinity;
+                const cityWidth = Math.abs(xMax - xMin);
+                const cityDepth = Math.abs(zMax - zMin);
+                const citySize = Math.max(cityWidth, cityDepth);
 
-        allCoordinates.forEach(([lon, lat]) => {
-          sumLat += lat;
-          sumLon += lon;
-          minLat = Math.min(minLat, lat);
-          maxLat = Math.max(maxLat, lat);
-          minLon = Math.min(minLon, lon);
-          maxLon = Math.max(maxLon, lon);
-        });
-        const avgLat = sumLat / allCoordinates.length;
-        const avgLon = sumLon / allCoordinates.length;
+                // Distance de la caméra : vue en forte plongée (angle ~30 degrés)
+                const cameraHeight = citySize * 0.8; // Hauteur modérée pour être "un peu plus grand"
+                const cameraDistance = citySize * 2; // Distance horizontale importante pour vue face à nous
 
-        // Convertir en coordonnées cartésiennes
-        const { centerLat, centerLon } = centerLatLonRef.current;
-        const R = 6371000;
-        const lat1 = (centerLat * Math.PI) / 180;
-        const lat2 = (avgLat * Math.PI) / 180;
-        const deltaLon = ((avgLon - centerLon) * Math.PI) / 180;
+                console.log(`📍 Centre de ${selectedCityName}:`, { x, z });
+                console.log(`📐 Taille de ${selectedCityName}:`, {
+                    width: cityWidth,
+                    depth: cityDepth,
+                    height: cameraHeight,
+                });
 
-        let x = deltaLon * R * Math.cos(lat1) / 100;
-        let z = -(lat2 - lat1) * R / 100;
+                // Positionner la caméra en forte plongée (ville face à nous)
+                camera.position.set(x, cameraHeight, z + cameraDistance);
+                camera.lookAt(x, 0, z);
 
-        // Calculer les bounds de la ville en coordonnées cartésiennes
-        const lat1Min = (centerLat * Math.PI) / 180;
-        const lat2Min = (minLat * Math.PI) / 180;
-        const lat2Max = (maxLat * Math.PI) / 180;
-        const deltaLonMin = ((minLon - centerLon) * Math.PI) / 180;
-        const deltaLonMax = ((maxLon - centerLon) * Math.PI) / 180;
+                // Déplacer les controls vers cette position
+                if (controlsRef.current) {
+                    controlsRef.current.target.set(x, 0, z);
+                    controlsRef.current.update();
+                    console.log(
+                        `📷 Caméra repositionnée en plongée sur ${selectedCityName}`,
+                    );
+                }
 
-        const xMin = deltaLonMin * R * Math.cos(lat1Min) / 100;
-        const xMax = deltaLonMax * R * Math.cos(lat1Min) / 100;
-        const zMin = -(lat2Max - lat1Min) * R / 100;
-        const zMax = -(lat2Min - lat1Min) * R / 100;
+                // Créer le label 3D au-dessus de la ville
+                if (cityLabelRef.current) {
+                    scene.remove(cityLabelRef.current);
+                    cityLabelRef.current = null;
+                }
 
-        const cityWidth = Math.abs(xMax - xMin);
-        const cityDepth = Math.abs(zMax - zMin);
-        const citySize = Math.max(cityWidth, cityDepth);
+                const label = await createCityLabel(
+                    selectedCityName,
+                    { x, z },
+                    cameraHeight * 0.3,
+                );
+                cityLabelRef.current = label;
+                scene.add(label);
+                console.log(`🏷️ Label 3D créé pour ${selectedCityName}`);
+            } catch (error) {
+                console.error(
+                    `Erreur lors du chargement de ${selectedCityName}:`,
+                    error,
+                );
+            }
+        };
 
-        // Distance de la caméra : vue en forte plongée (angle ~30 degrés)
-        const cameraHeight = citySize * 0.8; // Hauteur modérée pour être "un peu plus grand"
-        const cameraDistance = citySize * 2; // Distance horizontale importante pour vue face à nous
+        fetchCityAndCenter();
+    }, [selectedCityName, controlsRef, scene]);
 
-        console.log(`📍 Centre de ${selectedCityName}:`, { x, z });
-        console.log(`📐 Taille de ${selectedCityName}:`, { width: cityWidth, depth: cityDepth, height: cameraHeight });
-
-        // Positionner la caméra en forte plongée (ville face à nous)
-        camera.position.set(x, cameraHeight, z + cameraDistance);
-        camera.lookAt(x, 0, z);
-
-        // Déplacer les controls vers cette position
-        if (controlsRef.current) {
-          controlsRef.current.target.set(x, 0, z);
-          controlsRef.current.update();
-          console.log(`📷 Caméra repositionnée en plongée sur ${selectedCityName}`);
-        }
-
-        // Créer le label 3D au-dessus de la ville
+    // Mettre à jour l'orientation du label à chaque frame avec useFrame
+    useFrame(() => {
         if (cityLabelRef.current) {
-          scene.remove(cityLabelRef.current);
-          cityLabelRef.current = null;
+            updateCityLabelOrientation(cityLabelRef.current, camera);
         }
+    });
 
-        const label = await createCityLabel(selectedCityName, { x, z }, cameraHeight * 0.3);
-        cityLabelRef.current = label;
-        scene.add(label);
-        console.log(`🏷️ Label 3D créé pour ${selectedCityName}`);
+    // Changer la couleur de la ville sélectionnée et survolée
+    useEffect(() => {
+        setHoveredCityColor(scene, hoveredCity, selectedCityName);
+    }, [selectedCityName, hoveredCity, scene]);
 
-      } catch (error) {
-        console.error(`Erreur lors du chargement de ${selectedCityName}:`, error);
-      }
-    };
-
-    fetchCityAndCenter();
-  }, [selectedCityName, controlsRef, scene]);
-
-  // Mettre à jour l'orientation du label à chaque frame avec useFrame
-  useFrame(() => {
-    if (cityLabelRef.current) {
-      updateCityLabelOrientation(cityLabelRef.current, camera);
-    }
-  });
-
-  // Changer la couleur de la ville sélectionnée et survolée
-  useEffect(() => {
-    setHoveredCityColor(scene, hoveredCity, selectedCityName);
-  }, [selectedCityName, hoveredCity, scene]);
-
-  return null;
+    return null;
 }
 
 export default function Map3DDepartment() {
-  const [cityCount, setCityCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [mapCenter, setMapCenter] = useState({ x: 0, y: 5000, z: 0 });
-  const [selectedCity, setSelectedCity] = useState<string | null>(null);
-  const [currentCityIndex, setCurrentCityIndex] = useState(0);
-  const [aiResponse, setAiResponse] = useState<string>("");
-  const citiesListRef = useRef<string[]>([]);
-  const controlsRef = useRef<any>(null);
+    const [cityCount, setCityCount] = useState(0);
+    const [isLoading, setIsLoading] = useState(true);
+    const [mapCenter, setMapCenter] = useState({ x: 0, y: 5000, z: 0 });
+    const [selectedCity, setSelectedCity] = useState<string | null>(null);
+    const [currentCityIndex, setCurrentCityIndex] = useState(0);
+    const [aiResponse, setAiResponse] = useState<string>("");
+    const citiesListRef = useRef<string[]>([]);
+    const controlsRef = useRef<any>(null);
 
-  const handleRecenter = () => {
-    if (controlsRef.current) {
-      controlsRef.current.target.set(mapCenter.x, 0, mapCenter.z);
-      controlsRef.current.update();
-    }
-  };
-
-  const handleCitySelected = (cityName: string | null) => {
-    setSelectedCity(cityName);
-    setAiResponse(""); // Reset AI response when manually selecting a city
-    if (cityName) {
-      const index = citiesListRef.current.indexOf(cityName);
-      if (index !== -1) {
-        setCurrentCityIndex(index);
-      }
-    }
-  };
-
-  const handleAICityDetected = (cityName: string, response: string) => {
-    setSelectedCity(cityName);
-    setAiResponse(response);
-    const index = citiesListRef.current.indexOf(cityName);
-    if (index !== -1) {
-      setCurrentCityIndex(index);
-    }
-  };
-
-  // Navigation avec les flèches
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (citiesListRef.current.length === 0) return;
-
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-        e.preventDefault();
-        const newIndex = (currentCityIndex + 1) % citiesListRef.current.length;
-        setCurrentCityIndex(newIndex);
-        setSelectedCity(citiesListRef.current[newIndex]);
-        setAiResponse(""); // Reset AI response on manual navigation
-        console.log(`➡️ Ville suivante: ${citiesListRef.current[newIndex]}`);
-      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        e.preventDefault();
-        const newIndex = currentCityIndex === 0 ? citiesListRef.current.length - 1 : currentCityIndex - 1;
-        setCurrentCityIndex(newIndex);
-        setSelectedCity(citiesListRef.current[newIndex]);
-        setAiResponse(""); // Reset AI response on manual navigation
-        console.log(`⬅️ Ville précédente: ${citiesListRef.current[newIndex]}`);
-      }
+    const handleRecenter = () => {
+        if (controlsRef.current) {
+            controlsRef.current.target.set(mapCenter.x, 0, mapCenter.z);
+            controlsRef.current.update();
+        }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentCityIndex]);
+    const handleCitySelected = (cityName: string | null) => {
+        setSelectedCity(cityName);
+        setAiResponse(""); // Reset AI response when manually selecting a city
+        if (cityName) {
+            const index = citiesListRef.current.indexOf(cityName);
+            if (index !== -1) {
+                setCurrentCityIndex(index);
+            }
+        }
+    };
 
-  return (
-    <div className="relative w-full h-[70vh]">
-      <Canvas>
-        <PerspectiveCamera
-          makeDefault
-          position={[0, 5000, 5000]}
-          fov={60}
-          near={0.1}
-          far={100000}
-        />
+    const handleAICityDetected = (cityName: string, response: string) => {
+        setSelectedCity(cityName);
+        setAiResponse(response);
+        const index = citiesListRef.current.indexOf(cityName);
+        if (index !== -1) {
+            setCurrentCityIndex(index);
+        }
+    };
 
-        <OrbitControls
-          ref={controlsRef}
-          enableDamping
-          target={[mapCenter.x, 0, mapCenter.z]}
-        />
+    // Navigation avec les flèches
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (citiesListRef.current.length === 0) return;
 
-        <DepartmentScene
-          onLoadingChange={setIsLoading}
-          onCityCountChange={setCityCount}
-          onCenterCalculated={setMapCenter}
-          onSelectedCity={handleCitySelected}
-          selectedCityName={selectedCity}
-          citiesListRef={citiesListRef}
-          controlsRef={controlsRef}
-        />
-      </Canvas>
+            if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+                e.preventDefault();
+                const newIndex =
+                    (currentCityIndex + 1) % citiesListRef.current.length;
+                setCurrentCityIndex(newIndex);
+                setSelectedCity(citiesListRef.current[newIndex]);
+                setAiResponse(""); // Reset AI response on manual navigation
+                console.log(
+                    `➡️ Ville suivante: ${citiesListRef.current[newIndex]}`,
+                );
+            } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+                e.preventDefault();
+                const newIndex =
+                    currentCityIndex === 0
+                        ? citiesListRef.current.length - 1
+                        : currentCityIndex - 1;
+                setCurrentCityIndex(newIndex);
+                setSelectedCity(citiesListRef.current[newIndex]);
+                setAiResponse(""); // Reset AI response on manual navigation
+                console.log(
+                    `⬅️ Ville précédente: ${citiesListRef.current[newIndex]}`,
+                );
+            }
+        };
 
-      {/* Loading */}
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 dark:bg-black/60">
-          <div className="bg-card rounded-lg p-8 text-center shadow-lg border border-border">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-primary mx-auto mb-4"></div>
-            <h2 className="text-xl font-bold text-foreground">Chargement...</h2>
-            {cityCount > 0 && <p className="text-sm text-primary mt-2">{cityCount} communes</p>}
-          </div>
-        </div>
-      )}
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [currentCityIndex]);
 
-      {/* Info */}
-      <div className="absolute top-4 left-4 bg-card rounded-lg shadow-lg border border-border p-4 min-w-[280px]">
-        <h2 className="text-lg font-bold text-foreground">Département 06</h2>
-        <p className="text-sm text-muted-foreground">{cityCount} communes</p>
+    return (
+        <div className="relative h-[70vh] w-full">
+            <Canvas>
+                <PerspectiveCamera
+                    makeDefault
+                    position={[0, 5000, 5000]}
+                    fov={60}
+                    near={0.1}
+                    far={100000}
+                />
 
-        <div className="mt-3 p-2 bg-primary/10 dark:bg-primary/20 rounded text-xs">
-          <p className="font-semibold mb-1 text-foreground">Navigation :</p>
-          <p className="text-muted-foreground">• ← → : Ville précédente / suivante</p>
-          <p className="text-muted-foreground">• ↑ ↓ : Parcourir les communes</p>
-        </div>
-      </div>
+                <OrbitControls
+                    ref={controlsRef}
+                    enableDamping
+                    target={[mapCenter.x, 0, mapCenter.z]}
+                />
 
-      {/* Ville sélectionnée - Card à droite */}
-      {selectedCity && (
-        <div className="absolute top-4 right-4 bg-card rounded-lg shadow-lg p-6 min-w-[320px] max-w-[400px] border border-border">
-          <div className="space-y-3">
-            <div>
-              <p className="text-sm text-muted-foreground">Commune sélectionnée</p>
-              <h3 className="text-2xl font-bold text-foreground mt-1">{selectedCity}</h3>
-            </div>
+                <DepartmentScene
+                    onLoadingChange={setIsLoading}
+                    onCityCountChange={setCityCount}
+                    onCenterCalculated={setMapCenter}
+                    onSelectedCity={handleCitySelected}
+                    selectedCityName={selectedCity}
+                    citiesListRef={citiesListRef}
+                    controlsRef={controlsRef}
+                />
+            </Canvas>
 
-            {/* Réponse de l'IA si disponible */}
-            {aiResponse && (
-              <div className="pt-3 border-t border-border">
-                <p className="text-xs text-muted-foreground mb-2">Réponse de l'IA :</p>
-                <p className="text-sm text-foreground bg-muted/50 p-3 rounded-lg whitespace-pre-wrap">
-                  {aiResponse}
-                </p>
-              </div>
+            {/* Loading */}
+            {isLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50 dark:bg-black/60">
+                    <div className="bg-card border-border rounded-lg border p-8 text-center shadow-lg">
+                        <div className="border-primary mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-b-4"></div>
+                        <h2 className="text-foreground text-xl font-bold">
+                            Chargement...
+                        </h2>
+                        {cityCount > 0 && (
+                            <p className="text-primary mt-2 text-sm">
+                                {cityCount} communes
+                            </p>
+                        )}
+                    </div>
+                </div>
             )}
 
-            <div className="flex items-center justify-between pt-2 border-t border-border">
-              <span className="text-sm text-muted-foreground">Position</span>
-              <span className="text-sm font-medium text-foreground">
-                {currentCityIndex + 1} / {citiesListRef.current.length}
-              </span>
+            {/* Info */}
+            <div className="bg-card border-border absolute top-4 left-4 min-w-[280px] rounded-lg border p-4 shadow-lg">
+                <h2 className="text-foreground text-lg font-bold">
+                    Département 06
+                </h2>
+                <p className="text-muted-foreground text-sm">
+                    {cityCount} communes
+                </p>
+
+                <div className="bg-primary/10 dark:bg-primary/20 mt-3 rounded p-2 text-xs">
+                    <p className="text-foreground mb-1 font-semibold">
+                        Navigation :
+                    </p>
+                    <p className="text-muted-foreground">
+                        • ← → : Ville précédente / suivante
+                    </p>
+                    <p className="text-muted-foreground">
+                        • ↑ ↓ : Parcourir les communes
+                    </p>
+                </div>
             </div>
-          </div>
+
+            {/* Ville sélectionnée - Card à droite */}
+            {selectedCity && (
+                <div className="bg-card border-border absolute top-4 right-4 max-w-[400px] min-w-[320px] rounded-lg border p-6 shadow-lg">
+                    <div className="space-y-3">
+                        <div>
+                            <p className="text-muted-foreground text-sm">
+                                Commune sélectionnée
+                            </p>
+                            <h3 className="text-foreground mt-1 text-2xl font-bold">
+                                {selectedCity}
+                            </h3>
+                        </div>
+
+                        {/* Réponse de l'IA si disponible */}
+                        {aiResponse && (
+                            <div className="border-border border-t pt-3">
+                                <p className="text-muted-foreground mb-2 text-xs">
+                                    Réponse de l'IA :
+                                </p>
+                                <p className="text-foreground bg-muted/50 rounded-lg p-3 text-sm whitespace-pre-wrap">
+                                    {aiResponse}
+                                </p>
+                            </div>
+                        )}
+
+                        <div className="border-border flex items-center justify-between border-t pt-2">
+                            <span className="text-muted-foreground text-sm">
+                                Position
+                            </span>
+                            <span className="text-foreground text-sm font-medium">
+                                {currentCityIndex + 1} /{" "}
+                                {citiesListRef.current.length}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Chat IA - en bas à gauche */}
+            <div className="absolute bottom-4 left-4 w-full max-w-md">
+                <Map3DChatBox
+                    citiesList={citiesListRef.current}
+                    onCityDetected={handleAICityDetected}
+                />
+            </div>
         </div>
-      )}
-
-      {/* Chat IA - en bas à gauche */}
-      <div className="absolute bottom-4 left-4 w-full max-w-md">
-        <Map3DChatBox
-          citiesList={citiesListRef.current}
-          onCityDetected={handleAICityDetected}
-        />
-      </div>
-    </div>
-  );
+    );
 }
-

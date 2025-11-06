@@ -32,15 +32,22 @@
         "logs:frontend": "docker compose logs -f frontend",
         "logs:backend": "docker compose logs -f backend",
         "logs:ollama": "docker compose logs -f ollama",
-        "format": "prettier --write \"**.{ts,tsx,js,jsx,json,css,md}\"",
+        "format": "prettier --write \"**.{ts,tsx,js,jsx,json,css,md,yaml}\"",
         "lint": "cd apps/frontend && pnpm lint",
         "test": "echo \"No tests yet\"",
         "install:all": "pnpm install && cd apps/frontend && pnpm install && cd ../backend && pnpm install",
-        "error-check": "pnpm -s tsc --noEmit"
+        "error-check": "pnpm -s tsc --noEmit",
+        "docs:install": "npm install -g docsify-cli",
+        "docs:init": "docsify init .",
+        "docs:serve": "docsify serve . --port 4000",
+        "docs:build": "echo 'Docsify does not need a build step'",
+        "docs:pdf": "echo 'PDF generation not available with Docsify'",
+        "docs:clean": "echo 'No build files to clean'"
     },
     "devDependencies": {
         "concurrently": "^9.1.2",
-        "prettier": "^3.6.2"
+        "prettier": "^3.6.2",
+        "prettier-plugin-tailwindcss": "^0.7.1"
     },
     "engines": {
         "node": ">=20.0.0",

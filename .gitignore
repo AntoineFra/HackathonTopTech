@@ -62,3 +62,11 @@ apps/**/generated/
 
 # Backup files
 *.old
+
+# GitBook
+_book/
+.gitbook/build/
+node_modules/
+*.epub
+*.mobi
+*.pdf
