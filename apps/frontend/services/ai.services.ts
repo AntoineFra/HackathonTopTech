@@ -18,14 +18,16 @@ export async function aiHealth() {
 }
 
 /**
- * Call backend AI (Ollama)
+ * Call backend AI (Ollama or Gemini)
  * @param prompt - User question
  * @param history - Optional conversation history (last 10 messages recommended)
- * @returns AI response with answer, confidence, model info
+ * @param provider - AI provider to use ("ollama" | "gemini")
+ * @returns AI response with answer, confidence, model info, optional legendType, and chart data
  */
 export async function aiAnswer(
     prompt: string,
     history?: ChatMessage[],
+    provider?: "ollama" | "gemini",
 ): Promise<{
     success: boolean;
     query: string;
@@ -34,12 +36,21 @@ export async function aiAnswer(
     model?: string;
     source?: string;
     error?: string;
+    legendType?: "population" | "economy" | "tourism";
+    chart?: {
+        type: "bar" | "line" | "pie" | "area" | "radar" | "radial";
+        data: any[];
+        title?: string;
+        description?: string;
+    };
+    prismaQuery?: string;
 }> {
     return apiFetch("/ai/answer", {
         method: "POST",
         body: JSON.stringify({
             question: prompt,
             history: history || [],
+            provider: provider || "gemini",
         }),
     });
 }

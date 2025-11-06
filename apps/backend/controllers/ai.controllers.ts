@@ -3,12 +3,15 @@ import { answerQuestion, checkOllamaHealth } from "../services/ai.services.js";
 
 // Express handler pour POST /ai/answer
 export async function answer(req: Request, res: Response) {
-    const { question, history } = req.body;
+    const { question, history, provider } = req.body;
     if (!question)
         return res.status(400).json({ error: "Question is required" });
 
+    // Valider le provider
+    const aiProvider = (provider === "gemini" || provider === "ollama") ? provider : undefined;
+
     try {
-        const result = await answerQuestion(question, history || []);
+        const result = await answerQuestion(question, history || [], aiProvider);
         return res.json(result);
     } catch (error: unknown) {
         const err = error as Error;
