@@ -20,7 +20,7 @@ await fs.mkdir("data", { recursive: true });
 await settingsService.ensureDefaults();
 
 try {
-    const types = ["legal_unit", "cities", "population"];
+    const types = ["legal_unit", "cities", "population", "establishments"];
     for (const t of types) {
         await prisma.dump.upsert({
             where: { type: t as any },

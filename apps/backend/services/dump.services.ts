@@ -374,3 +374,68 @@ export async function dumpPopulationData(): Promise<DumpResult> {
         },
     };
 }
+
+export async function dumpEstablishments(): Promise<DumpResult> {
+  if (!process.env.ESTABLISHMENT_URL) {
+    throw new Error(
+      "ESTABLISHMENT_URL is not defined in environment variables.",
+    );
+  }
+  const existingCount = await prisma.establishment.count();
+  if (existingCount > 0) {
+    console.log(
+      "Establishments already exist in the database. Skipping dump.",
+    );
+    return {
+      count: existingCount,
+      items: await prisma.establishment.findMany(),
+      summary: {
+        message: "Legal units already exist in database",
+      },
+    };
+  }
+
+  await downloadAndExtractZip(process.env.ESTABLISHMENT_URL);
+
+  if (!fs.existsSync("data/GeolocalisationEtablissement_Sirene_pour_etudes_statistiques_utf8.csv")) {
+    throw new Error("CSV file not found after extraction.");
+  }
+
+  console.log("📂 Importing CSV directly into SQLite...");
+
+  const sqliteFile = path.join(process.cwd(), "prisma/dev.db");
+
+  await new Promise<void>((resolve) => {
+    const child = spawn("sqlite3", [sqliteFile], {
+      stdio: ["pipe", "ignore", "ignore"],
+    });
+
+    // commande SQLite pour importer le CSV
+    child.stdin.write(`.mode csv\n`);
+    child.stdin.write(
+      `.import 'data/GeolocalisationEtablissement_Sirene_pour_etudes_statistiques_utf8.csv' Establishment\n`,
+    );
+    child.stdin.end();
+
+    child.on("close", (code) => {
+      if (code === 0) {
+        console.log("✅ CSV imported successfully!");
+        //fs.unlinkSync(data/GeolocalisationEtablissement_Sirene_pour_etudes_statistiques_utf8.csv);
+        console.log("🧹 Temporary CSV removed.");
+      } else {
+        console.log(`❌ SQLite process exited with code ${code}`);
+        //reject(new Error(`SQLite process exited with code ${code}`));
+      }
+      resolve();
+    });
+  });
+
+  const count = await prisma.establishment.count();
+  return {
+    count,
+    items: await prisma.establishment.findMany(),
+    summary: {
+      message: "Establishments imported successfully",
+    },
+  };
+}
