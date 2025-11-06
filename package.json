@@ -25,7 +25,7 @@
         "format": "turbo format",
         "lint": "turbo lint",
         "test": "turbo test",
-        "install:all": "pnpm install"
+        "install:all": "pnpm install",
         "docs:init": "docsify init .",
         "docs:serve": "docsify serve . --port 4000",
         "docs:build": "echo 'Docsify does not need a build step'",
