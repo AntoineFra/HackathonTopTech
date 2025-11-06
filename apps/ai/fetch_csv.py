@@ -24,6 +24,27 @@ url_list = [
     "https://www.insee.fr/fr/statistiques/tableaux/8582083/COM/$1/rp2022_td_nat3A.csv",
     "https://www.insee.fr/fr/statistiques/tableaux/8582085/COM/$1/rp2022_td_nat3B.csv",
 ]
+url_list_dep = [
+    "https://www.insee.fr/fr/statistiques/tableaux/8572063/DEP/06/rp2022_cc_act.csv",
+    "https://www.insee.fr/fr/statistiques/tableaux/8574929/DEP/06/rp2022_cc_emp.csv",
+    "https://www.insee.fr/fr/statistiques/tableaux/8569208/DEP/06/rp2022_cc_fam.csv",
+    "https://www.insee.fr/fr/statistiques/tableaux/8581240/DEP/06/rp2022_cc_for.csv",
+    "https://www.insee.fr/fr/statistiques/tableaux/8581193/DEP/06/rp2022_cc_log.csv",
+    "https://www.insee.fr/fr/statistiques/tableaux/8581709/DEP/06/rp2022_cc_pop.csv",
+    "https://www.insee.fr/fr/statistiques/tableaux/8582065/DEP/06/rp2022_td_img1A.csv",
+    "https://www.insee.fr/fr/statistiques/tableaux/8582067/DEP/06/rp2022_td_img1B.csv",
+    "https://www.insee.fr/fr/statistiques/tableaux/8582071/DEP/06/rp2022_td_img2A_v2.csv",
+    "https://www.insee.fr/fr/statistiques/tableaux/8582073/DEP/06/rp2022_td_img2B.csv",
+    "https://www.insee.fr/fr/statistiques/tableaux/8582075/DEP/06/rp2022_td_img3A.csv",
+    "https://www.insee.fr/fr/statistiques/tableaux/8582077/DEP/06/rp2022_td_img3B.csv",
+    "https://www.insee.fr/fr/statistiques/tableaux/8582079/DEP/06/rp2022_td_nat1.csv",
+    "https://www.insee.fr/fr/statistiques/tableaux/8582081/DEP/06/rp2022_td_nat2.csv",
+    "https://www.insee.fr/fr/statistiques/tableaux/8582083/DEP/06/rp2022_td_nat3A.csv",
+    "https://www.insee.fr/fr/statistiques/tableaux/8582085/DEP/06/rp2022_td_nat3B.csv",
+]
+
+# Additional standalone file to download for the department
+POP_HISTORIC_XLSX = "https://www.insee.fr/fr/statistiques/fichier/3698339/base-pop-historiques-1876-2022.xlsx"
 
 
 def _ensure_dir(path: str) -> None:
@@ -74,6 +95,16 @@ def download_insee_csvs(
 
     summary = {"ok": [], "failed": []}
 
+    # If we're fetching department-level data, also download the historical population XLSX
+    if city_code == "06000":
+        xlsx_name = _filename_from_url(POP_HISTORIC_XLSX)
+        xlsx_dest = os.path.join(out_dir, xlsx_name)
+        ok, err = _download(POP_HISTORIC_XLSX, xlsx_dest, timeout=timeout, retries=retries)
+        if ok:
+            summary["ok"].append(xlsx_name)
+        else:
+            summary["failed"].append({"file": xlsx_name, "error": err})
+
     def _task(tpl: str) -> Tuple[str, bool, str]:
         url = tpl.replace("$1", city_code)
         fname = _filename_from_url(url)
@@ -81,9 +112,11 @@ def download_insee_csvs(
         ok, err = _download(url, dest, timeout=timeout, retries=retries)
         return fname, ok, err
 
+    url_list_fix = url_list_dep if city_code == "06000" else url_list
+
     with ThreadPoolExecutor(max_workers=max_workers) as ex:
         futures = []
-        for tpl in url_list:
+        for tpl in url_list_fix:
             if pause:
                 time.sleep(pause)
             futures.append(ex.submit(_task, tpl))
@@ -98,12 +131,12 @@ def download_insee_csvs(
     return summary
 
 
-# if __name__ == "__main__":
-# 	#download range of city codes
-# 	for code in range(6015, 6164):
-# 		city_code = str(code).zfill(5)
-# 		result = download_insee_csvs(city_code, pause=0.2)
-# 		print(f"Download summary for city code {city_code}: Successful downloads: {len(result['ok'])}, Failed downloads: {len(result['failed'])}")
-# 		if result["failed"]:
-# 			for failure in result["failed"]:
-# 				print(f"    - {failure['file']}: {failure['error']}")
+if __name__ == "__main__":
+    # download range of city codes
+    result = download_insee_csvs("06000", pause=0.0)
+    print(
+        f"Download summary for city code {"06000"}: Successful downloads: {len(result['ok'])}, Failed downloads: {len(result['failed'])}"
+    )
+    if result["failed"]:
+        for failure in result["failed"]:
+            print(f"    - {failure['file']}: {failure['error']}")
