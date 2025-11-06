@@ -14,12 +14,12 @@ services:
     container_name: paca-frontend
     ports:
       - "8080:3000"
+    env_file:
+      - .env.local
     environment:
       - NODE_ENV=development
       - NEXT_PUBLIC_BACKEND_URL=http://localhost:3000
       - OLLAMA_BASE_URL=http://ollama:11434
-      - OLLAMA_MODEL=mistral
-      - OLLAMA_TIMEOUT=30000
     volumes:
       - ./apps/frontend:/app
       - /app/node_modules
@@ -41,13 +41,8 @@ services:
     container_name: paca-backend
     ports:
       - "3000:3000"
-    environment:
-      - NODE_ENV=development
-      - PORT=3000
-      - DATABASE_URL=file:/app/prisma/dev.db
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - OLLAMA_MODEL=mistral
-      - OLLAMA_TIMEOUT=120000
+    env_file:
+      - .env.root.example
     volumes:
       - ./apps/backend:/app
       - /app/node_modules
@@ -96,14 +91,14 @@ services:
     command:
       - -c
       - |
-        echo "🚀 Vérification du modèle Mistral..."
+        echo "🚀 Vérification du modèle Phi-3 Mini..."
         sleep 10
-        if ! OLLAMA_HOST=http://ollama:11434 ollama list | grep -q "mistral"; then
-          echo "📥 Téléchargement du modèle Mistral (cela peut prendre plusieurs minutes)..."
-          OLLAMA_HOST=http://ollama:11434 ollama pull mistral
-          echo "✅ Modèle Mistral téléchargé avec succès !"
+        if ! OLLAMA_HOST=http://ollama:11434 ollama list | grep -q "phi3:mini"; then
+          echo "📥 Téléchargement du modèle Phi-3 Mini (cela peut prendre plusieurs minutes)..."
+          OLLAMA_HOST=http://ollama:11434 ollama pull phi3:mini
+          echo "✅ Modèle Phi-3 Mini téléchargé avec succès !"
         else
-          echo "✅ Modèle Mistral déjà disponible !"
+          echo "✅ Modèle Phi-3 Mini déjà disponible !"
         fi
     restart: "no"
 
