@@ -52,6 +52,7 @@ export interface AIServiceResponse {
         description?: string;
     };
     prismaQuery?: string;
+    selected_codes?: string[];
 }
 
 // System prompt spécialisé PACA

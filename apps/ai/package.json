@@ -1,0 +1,20 @@
+{
+  "name": "@hackathon/ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI Service with FastAPI and Google Gemini",
+  "scripts": {
+    "dev": "./venv/bin/uvicorn ai:app --host 0.0.0.0 --port 8001 --reload",
+    "start": "./venv/bin/uvicorn ai:app --host 0.0.0.0 --port 8001",
+    "install-deps": "/opt/homebrew/Cellar/python@3.12/3.12.12/bin/python3.12 -m venv venv && ./venv/bin/pip install --upgrade pip && ./venv/bin/pip install -r requirements.txt && ./venv/bin/pip install pandas",
+    "fetch-csv": "./venv/bin/python3 fetch_csv.py",
+    "csv-to-sqlite": "./venv/bin/python3 csv_to_sqlite.py"
+  },
+  "keywords": [
+    "ai",
+    "fastapi",
+    "python",
+    "gemini",
+    "langchain"
+  ]
+}

@@ -40,6 +40,31 @@ export async function getCity(req: Request, res: Response) {
     }
 }
 
+export async function getCityByCode(req: Request, res: Response) {
+    try {
+        const codeINSEE = req.params.codeINSEE;
+        if (!codeINSEE) {
+            return res.status(400).json({ error: "Code INSEE is required" });
+        }
+
+        const city = await prisma.city.findFirst({
+            where: { codeINSEE: codeINSEE },
+            include: {
+                postalCodes: true,
+                geoData: true,
+            },
+        });
+
+        if (!city) {
+            return res.status(404).json({ error: "City not found" });
+        }
+
+        res.json(city);
+    } catch (e: any) {
+        res.status(500).json({ error: "Internal server error" });
+    }
+}
+
 export async function getPopulationData(req: Request, res: Response) {
     try {
         const populationData = await prisma.populationHistory.findMany();

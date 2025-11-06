@@ -8,8 +8,7 @@ export async function answer(req: Request, res: Response) {
         return res.status(400).json({ error: "Question is required" });
 
     // Valider le provider
-    const aiProvider =
-        provider === "gemini" || provider === "ollama" ? provider : undefined;
+    const aiProvider = (provider === "gemini" || provider === "ollama" || provider === "local") ? provider : undefined;
 
     try {
         const result = await answerQuestion(

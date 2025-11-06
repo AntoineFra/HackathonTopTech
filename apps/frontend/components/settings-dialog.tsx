@@ -258,7 +258,7 @@ export default function SettingsDialog() {
                 return (
                     <span
                         title="En cours"
-                        className="inline-flex h-3 w-3 items-center justify-center rounded-full bg-orange-400"
+                        className="inline-flex h-3 w-3 items-center justify-center rounded-full bg-yellow-500"
                     />
                 );
             }
