@@ -71,11 +71,31 @@ export function AIGeneratedChart({
         const config: any = {};
         const firstItem = data[0];
 
+        // Mapping des labels communs pour améliorer l'affichage
+        const labelMapping: Record<string, string> = {
+            population: "Population",
+            year: "Année",
+            annee: "Année",
+            city: "Ville",
+            commune: "Commune",
+            name: "Nom",
+            nom: "Nom",
+            count: "Nombre",
+            total: "Total",
+            value: "Valeur",
+            valeur: "Valeur",
+        };
+
         // Extraire les clés numériques pour la configuration
         Object.keys(firstItem).forEach((key, index) => {
             if (typeof firstItem[key] === "number") {
+                const lowerKey = key.toLowerCase();
+                const label =
+                    labelMapping[lowerKey] ||
+                    key.charAt(0).toUpperCase() + key.slice(1);
+
                 config[key] = {
-                    label: key.charAt(0).toUpperCase() + key.slice(1),
+                    label: label,
                     color: CHART_COLORS[index % CHART_COLORS.length],
                 };
             }
@@ -136,6 +156,7 @@ export function AIGeneratedChart({
                                 <Bar
                                     key={key}
                                     dataKey={key}
+                                    name={chartConfig[key]?.label || key}
                                     fill={
                                         CHART_COLORS[
                                             index % CHART_COLORS.length
@@ -167,6 +188,7 @@ export function AIGeneratedChart({
                                     key={key}
                                     type="monotone"
                                     dataKey={key}
+                                    name={chartConfig[key]?.label || key}
                                     stroke={
                                         CHART_COLORS[
                                             index % CHART_COLORS.length
@@ -199,6 +221,7 @@ export function AIGeneratedChart({
                                     key={key}
                                     type="monotone"
                                     dataKey={key}
+                                    name={chartConfig[key]?.label || key}
                                     stroke={
                                         CHART_COLORS[
                                             index % CHART_COLORS.length
@@ -261,7 +284,7 @@ export function AIGeneratedChart({
                             {yKeys.map((key, index) => (
                                 <Radar
                                     key={key}
-                                    name={key}
+                                    name={chartConfig[key]?.label || key}
                                     dataKey={key}
                                     stroke={
                                         CHART_COLORS[
