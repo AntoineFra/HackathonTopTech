@@ -8,6 +8,7 @@
         "dev": "docker compose up -d && turbo dev",
         "dev:frontend": "turbo dev --filter=frontend",
         "dev:backend": "turbo dev --filter=backend",
+        "dev:ai": "turbo dev --filter=@hackathon/ai",
         "build": "turbo build",
         "build:frontend": "turbo build --filter=frontend",
         "build:backend": "turbo build --filter=backend",
