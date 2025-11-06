@@ -45,7 +45,7 @@ export default function Footer() {
                                 Support
                             </span>
                             <Link
-                                href="/docs"
+                                href="https://antoinefra.github.io/HackathonTopTech/#/"
                                 className="text-muted-foreground hover:text-foreground text-sm"
                             >
                                 Documentation
@@ -90,7 +90,7 @@ export default function Footer() {
                                 type="submit"
                                 className="bg-primary text-primary-foreground rounded-md px-3 py-2 text-sm font-medium hover:opacity-95"
                             >
-                                S'abonner
+                                S&apos;abonner
                             </button>
                         </form>
 

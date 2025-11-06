@@ -27,7 +27,7 @@ export default function Home() {
 
                 <p className="text-muted-foreground mr-2 self-center">
                     Ou explorez directement les données géospatiales sur une
-                    carte 3D via l&apos;IA :
+                    carte via l&apos;IA :
                 </p>
 
                 <div className="flex justify-center gap-3 pt-4">
@@ -37,16 +37,10 @@ export default function Home() {
                             Carte 2D seule
                         </Button>
                     </Link>
-                    <Link href="/map">
-                        <Button size="lg" className="gap-2" variant="outline">
-                            <MapPin className="h-5 w-5" />
-                            Carte 3D seule
-                        </Button>
-                    </Link>
-                    <Link href="/map-chat">
+                    <Link href="/map-threejs">
                         <Button size="lg" className="gap-2">
                             <MapPin className="h-5 w-5" />
-                            Carte 3D + Chat IA
+                            Carte 3D seule
                         </Button>
                     </Link>
                 </div>
