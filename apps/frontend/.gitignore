@@ -1,9 +1,9 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-**/node_modules
-**/.pnp
-**/.pnp.*
+/node_modules
+/.pnp
+.pnp.*
 .yarn/*
 !.yarn/patches
 !.yarn/plugins
@@ -11,15 +11,14 @@
 !.yarn/versions
 
 # testing
-**/coverage
+/coverage
 
 # next.js
-**/.next/
-**/out/
+/.next/
+/out/
 
 # production
-**/build
-**/dist
+/build
 
 # misc
 .DS_Store
@@ -31,34 +30,15 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files
+# env files (can opt-in for committing if needed)
 .env*
 !.env.example
-!.env*.example
 
 # vercel
 .vercel
 
 # typescript
 *.tsbuildinfo
-**/next-env.d.ts
+next-env.d.ts
 
-# IDEs
 .idea
-.vscode/*
-!.vscode/settings.json
-!.vscode/extensions.json
-
-# Prisma
-**/prisma/dev.db
-**/prisma/dev.db-journal
-
-# Docker
-**/tmp/
-**/data/
-
-# Monorepo specific
-apps/**/generated/
-
-# Backup files
-*.old

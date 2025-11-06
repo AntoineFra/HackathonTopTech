@@ -1,0 +1,109 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client"
+  output        = "../generated/prisma"
+  binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id    Int     @id @default(autoincrement())
+  email String  @unique
+  name  String?
+}
+
+model LegalUnit {
+  siren               String    @id
+  diffusionStatus     String?
+  purgedUnit          String?
+  creationDate        DateTime?
+  acronym             String?
+  gender              String?
+  firstName1          String?
+  firstName2          String?
+  firstName3          String?
+  firstName4          String?
+  usualFirstName      String?
+  pseudonym           String?
+  associationId       String?
+  employeeRange       String?
+  employeeYear        Int?
+  lastProcessedDate   DateTime?
+  numberOfPeriods     Int?
+  companyCategory     String?
+  companyCategoryYear Int?
+  startDate           DateTime?
+  administrativeState String?
+  legalName           String?
+  usageName           String?
+  denomination        String?
+  usualDenomination1  String?
+  usualDenomination2  String?
+  usualDenomination3  String?
+  legalForm           String?
+  mainActivity        String?
+  mainActivityCode    String?
+  headquarterNic      String?
+  socialEconomy       String?
+  missionCompany      String?
+  employerStatus      String?
+}
+
+
+/**
+ Example of City record:
+ * {
+ * "nom": "Aiglun",
+ * "code": "06001",
+ * "codeDepartement": "06",
+ * "siren": "210600011",
+ * "codeEpci": "200039931",
+ * "codeRegion": "93",
+ * "codesPostaux": [
+ * "06910"
+ * ],
+ * "population": 99
+ * },
+ */
+model City {
+  codeINSEE       String       @id
+  name            String
+  codeDepartement String
+  siren           String
+  codeEpci        String
+  codeRegion      String
+  population      Int
+  postalCodes     PostalCode[]
+}
+
+model PostalCode {
+  id            Int    @id @default(autoincrement())
+  code          String // ex: "06910"
+  cityCodeINSEE String // référence vers City.codeINSEE
+  city          City   @relation(fields: [cityCodeINSEE], references: [codeINSEE])
+}
+
+// New: dump types and status + Dump model
+enum DumpType {
+  legal_unit
+  cities
+}
+
+enum DumpStatus {
+  PAS_A_JOUR
+  A_JOUR
+  EN_COURS
+}
+
+model Dump {
+  id         Int        @id @default(autoincrement())
+  type       DumpType   @unique
+  status     DumpStatus @default(PAS_A_JOUR)
+  lastUpdate DateTime?
+}

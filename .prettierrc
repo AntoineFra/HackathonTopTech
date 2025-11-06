@@ -4,15 +4,4 @@
     "tabWidth": 4,
     "useTabs": false,
     "plugins": ["prettier-plugin-tailwindcss"],
-    "extensions": [
-        ".md",
-        ".js",
-        ".ts",
-        ".jsx",
-        ".tsx",
-        ".css",
-        ".scss",
-        ".json",
-        ".prettierrc"
-    ]
 }
