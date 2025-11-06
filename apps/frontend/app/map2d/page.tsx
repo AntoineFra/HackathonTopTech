@@ -12,7 +12,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Send, Loader2, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
+import { Send, Loader2, Sparkles, ChevronDown, ChevronUp, Settings } from "lucide-react";
+import { useAIProvider } from "@/contexts/AIProviderContext";
 
 interface HoveredCity extends CityDataType {
     name: string;
@@ -33,6 +34,7 @@ export default function Map2DPage() {
     const [loading, setLoading] = useState(false);
     const [response, setResponse] = useState<string>("");
     const [showChat, setShowChat] = useState(true);
+    const { provider, setProvider } = useAIProvider();
 
     const suggestions = getMap2DSuggestions();
 
@@ -254,7 +256,9 @@ export default function Map2DPage() {
         setResponse("");
 
         try {
-            const result = await queryMap2DAI(query);
+            // Utiliser le provider sélectionné (ollama ou gemini)
+            const aiProvider = provider === "local" ? "gemini" : provider;
+            const result = await queryMap2DAI(query, aiProvider as "ollama" | "gemini");
 
             // Appliquer les actions à la map
             for (const action of result.mapActions) {
@@ -398,24 +402,64 @@ export default function Map2DPage() {
                         >
                             Assistant IA - Carte Interactive
                         </h3>
+                        <Badge
+                            style={{
+                                background: provider === "ollama" ? "rgba(139, 92, 246, 0.2)" : "rgba(59, 130, 246, 0.2)",
+                                border: `1px solid ${provider === "ollama" ? "#8b5cf6" : "#3b82f6"}`,
+                                color: provider === "ollama" ? "#a78bfa" : "#60a5fa",
+                                fontSize: "0.7rem",
+                                padding: "0.15rem 0.5rem",
+                            }}
+                        >
+                            {provider === "ollama" ? "🤖 Ollama" : "✨ Gemini"}
+                        </Badge>
                     </div>
-                    {showChat ? (
-                        <ChevronDown
-                            style={{
-                                color: "#888",
-                                width: "20px",
-                                height: "20px",
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setProvider(provider === "ollama" ? "gemini" : "ollama");
                             }}
-                        />
-                    ) : (
-                        <ChevronUp
                             style={{
-                                color: "#888",
-                                width: "20px",
-                                height: "20px",
+                                background: "rgba(136, 136, 136, 0.2)",
+                                border: "1px solid #555",
+                                color: "#ccc",
+                                padding: "0.25rem 0.75rem",
+                                borderRadius: "6px",
+                                fontSize: "0.75rem",
+                                cursor: "pointer",
+                                transition: "all 0.2s",
                             }}
-                        />
-                    )}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.background = "rgba(0, 188, 212, 0.2)";
+                                e.currentTarget.style.borderColor = "#00bcd4";
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.background = "rgba(136, 136, 136, 0.2)";
+                                e.currentTarget.style.borderColor = "#555";
+                            }}
+                        >
+                            <Settings style={{ width: "14px", height: "14px", display: "inline", marginRight: "4px" }} />
+                            Changer
+                        </button>
+                        {showChat ? (
+                            <ChevronDown
+                                style={{
+                                    color: "#888",
+                                    width: "20px",
+                                    height: "20px",
+                                }}
+                            />
+                        ) : (
+                            <ChevronUp
+                                style={{
+                                    color: "#888",
+                                    width: "20px",
+                                    height: "20px",
+                                }}
+                            />
+                        )}
+                    </div>
                 </div>
 
                 {showChat && (
