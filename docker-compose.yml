@@ -1,119 +1,20 @@
-# ==============================================
-# Docker Compose - Development Environment
-# PACA Analytics Monorepo
-# ==============================================
+version: '3.8'
 
 services:
-  # ===================
-  # Frontend - Next.js
-  # ===================
-  frontend:
-    build:
-      context: .
-      dockerfile: apps/frontend/Dockerfile.dev
-    container_name: paca-frontend
-    ports:
-      - "8080:3000"
-    env_file:
-      - .env.root.example
-    volumes:
-      - ./apps/frontend:/app
-      - /app/node_modules
-      - /app/.next
-    depends_on:
-      - backend
-      - ollama
-    networks:
-      - paca-network
-    restart: unless-stopped
-
-  # ====================
-  # Backend - Express
-  # ====================
-  backend:
-    build:
-      context: .
-      dockerfile: apps/backend/Dockerfile.dev
-    container_name: paca-backend
-    ports:
-      - "3000:3000"
-    env_file:
-      - .env.root.example
-    volumes:
-      - ./apps/backend:/app
-      - /app/node_modules
-      - backend-generated:/app/generated
-      - backend-db:/app/prisma
-    depends_on:
-      - ollama
-    networks:
-      - paca-network
-    restart: unless-stopped
-    command: sh /app/start-dev.sh
-
-  # ====================
-  # Ollama - Local AI
-  # ====================
   ollama:
-    image: ollama/ollama:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.ollama
     container_name: paca-ollama
     ports:
       - "11434:11434"
     volumes:
-      - ollama-models:/root/.ollama
-    networks:
-      - paca-network
+      - ollama-data:/root/.ollama
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "ollama", "list"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-llama2:7b-chat-q4_K_S}
 
-  # ====================================
-  # Ollama Model Downloader (Init)
-  # ====================================
-  ollama-init:
-    image: ollama/ollama:latest
-    container_name: paca-ollama-init
-    depends_on:
-      ollama:
-        condition: service_healthy
-    networks:
-      - paca-network
-    env_file:
-      - .env.root.example
-    entrypoint: /bin/sh
-    command:
-      - -c
-      - |
-        echo "🚀 Vérification du modèle $$OLLAMA_MODEL"
-        sleep 10
-        if ! OLLAMA_HOST=http://ollama:11434 ollama list | grep -q "$$OLLAMA_MODEL"; then
-          echo "📥 Téléchargement du modèle $$OLLAMA_MODEL (cela peut prendre plusieurs minutes)..."
-          OLLAMA_HOST=http://ollama:11434 ollama pull "$$OLLAMA_MODEL"
-          echo "✅ Modèle $$OLLAMA_MODEL téléchargé avec succès !"
-        else
-          echo "✅ Modèle $$OLLAMA_MODEL déjà disponible !"
-        fi
-    restart: "no"
-
-# ===================
-# Networks
-# ===================
-networks:
-  paca-network:
-    driver: bridge
-    name: paca-analytics-network
-
-# ===================
-# Volumes
-# ===================
 volumes:
-  ollama-models:
-    name: paca-ollama-models
-  backend-db:
-    name: paca-backend-db
-  backend-generated:
-    name: paca-backend-generated
+  ollama-data:
+    driver: local

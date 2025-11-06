@@ -1,0 +1,11 @@
+FROM ollama/ollama:latest
+
+# Installer curl pour le healthcheck
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+# Copier le script d'initialisation
+COPY init-ollama.sh /init-ollama.sh
+RUN chmod +x /init-ollama.sh
+
+# Script de démarrage
+ENTRYPOINT ["/init-ollama.sh"]
